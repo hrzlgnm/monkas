@@ -62,7 +62,7 @@ void NetlinkMonitorNlm::startReceiving()
                          &NetlinkMonitorNlm::dipatchMnlDataCallbackToSelf, this);
         if (ret < MNL_CB_STOP)
         {
-            LOG(WARNING) << "bork";
+            PLOG(WARNING) << "bork";
             break;
         }
         if (ret == MNL_CB_STOP)
@@ -77,7 +77,7 @@ void NetlinkMonitorNlm::startReceiving()
             {
                 m_cacheState = CacheState::WaitForChanges;
                 m_sequenceCounter = 0; // stop sequence checks
-                LOG(INFO) << "cache filled with all available information successfully";
+                LOG(INFO) << "cache is filled with all requested information";
                 LOG(INFO) << "tracking changes for: " << m_cache.size() << " interfaces";
                 dumpState();
             }
@@ -152,8 +152,10 @@ NetworkInterfaceDescriptor &NetlinkMonitorNlm::ensureNamed(int interface_index)
         return cacheEntry;
     }
     // it's safe to use IFLA_IFNAME here as IFA_LABEL is the same id
+    // we should be receiving link messages as first anyway
     if (m_lastSeenAttributes[IFLA_IFNAME])
     {
+        VLOG(2) << "using name from already parsed attributes";
         cacheEntry.set_name(mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME]));
     }
     else
@@ -162,6 +164,7 @@ NetworkInterfaceDescriptor &NetlinkMonitorNlm::ensureNamed(int interface_index)
         auto name = if_indextoname(interface_index, &namebuf[0]);
         if (name)
         {
+            VLOG(2) << "resolved name via if_indextoname";
             cacheEntry.set_name(name);
         }
         else
@@ -216,26 +219,13 @@ void NetlinkMonitorNlm::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
     }
 
     auto &cacheEntry = ensureNamed(ifa->ifa_index);
-
-    /* for point to point local is local, address is peer*/
-    if (!m_lastSeenAttributes[IFA_LOCAL])
-        m_lastSeenAttributes[IFA_LOCAL] = m_lastSeenAttributes[IFA_ADDRESS];
-    if (!m_lastSeenAttributes[IFA_ADDRESS])
-        m_lastSeenAttributes[IFA_ADDRESS] = m_lastSeenAttributes[IFA_LOCAL];
-
     if (m_lastSeenAttributes[IFA_ADDRESS])
     {
         void *addr = mnl_attr_get_payload(m_lastSeenAttributes[IFA_ADDRESS]);
-        void *laddr = mnl_attr_get_payload(m_lastSeenAttributes[IFA_LOCAL]);
-        const bool is_peer = !!memcmp(addr, laddr, ifa->ifa_family == AF_INET ? 4 : 16);
         char out[INET6_ADDRSTRLEN];
         if (inet_ntop(ifa->ifa_family, addr, out, sizeof(out)))
         {
             std::stringstream strm;
-            if (is_peer)
-            {
-                strm << "peer:";
-            }
             if (ifa->ifa_family == AF_INET6)
             {
                 strm << "ip6=";
