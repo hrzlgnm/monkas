@@ -1,5 +1,5 @@
-#ifndef MONKA_H
-#define MONKA_H
+#ifndef NETLINKMONITORNML_H
+#define NETLINKMONITORNML_H
 
 #include <string>
 #include <vector>
@@ -9,6 +9,11 @@
 #include <chrono>
 #include <libmnl/libmnl.h>
 
+// TODO: move to own translation unit
+// TODO: camelCaes
+// TODO: address struct with family, scope, prefix lenght
+// TODO: own member for mac address
+// TODO: check whether changing mac will remove the hwaddress and add a new one
 using age_duration = std::chrono::duration<int64_t, std::milli>;
 class NetworkInterfaceDescriptor {
 public:
@@ -40,6 +45,8 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
 };
 
+
+// TODO: more expressive name, something with link and address
 class NetlinkMonitorNlm
 {
 public:
@@ -50,44 +57,41 @@ private:
     void startReceiving();
     void requestInfo(uint16_t t);
 
-    int mnlMessageCallback(const struct nlmsghdr *n);
-    int mnlAttributeCallbackOnSelf(const nlattr *a);
 
     void handleLinkMessage(const struct ifinfomsg *ifi, bool n);
     void handleAddrMessage(const struct ifaddrmsg *ifa, bool n);
-    void parseFlags(const struct nlmsghdr *n, size_t len);
-
+    void parseAttributes(const struct nlmsghdr *n, size_t offset);
+    void ensureInterfaceNamed(int interface_index);
     void dumpState();
 
-    void ensureInterfaceNamed(int interface_index);
-
-    static int runMnlDataCallbackOnSelf(const struct nlmsghdr *n, void *self);
-    static int mnlAttributeCallbackOnSelf(const struct nlattr *a, void *self);
+    static int dipatchMnlDataCallbackToSelf(const struct nlmsghdr *n, void *self);
+    int mnlMessageCallback(const struct nlmsghdr *n);
+    static int mnlAttributeCallback(const struct nlattr *a, void *self);
+    int mnlAttributeCallback(const nlattr *a);
 
 private:
-    std::vector<const nlattr*> m_lastSeenAttributeTable;
+    std::vector<const nlattr*> m_lastSeenAttributes;
     std::vector<char> m_buffer;
     std::unique_ptr<mnl_socket, int(*)(mnl_socket*)> m_mnlSocket;
     std::map<int, NetworkInterfaceDescriptor> m_cache;
 
     enum class CacheState {
-        FetchLinkInfo,
-        FetchAddressInfo,
+        FillLinkInfo,
+        FillAddressInfo,
         WaitForChanges
-    } m_cacheState{CacheState::FetchLinkInfo};
+    } m_cacheState{CacheState::FillLinkInfo};
 
     unsigned m_portid{};
     unsigned m_sequenceCounter{};
 
     struct stats {
-        uint64_t nBytesSent{};
-        uint64_t nBytesReceived{};
-        uint64_t nPacketsSent{};
-        uint64_t nPacketsReceived{};
-        uint64_t nMsgs{};
-        uint64_t nParsedAttrs{};
+        uint64_t bytesSent{};
+        uint64_t bytesReceived{};
+        uint64_t packetsSent{};
+        uint64_t packetsReceived{};
+        uint64_t msgsReceived{};
+        uint64_t parsedAttributes{};
     } m_stats;
 
 };
-
-#endif // MONKA_H
+#endif
