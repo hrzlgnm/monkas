@@ -2,11 +2,9 @@
 
 #include "monka.h"
 
-int main()
-{
+int main() {
 
     monkaS m;
-
 
     return m.run();
 }
