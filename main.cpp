@@ -1,10 +1,12 @@
 #include <iostream>
 
-#include "NetlinkMonitorNlm.h"
+#include "RtNetlinkEthernetLinkAndIpAddressMonitor.h"
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+// TODO: Use qt event loop with QSocketNotifier for async netlink reading
+// TODO: Implement some kind of IPC
 int main(int argc, char *argv[])
 {
     google::InitGoogleLogging(argv[0]);
@@ -12,7 +14,7 @@ int main(int argc, char *argv[])
     FLAGS_log_prefix = true;
     gflags::ParseCommandLineFlags(&argc, &argv, false);
     VLOG(3) << "command line flags: " << gflags::CommandlineFlagsIntoString();
-    NetlinkMonitorNlm mon;
+    RtNetlinkEthernetLinkAndIpAddressMonitor mon;
 
     return mon.run();
 }

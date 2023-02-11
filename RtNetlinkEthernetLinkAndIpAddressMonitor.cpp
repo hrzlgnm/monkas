@@ -1,4 +1,4 @@
-#include "NetlinkMonitorNlm.h"
+#include "RtNetlinkEthernetLinkAndIpAddressMonitor.h"
 
 #include <arpa/inet.h>
 #include <glog/logging.h>
@@ -22,7 +22,7 @@ unsigned toNetlinkMulticastFlag(rtnetlink_groups group)
 }
 } // namespace
 
-NetlinkMonitorNlm::NetlinkMonitorNlm()
+RtNetlinkEthernetLinkAndIpAddressMonitor::RtNetlinkEthernetLinkAndIpAddressMonitor()
     : m_mnlSocket{mnl_socket_open(NETLINK_ROUTE), mnl_socket_close}, m_portid{mnl_socket_get_portid(m_mnlSocket.get())}
 {
     m_buffer.resize(MNL_SOCKET_BUFFER_SIZE);
@@ -37,7 +37,7 @@ NetlinkMonitorNlm::NetlinkMonitorNlm()
     }
 }
 
-int NetlinkMonitorNlm::run()
+int RtNetlinkEthernetLinkAndIpAddressMonitor::run()
 {
     LOG(INFO) << "requesting RTM_GETLINK";
     // start with link information, to setup the cache to only contain ethernet devices
@@ -46,7 +46,7 @@ int NetlinkMonitorNlm::run()
     return 0;
 }
 
-void NetlinkMonitorNlm::startReceiving()
+void RtNetlinkEthernetLinkAndIpAddressMonitor::startReceiving()
 {
     auto ret = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
     while (ret > 0)
@@ -60,7 +60,7 @@ void NetlinkMonitorNlm::startReceiving()
             mnl_nlmsg_fprintf(stdout, &m_buffer[0], ret, 0);
         }
         ret = mnl_cb_run(&m_buffer[0], ret, m_sequenceCounter, m_portid,
-                         &NetlinkMonitorNlm::dipatchMnlDataCallbackToSelf, this);
+                         &RtNetlinkEthernetLinkAndIpAddressMonitor::dipatchMnlDataCallbackToSelf, this);
         if (ret < MNL_CB_STOP)
         {
             PLOG(WARNING) << "bork";
@@ -87,7 +87,7 @@ void NetlinkMonitorNlm::startReceiving()
     }
 }
 
-void NetlinkMonitorNlm::request(uint16_t msgType)
+void RtNetlinkEthernetLinkAndIpAddressMonitor::request(uint16_t msgType)
 {
     ++m_sequenceCounter;
     nlmsghdr *nlh = mnl_nlmsg_put_header(&m_buffer[0]);
@@ -105,7 +105,7 @@ void NetlinkMonitorNlm::request(uint16_t msgType)
     m_stats.bytesSent += ret;
 }
 
-int NetlinkMonitorNlm::mnlMessageCallback(const nlmsghdr *n)
+int RtNetlinkEthernetLinkAndIpAddressMonitor::mnlMessageCallback(const nlmsghdr *n)
 {
     m_stats.msgsReceived++;
     const auto t = n->nlmsg_type;
@@ -134,9 +134,9 @@ int NetlinkMonitorNlm::mnlMessageCallback(const nlmsghdr *n)
     return MNL_CB_OK;
 }
 
-int NetlinkMonitorNlm::mnlAttributeCallback(const nlattr *a)
+int RtNetlinkEthernetLinkAndIpAddressMonitor::mnlAttributeCallback(const nlattr *a)
 {
-    if (mnl_attr_type_valid(a, m_maxType) >= 0)
+    if (mnl_attr_type_valid(a, m_maxAttributeType) >= 0)
     {
         m_stats.parsedAttributes++;
         auto type = mnl_attr_get_type(a);
@@ -145,73 +145,89 @@ int NetlinkMonitorNlm::mnlAttributeCallback(const nlattr *a)
     return MNL_CB_OK;
 }
 
-NetworkInterfaceDescriptor &NetlinkMonitorNlm::ensureNamed(int interface_index)
+NetworkInterfaceDescriptor &RtNetlinkEthernetLinkAndIpAddressMonitor::ensureNameAndIndexCurrent(int interfaceIndex)
 {
-    auto &cacheEntry = m_cache[interface_index];
-    if (cacheEntry.has_name())
+    auto &cacheEntry = m_cache[interfaceIndex];
+    if (cacheEntry.hasName() && m_lastSeenAttributes[IFLA_IFNAME] &&
+        cacheEntry.name() == mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME]))
     {
         return cacheEntry;
     }
+    cacheEntry.setIndex(interfaceIndex);
     // it's safe to use IFLA_IFNAME here as IFA_LABEL is the same id
     // we should be receiving link messages as first anyway
     if (m_lastSeenAttributes[IFLA_IFNAME])
     {
         VLOG(2) << "using name from already parsed attributes";
-        cacheEntry.set_name(mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME]));
+        cacheEntry.setName(mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME]));
     }
     else
     {
         std::vector<char> namebuf(IF_NAMESIZE, '\0');
-        auto name = if_indextoname(interface_index, &namebuf[0]);
+        auto name = if_indextoname(interfaceIndex, &namebuf[0]);
         if (name)
         {
             VLOG(2) << "resolved name via if_indextoname";
-            cacheEntry.set_name(name);
+            cacheEntry.setName(name);
         }
         else
         {
-            LOG(WARNING) << "failed to determine interface name from index " << interface_index << "\n";
+            LOG(WARNING) << "failed to determine interface name from index " << interfaceIndex << "\n";
         }
     }
     return cacheEntry;
 }
 
-void NetlinkMonitorNlm::handleLinkMessage(const ifinfomsg *ifi, bool isNew)
+void RtNetlinkEthernetLinkAndIpAddressMonitor::handleLinkMessage(const ifinfomsg *ifi, bool isNew)
 {
     if (ifi->ifi_type != ARPHRD_ETHER)
     {
         VLOG(4) << "ignoring non ethernet network interface with index: " << ifi->ifi_index;
         return;
     }
-    auto &cacheEntry = ensureNamed(ifi->ifi_index);
-    if (m_lastSeenAttributes[IFLA_OPERSTATE])
+    auto &cacheEntry = ensureNameAndIndexCurrent(ifi->ifi_index);
+    if (isNew)
     {
-        auto operstate{mnl_attr_get_u16(m_lastSeenAttributes[IFLA_OPERSTATE])};
-        VLOG(1) << "oper state " << operstate;
-        cacheEntry.set_operstate(static_cast<OperState>(operstate));
-    }
-    if (m_lastSeenAttributes[IFLA_ADDRESS])
-    {
-        if (isNew)
+        if (m_lastSeenAttributes[IFLA_CARRIER])
         {
-            std::ostringstream strm;
-            const uint8_t *hwaddr = (const uint8_t *)mnl_attr_get_payload(m_lastSeenAttributes[IFLA_ADDRESS]);
-            const auto len = mnl_attr_get_payload_len(m_lastSeenAttributes[IFLA_ADDRESS]);
-            for (int i = 0; i < len; i++)
-            {
-                strm << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hwaddr[i]);
-                if (i + 1 != len)
-                {
-                    strm << ':';
-                }
-            }
-            cacheEntry.set_hwaddr(strm.str());
+            VLOG(3) << "carrier " << static_cast<int>(mnl_attr_get_u8(m_lastSeenAttributes[IFLA_CARRIER]));
         }
+        if (m_lastSeenAttributes[IFLA_IFALIAS])
+        {
+            VLOG(3) << "ifalias " << mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFALIAS]);
+        }
+        if (m_lastSeenAttributes[IFLA_OPERSTATE])
+        {
+            auto operstate{mnl_attr_get_u16(m_lastSeenAttributes[IFLA_OPERSTATE])};
+            cacheEntry.setOperationalState(static_cast<OperationalState>(operstate));
+        }
+        if (m_lastSeenAttributes[IFLA_ADDRESS])
+        {
+            {
+                std::ostringstream strm;
+                const uint8_t *hwaddr = (const uint8_t *)mnl_attr_get_payload(m_lastSeenAttributes[IFLA_ADDRESS]);
+                const auto len = mnl_attr_get_payload_len(m_lastSeenAttributes[IFLA_ADDRESS]);
+                for (int i = 0; i < len; i++)
+                {
+                    strm << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hwaddr[i]);
+                    if (i + 1 != len)
+                    {
+                        strm << ':';
+                    }
+                }
+                cacheEntry.setHardwareAddress(strm.str());
+            }
+        }
+    }
+    else
+    {
+        VLOG(2) << "removing interface " << cacheEntry.name();
+        m_cache.erase(ifi->ifi_index);
     }
     dumpState();
 }
 
-void NetlinkMonitorNlm::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
+void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
 {
     if (m_cache.find(ifa->ifa_index) == m_cache.cend())
     {
@@ -219,7 +235,17 @@ void NetlinkMonitorNlm::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
         return;
     }
 
-    auto &cacheEntry = ensureNamed(ifa->ifa_index);
+    auto &cacheEntry = ensureNameAndIndexCurrent(ifa->ifa_index);
+    if (m_lastSeenAttributes[IFA_PROTO])
+    {
+        auto proto{mnl_attr_get_u8(m_lastSeenAttributes[IFA_PROTO])};
+        VLOG(3) << "proto " << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(proto);
+    }
+    if (m_lastSeenAttributes[IFA_FLAGS])
+    {
+        auto flags{mnl_attr_get_u32(m_lastSeenAttributes[IFA_FLAGS])};
+        VLOG(3) << "flags " << std::setw(8) << std::setfill('0') << std::hex << flags;
+    }
     if (m_lastSeenAttributes[IFA_ADDRESS])
     {
         void *addr = mnl_attr_get_payload(m_lastSeenAttributes[IFA_ADDRESS]);
@@ -236,6 +262,7 @@ void NetlinkMonitorNlm::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
                 strm << "ip4=";
             }
             strm << out << "/" << static_cast<int>(ifa->ifa_prefixlen);
+            // TODO: Factor out to own toString function
             switch (ifa->ifa_scope)
             {
             case RT_SCOPE_UNIVERSE:
@@ -259,25 +286,25 @@ void NetlinkMonitorNlm::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
             }
             if (isNew)
             {
-                cacheEntry.push_addr(strm.str());
+                cacheEntry.addAddress(strm.str());
             }
             else
             {
-                cacheEntry.del_addr(strm.str());
+                cacheEntry.delAddress(strm.str());
             }
         }
     }
     dumpState();
 }
 
-void NetlinkMonitorNlm::parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype)
+void RtNetlinkEthernetLinkAndIpAddressMonitor::parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype)
 {
-    m_maxType = maxtype;
+    m_maxAttributeType = maxtype;
     std::fill(m_lastSeenAttributes.begin(), m_lastSeenAttributes.end(), nullptr);
-    mnl_attr_parse(n, offset, &NetlinkMonitorNlm::dispatchMnlAttributeCallbackToSelf, this);
+    mnl_attr_parse(n, offset, &RtNetlinkEthernetLinkAndIpAddressMonitor::dispatchMnlAttributeCallbackToSelf, this);
 }
 
-void NetlinkMonitorNlm::dumpState()
+void RtNetlinkEthernetLinkAndIpAddressMonitor::dumpState()
 {
     if (m_cacheState != CacheState::WaitForChanges)
     {
@@ -292,128 +319,16 @@ void NetlinkMonitorNlm::dumpState()
     VLOG(1) << "interface details by index:";
     for (const auto &c : m_cache)
     {
-        VLOG(1) << '\t' << c.first << ": " << c.second;
+        VLOG(1) << '\t' << c.second;
     }
 }
 
-int NetlinkMonitorNlm::dipatchMnlDataCallbackToSelf(const nlmsghdr *n, void *self)
+int RtNetlinkEthernetLinkAndIpAddressMonitor::dipatchMnlDataCallbackToSelf(const nlmsghdr *n, void *self)
 {
-    return reinterpret_cast<NetlinkMonitorNlm *>(self)->mnlMessageCallback(n);
+    return reinterpret_cast<RtNetlinkEthernetLinkAndIpAddressMonitor *>(self)->mnlMessageCallback(n);
 }
 
-int NetlinkMonitorNlm::dispatchMnlAttributeCallbackToSelf(const nlattr *a, void *self)
+int RtNetlinkEthernetLinkAndIpAddressMonitor::dispatchMnlAttributeCallbackToSelf(const nlattr *a, void *self)
 {
-    return reinterpret_cast<NetlinkMonitorNlm *>(self)->mnlAttributeCallback(a);
-}
-
-NetworkInterfaceDescriptor::NetworkInterfaceDescriptor()
-    : m_operstate{}, m_lastChanged(std::chrono::steady_clock::now())
-{
-}
-
-bool NetworkInterfaceDescriptor::has_name() const
-{
-    return !m_name.empty();
-}
-
-const std::string &NetworkInterfaceDescriptor::name() const
-{
-    return m_name;
-}
-
-void NetworkInterfaceDescriptor::set_name(const std::string &name)
-{
-    if (m_name != name)
-    {
-        m_lastChanged = std::chrono::steady_clock::now();
-        m_name = name;
-        VLOG(1) << this << " "
-                << "name changed to: " << name << "\n";
-    }
-}
-
-NetworkInterfaceDescriptor::OperState NetworkInterfaceDescriptor::operstate() const
-{
-    return m_operstate;
-}
-
-void NetworkInterfaceDescriptor::set_operstate(OperState operstate)
-{
-    if (m_operstate != operstate)
-    {
-        m_lastChanged = std::chrono::steady_clock::now();
-        m_operstate = operstate;
-        VLOG(1) << this << " " << m_name << " operstate changed to: " << static_cast<int>(operstate) << "\n";
-    }
-}
-
-void NetworkInterfaceDescriptor::set_hwaddr(const std::string &hwaddr)
-{
-    if (m_hwaddr != hwaddr)
-    {
-        m_lastChanged = std::chrono::steady_clock::now();
-        m_hwaddr = hwaddr;
-        VLOG(1) << this << " " << m_name << " hwaddr changed to: " << hwaddr << "\n";
-    }
-}
-
-void NetworkInterfaceDescriptor::push_addr(const std::string &addr)
-{
-    auto res = m_addresses.emplace(addr);
-    if (res.second)
-    {
-        m_lastChanged = std::chrono::steady_clock::now();
-        VLOG(1) << this << " " << m_name << " addr added: " << addr << "\n";
-    }
-}
-
-void NetworkInterfaceDescriptor::del_addr(const std::string &addr)
-{
-    auto res = m_addresses.erase(addr);
-    if (res > 0)
-    {
-        m_lastChanged = std::chrono::steady_clock::now();
-        VLOG(1) << this << " " << m_name << " addr removed: " << addr << "\n";
-    }
-}
-
-age_duration NetworkInterfaceDescriptor::age() const
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_lastChanged);
-}
-
-std::string to_string(NetworkInterfaceDescriptor::OperState o)
-{
-    using OperState = NetworkInterfaceDescriptor::OperState;
-    switch (o)
-    {
-    case OperState::NotPresent:
-        return "NotPresent";
-    case OperState::Down:
-        return "Down";
-    case OperState::LowerLayerDown:
-        return "LowerLayerDown";
-    case OperState::Testing:
-        return "Testing";
-    case OperState::Dormant:
-        return "Dormant";
-    case OperState::Up:
-        return "Up";
-    case OperState::Unknown:
-        // fallthrough
-    default:
-        return "Uknown";
-    }
-}
-
-std::ostream &operator<<(std::ostream &o, const NetworkInterfaceDescriptor &s)
-{
-    o << s.name();
-    for (const auto &a : s.m_addresses)
-    {
-        o << " " << a;
-    }
-    o << " state=" << to_string(s.m_operstate) << "(" << static_cast<int>(s.m_operstate) << ")";
-    o << " age=" << s.age().count();
-    return o;
+    return reinterpret_cast<RtNetlinkEthernetLinkAndIpAddressMonitor *>(self)->mnlAttributeCallback(a);
 }
