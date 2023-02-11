@@ -6,7 +6,9 @@
 #include <linux/rtnetlink.h>
 #include <memory.h>
 #include <net/if.h>
+#include <net/if_arp.h>
 
+#include <assert.h>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -149,6 +151,7 @@ NetworkInterfaceDescriptor &NetlinkMonitorNlm::ensureNamed(int interface_index)
     {
         return cacheEntry;
     }
+    // it's safe to use IFLA_IFNAME here as IFA_LABEL is the same id
     if (m_lastSeenAttributes[IFLA_IFNAME])
     {
         cacheEntry.set_name(mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME]));
@@ -171,12 +174,17 @@ NetworkInterfaceDescriptor &NetlinkMonitorNlm::ensureNamed(int interface_index)
 
 void NetlinkMonitorNlm::handleLinkMessage(const ifinfomsg *ifi, bool isNew)
 {
+    if (ifi->ifi_type != ARPHRD_ETHER)
+    {
+        VLOG(4) << "ignoring non ethernet network interface with index: " << ifi->ifi_index;
+        return;
+    }
     auto &cacheEntry = ensureNamed(ifi->ifi_index);
-    ;
     if (m_lastSeenAttributes[IFLA_OPERSTATE])
     {
-        cacheEntry.set_operstate(
-            static_cast<NetworkInterfaceDescriptor::OperState>(mnl_attr_get_u16(m_lastSeenAttributes[IFLA_OPERSTATE])));
+        auto operstate{mnl_attr_get_u16(m_lastSeenAttributes[IFLA_OPERSTATE])};
+        VLOG(1) << "oper state " << operstate;
+        cacheEntry.set_operstate(static_cast<OperState>(operstate));
     }
     if (m_lastSeenAttributes[IFLA_ADDRESS])
     {
@@ -201,6 +209,12 @@ void NetlinkMonitorNlm::handleLinkMessage(const ifinfomsg *ifi, bool isNew)
 
 void NetlinkMonitorNlm::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
 {
+    if (m_cache.find(ifa->ifa_index) == m_cache.cend())
+    {
+        VLOG(4) << "ignoring unkown network interface with index: " << ifa->ifa_index;
+        return;
+    }
+
     auto &cacheEntry = ensureNamed(ifa->ifa_index);
 
     /* for point to point local is local, address is peer*/
@@ -278,16 +292,16 @@ void NetlinkMonitorNlm::dumpState()
     {
         return;
     }
-    LOG(INFO) << "sent:     " << m_stats.bytesSent << " bytes";
-    LOG(INFO) << "sent:     " << m_stats.packetsSent << " packets";
-    LOG(INFO) << "received: " << m_stats.packetsReceived << " pakets";
-    LOG(INFO) << "received: " << m_stats.bytesReceived << " bytes";
-    LOG(INFO) << "received: " << m_stats.msgsReceived << " netlink messages";
-    LOG(INFO) << "parsed:   " << m_stats.parsedAttributes << " attributes";
-    LOG(INFO) << "interface details by index:";
+    VLOG(1) << "sent:     " << m_stats.bytesSent << " bytes";
+    VLOG(1) << "sent:     " << m_stats.packetsSent << " packets";
+    VLOG(1) << "received: " << m_stats.packetsReceived << " pakets";
+    VLOG(1) << "received: " << m_stats.bytesReceived << " bytes";
+    VLOG(1) << "received: " << m_stats.msgsReceived << " netlink messages";
+    VLOG(1) << "parsed:   " << m_stats.parsedAttributes << " attributes";
+    VLOG(1) << "interface details by index:";
     for (const auto &c : m_cache)
     {
-        LOG(INFO) << '\t' << c.first << ": " << c.second;
+        VLOG(1) << '\t' << c.first << ": " << c.second;
     }
 }
 
