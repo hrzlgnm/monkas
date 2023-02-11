@@ -34,7 +34,7 @@ public:
     OperState operstate() const;
     void set_operstate(OperState operstate);
     void push_addr(const std::string& addr);
-    void pull_addr(const std::string& addr);
+    void del_addr(const std::string& addr);
     age_duration age() const;
 
 private:
@@ -55,18 +55,20 @@ public:
 
 private:
     void startReceiving();
-    void requestInfo(uint16_t t);
+
+    /* @note: only one such request can be in progress until the reply is fully received */
+    void request(uint16_t msgType);
 
 
-    void handleLinkMessage(const struct ifinfomsg *ifi, bool n);
-    void handleAddrMessage(const struct ifaddrmsg *ifa, bool n);
-    void parseAttributes(const struct nlmsghdr *n, size_t offset);
-    void ensureInterfaceNamed(int interface_index);
+    void handleLinkMessage(const struct ifinfomsg *ifi, bool isNew);
+    void handleAddrMessage(const struct ifaddrmsg *ifa, bool isNew);
+    void parseAttributes(const struct nlmsghdr *n, size_t offset, uint16_t maxtype);
+    NetworkInterfaceDescriptor& ensureNamed(int interface_index);
     void dumpState();
 
     static int dipatchMnlDataCallbackToSelf(const struct nlmsghdr *n, void *self);
     int mnlMessageCallback(const struct nlmsghdr *n);
-    static int mnlAttributeCallback(const struct nlattr *a, void *self);
+    static int dispatchMnlAttributeCallbackToSelf(const struct nlattr *a, void *self);
     int mnlAttributeCallback(const nlattr *a);
 
 private:
@@ -83,6 +85,7 @@ private:
 
     unsigned m_portid{};
     unsigned m_sequenceCounter{};
+    uint16_t m_maxType{};
 
     struct stats {
         uint64_t bytesSent{};
