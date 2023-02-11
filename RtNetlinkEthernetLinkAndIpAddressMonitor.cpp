@@ -148,12 +148,17 @@ int RtNetlinkEthernetLinkAndIpAddressMonitor::mnlAttributeCallback(const nlattr 
 NetworkInterfaceDescriptor &RtNetlinkEthernetLinkAndIpAddressMonitor::ensureNameAndIndexCurrent(int interfaceIndex)
 {
     auto &cacheEntry = m_cache[interfaceIndex];
-    if (cacheEntry.hasName() && m_lastSeenAttributes[IFLA_IFNAME] &&
-        cacheEntry.name() == mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME]))
+    cacheEntry.setIndex(interfaceIndex);
+    if (cacheEntry.hasName())
     {
+        // sometimes interfaces are renamed, account for that
+        if (m_lastSeenAttributes[IFLA_IFNAME])
+        {
+            auto nameFromAttributes{mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME])};
+            cacheEntry.setName(nameFromAttributes);
+        }
         return cacheEntry;
     }
-    cacheEntry.setIndex(interfaceIndex);
     // it's safe to use IFLA_IFNAME here as IFA_LABEL is the same id
     // we should be receiving link messages as first anyway
     if (m_lastSeenAttributes[IFLA_IFNAME])
