@@ -40,6 +40,7 @@ NetlinkMonitorNlm::NetlinkMonitorNlm()
 int NetlinkMonitorNlm::run()
 {
     LOG(INFO) << "requesting RTM_GETLINK";
+    // start with link information, to setup the cache to only contain ethernet devices
     request(RTM_GETLINK);
     startReceiving();
     return 0;
