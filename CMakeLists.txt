@@ -20,9 +20,8 @@ target_sources(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        PkgConfig::libmnl
         PkgConfig::gflags
         PkgConfig::libglog
-
+        PkgConfig::libmnl
 )
 

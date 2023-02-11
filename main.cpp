@@ -2,10 +2,11 @@
 
 #include "NetlinkMonitorNlm.h"
 
-#include <glog/logging.h>
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     google::InitGoogleLogging(argv[0]);
     FLAGS_logtostderr = true;
     FLAGS_log_prefix = true;
