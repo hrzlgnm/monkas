@@ -30,7 +30,7 @@ RtNetlinkEthernetLinkAndIpAddressMonitor::RtNetlinkEthernetLinkAndIpAddressMonit
     unsigned groups = toNetlinkMulticastFlag(RTNLGRP_LINK);
     groups |= toNetlinkMulticastFlag(RTNLGRP_IPV4_IFADDR);
     groups |= toNetlinkMulticastFlag(RTNLGRP_IPV6_IFADDR);
-    VLOG(1) << "joining to RTnetlink multiacst groups " << std::hex << std::setfill('0') << std::setw(8) << groups;
+    VLOG(1) << "Joining RTnetlink multicast groups " << std::hex << std::setfill('0') << std::setw(8) << groups;
     if (mnl_socket_bind(m_mnlSocket.get(), groups, MNL_SOCKET_AUTOPID) < 0)
     {
         PLOG(FATAL) << "mnl_socket_bind";
@@ -80,7 +80,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::startReceiving()
                 m_sequenceCounter = 0; // stop sequence checks
                 LOG(INFO) << "cache is filled with all requested information";
                 LOG(INFO) << "tracking changes for: " << m_cache.size() << " interfaces";
-                dumpState();
+                printStatsForNeds();
             }
         }
         ret = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
@@ -164,6 +164,7 @@ NetworkInterfaceDescriptor &RtNetlinkEthernetLinkAndIpAddressMonitor::ensureName
     if (m_lastSeenAttributes[IFLA_IFNAME])
     {
         VLOG(2) << "using name from already parsed attributes";
+        m_stats.resolveIfNameByAttributes++;
         cacheEntry.setName(mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME]));
     }
     else
@@ -173,6 +174,7 @@ NetworkInterfaceDescriptor &RtNetlinkEthernetLinkAndIpAddressMonitor::ensureName
         if (name)
         {
             VLOG(2) << "resolved name via if_indextoname";
+            m_stats.resolveIfNameByIfIndexToName++;
             cacheEntry.setName(name);
         }
         else
@@ -190,6 +192,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleLinkMessage(const ifinfomsg
         VLOG(4) << "ignoring non ethernet network interface with index: " << ifi->ifi_index;
         return;
     }
+    m_stats.linkUpdatesProcessed++;
     auto &cacheEntry = ensureNameAndIndexCurrent(ifi->ifi_index);
     if (isNew)
     {
@@ -208,20 +211,18 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleLinkMessage(const ifinfomsg
         }
         if (m_lastSeenAttributes[IFLA_ADDRESS])
         {
+            std::ostringstream strm;
+            const uint8_t *hwaddr = (const uint8_t *)mnl_attr_get_payload(m_lastSeenAttributes[IFLA_ADDRESS]);
+            const auto len = mnl_attr_get_payload_len(m_lastSeenAttributes[IFLA_ADDRESS]);
+            for (int i = 0; i < len; i++)
             {
-                std::ostringstream strm;
-                const uint8_t *hwaddr = (const uint8_t *)mnl_attr_get_payload(m_lastSeenAttributes[IFLA_ADDRESS]);
-                const auto len = mnl_attr_get_payload_len(m_lastSeenAttributes[IFLA_ADDRESS]);
-                for (int i = 0; i < len; i++)
+                strm << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hwaddr[i]);
+                if (i + 1 != len)
                 {
-                    strm << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hwaddr[i]);
-                    if (i + 1 != len)
-                    {
-                        strm << ':';
-                    }
+                    strm << ':';
                 }
-                cacheEntry.setHardwareAddress(strm.str());
             }
+            cacheEntry.setHardwareAddress(strm.str());
         }
     }
     else
@@ -229,7 +230,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleLinkMessage(const ifinfomsg
         VLOG(2) << "removing interface " << cacheEntry.name();
         m_cache.erase(ifi->ifi_index);
     }
-    dumpState();
+    printStatsForNeds();
 }
 
 void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
@@ -239,7 +240,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg
         VLOG(4) << "ignoring unkown network interface with index: " << ifa->ifa_index;
         return;
     }
-
+    m_stats.addressUpdatesProcessed++;
     auto &cacheEntry = ensureNameAndIndexCurrent(ifa->ifa_index);
     if (m_lastSeenAttributes[IFA_PROTO])
     {
@@ -299,7 +300,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg
             }
         }
     }
-    dumpState();
+    printStatsForNeds();
 }
 
 void RtNetlinkEthernetLinkAndIpAddressMonitor::parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype)
@@ -309,22 +310,28 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::parseAttributes(const nlmsghdr *n
     mnl_attr_parse(n, offset, &RtNetlinkEthernetLinkAndIpAddressMonitor::dispatchMnlAttributeCallbackToSelf, this);
 }
 
-void RtNetlinkEthernetLinkAndIpAddressMonitor::dumpState()
+void RtNetlinkEthernetLinkAndIpAddressMonitor::printStatsForNeds()
 {
     if (m_cacheState != CacheState::WaitForChanges)
     {
         return;
     }
-    VLOG(1) << "sent:     " << m_stats.bytesSent << " bytes";
-    VLOG(1) << "sent:     " << m_stats.packetsSent << " packets";
-    VLOG(1) << "received: " << m_stats.packetsReceived << " pakets";
-    VLOG(1) << "received: " << m_stats.bytesReceived << " bytes";
-    VLOG(1) << "received: " << m_stats.msgsReceived << " netlink messages";
-    VLOG(1) << "parsed:   " << m_stats.parsedAttributes << " attributes";
-    VLOG(1) << "interface details by index:";
+    VLOG(1) << "--------------- Stats for nerds -----------------";
+    VLOG(1) << "sent:                   " << m_stats.bytesSent << " bytes";
+    VLOG(1) << "sent:                   " << m_stats.packetsSent << " packets";
+    VLOG(1) << "received:               " << m_stats.packetsReceived << " pakets";
+    VLOG(1) << "received:               " << m_stats.bytesReceived << " bytes";
+    VLOG(1) << "received:               " << m_stats.msgsReceived << " netlink messages";
+    VLOG(1) << "parsed:                 " << m_stats.parsedAttributes << " attributes";
+    VLOG(1) << "resolve by attributes:  " << m_stats.resolveIfNameByAttributes << " time(s)";
+    VLOG(1) << "resolve if_indextoname: " << m_stats.resolveIfNameByIfIndexToName << " time(s)";
+    VLOG(1) << "address updates:        " << m_stats.addressUpdatesProcessed << " time(s)";
+    VLOG(1) << "link updates:           " << m_stats.linkUpdatesProcessed << " time(s)";
+
+    VLOG(1) << "--- Interface details in cache ---";
     for (const auto &c : m_cache)
     {
-        VLOG(1) << '\t' << c.second;
+        VLOG(1) << c.second;
     }
 }
 
