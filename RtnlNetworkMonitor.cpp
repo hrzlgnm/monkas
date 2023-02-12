@@ -362,6 +362,7 @@ RtnlAttributes RtnlNetworkMonitor::parseAttributes(const nlmsghdr *n, size_t off
     return attributes;
 }
 
+// TODO: enable/disable via command line options instead of VLOG
 void RtnlNetworkMonitor::printStatsForNerds()
 {
     if (m_cacheState != CacheState::WaitForChangeNotifications)
