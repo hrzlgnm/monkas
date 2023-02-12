@@ -182,15 +182,15 @@ std::ostream &operator<<(std::ostream &o, const NetworkInterface &s)
     o << s.index() << ": " << s.name();
     if (s.m_ethernetAddress)
     {
-        o << " ethaddr=" << s.m_ethernetAddress;
+        o << " ether " << s.m_ethernetAddress;
     }
     if (s.m_broadcastAddress)
     {
-        o << " bcast=" << s.m_broadcastAddress;
+        o << " brd " << s.m_broadcastAddress;
     }
     if (!s.m_networkAddresses.empty())
     {
-        o << " addrs=[";
+        o << " [";
         bool first = true;
         for (const auto &a : s.m_networkAddresses)
         {
@@ -205,10 +205,10 @@ std::ostream &operator<<(std::ostream &o, const NetworkInterface &s)
     }
     if (s.m_gateway)
     {
-        o << " gateway=" << s.m_gateway;
+        o << " default via " << s.m_gateway;
     }
-    o << " state=" << to_string(s.m_operState) << "(" << static_cast<int>(s.m_operState) << ")";
-    o << " age=" << s.age().count();
+    o << " op " << to_string(s.m_operState) << "(" << static_cast<int>(s.m_operState) << ")";
+    o << " age " << s.age().count();
     return o;
 }
 } // namespace monkas
