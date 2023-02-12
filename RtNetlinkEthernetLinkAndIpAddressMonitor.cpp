@@ -25,6 +25,7 @@ unsigned toNetlinkMulticastFlag(rtnetlink_groups group)
 RtNetlinkEthernetLinkAndIpAddressMonitor::RtNetlinkEthernetLinkAndIpAddressMonitor()
     : m_mnlSocket{mnl_socket_open(NETLINK_ROUTE), mnl_socket_close}, m_portid{mnl_socket_get_portid(m_mnlSocket.get())}
 {
+    m_stats.startTime = std::chrono::steady_clock::now();
     m_buffer.resize(MNL_SOCKET_BUFFER_SIZE);
     m_lastSeenAttributes.resize(IFLA_MAX + 1);
     unsigned groups = toNetlinkMulticastFlag(RTNLGRP_LINK);
@@ -190,6 +191,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleLinkMessage(const ifinfomsg
     if (ifi->ifi_type != ARPHRD_ETHER)
     {
         VLOG(4) << "ignoring non ethernet network interface with index: " << ifi->ifi_index;
+        m_stats.msgsDiscarded++;
         return;
     }
     m_stats.linkUpdatesProcessed++;
@@ -238,6 +240,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg
     if (m_cache.find(ifa->ifa_index) == m_cache.cend())
     {
         VLOG(4) << "ignoring unkown network interface with index: " << ifa->ifa_index;
+        m_stats.msgsDiscarded++;
         return;
     }
     m_stats.addressUpdatesProcessed++;
@@ -317,22 +320,28 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::printStatsForNeds()
         return;
     }
     VLOG(1) << "--------------- Stats for nerds -----------------";
-    VLOG(1) << "sent:                   " << m_stats.bytesSent << " bytes";
-    VLOG(1) << "sent:                   " << m_stats.packetsSent << " packets";
-    VLOG(1) << "received:               " << m_stats.packetsReceived << " pakets";
-    VLOG(1) << "received:               " << m_stats.bytesReceived << " bytes";
-    VLOG(1) << "received:               " << m_stats.msgsReceived << " netlink messages";
-    VLOG(1) << "parsed:                 " << m_stats.parsedAttributes << " attributes";
-    VLOG(1) << "resolve by attributes:  " << m_stats.resolveIfNameByAttributes << " time(s)";
-    VLOG(1) << "resolve if_indextoname: " << m_stats.resolveIfNameByIfIndexToName << " time(s)";
-    VLOG(1) << "address updates:        " << m_stats.addressUpdatesProcessed << " time(s)";
-    VLOG(1) << "link updates:           " << m_stats.linkUpdatesProcessed << " time(s)";
+    VLOG(1) << "uptime              "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
+                                                                     m_stats.startTime)
+                   .count()
+            << "ms";
+    VLOG(1) << "sent                " << m_stats.bytesSent << " bytes in " << m_stats.packetsSent << " packets";
+    VLOG(1) << "received            " << m_stats.bytesReceived << " bytes in " << m_stats.packetsReceived << " pakets";
+    VLOG(1) << "received            " << m_stats.msgsReceived << " netlink messages";
+    VLOG(1) << "discarded           " << m_stats.msgsDiscarded << " netlink messages";
+    VLOG(1) << "seen                " << m_stats.parsedAttributes << " attributes";
+    VLOG(1) << "                    " << m_stats.linkUpdatesProcessed << " link updates";
+    VLOG(1) << "                    " << m_stats.addressUpdatesProcessed << " address updates";
+    VLOG(1) << "resolved ifname";
+    VLOG(1) << " via attributes     " << m_stats.resolveIfNameByAttributes;
+    VLOG(1) << " via if_indextoname " << m_stats.resolveIfNameByIfIndexToName;
 
-    VLOG(1) << "--- Interface details in cache ---";
+    VLOG(1) << "----------- Interface details in cache ----------";
     for (const auto &c : m_cache)
     {
         VLOG(1) << c.second;
     }
+    VLOG(1) << "-------------------------------------------------";
 }
 
 int RtNetlinkEthernetLinkAndIpAddressMonitor::dipatchMnlDataCallbackToSelf(const nlmsghdr *n, void *self)

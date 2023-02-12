@@ -55,11 +55,13 @@ class RtNetlinkEthernetLinkAndIpAddressMonitor
 
     struct Statistics
     {
+        std::chrono::time_point<std::chrono::steady_clock> startTime;
         uint64_t bytesSent{};
         uint64_t bytesReceived{};
         uint64_t packetsSent{};
         uint64_t packetsReceived{};
         uint64_t msgsReceived{};
+        uint64_t msgsDiscarded{};
         uint64_t parsedAttributes{};
         uint64_t resolveIfNameByAttributes{};
         uint64_t resolveIfNameByIfIndexToName{};
