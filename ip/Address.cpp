@@ -78,8 +78,3 @@ std::ostream &operator<<(std::ostream &o, const Address &a)
 
 } // namespace ip
 } // namespace monkas
-
-std::size_t std::hash<monkas::ip::Address>::operator()(const monkas::ip::Address &a) const noexcept
-{
-    return std::hash<std::string>{}(a.toString());
-}

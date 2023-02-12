@@ -24,13 +24,4 @@ std::ostream &operator<<(std::ostream &o, const Address &a);
 } // namespace ethernet
 } // namespace monkas
 
-namespace std
-{
-// specialize std::hash<> for ethernet::Address
-template <> struct hash<monkas::ethernet::Address>
-{
-    size_t operator()(const monkas::ethernet::Address &a) const noexcept;
-};
-} // namespace std
-
 #endif
