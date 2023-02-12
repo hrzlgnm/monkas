@@ -27,6 +27,7 @@ RtnlNetworkMonitor::RtnlNetworkMonitor()
 {
     m_stats.startTime = std::chrono::steady_clock::now();
     m_buffer.resize(MNL_SOCKET_BUFFER_SIZE);
+    /// TODO: add notion of preferred address family
     unsigned groups = toNetlinkMulticastFlag(RTNLGRP_LINK);
     groups |= toNetlinkMulticastFlag(RTNLGRP_NOTIFY);
     groups |= toNetlinkMulticastFlag(RTNLGRP_IPV4_IFADDR);
