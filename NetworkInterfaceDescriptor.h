@@ -8,6 +8,7 @@
 using Duration = std::chrono::duration<int64_t, std::milli>;
 
 // TODO: address struct with family, address, prefix length
+// TODO: stats for nerds per interface descriptor
 class NetworkInterfaceDescriptor
 {
   public:
