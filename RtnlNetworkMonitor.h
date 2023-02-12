@@ -1,7 +1,7 @@
-#ifndef RTNETLINKETHERNETLINKANDIPADDRESSMONITOR_H
-#define RTNETLINKETHERNETLINKANDIPADDRESSMONITOR_H
+#ifndef RTNLNETWORKMONITOR_H
+#define RTNLNETWORKMONITOR_H
 
-#include "NetworkInterfaceDescriptor.h"
+#include "NetworkInterface.h"
 #include <map>
 #include <memory>
 #include <string>
@@ -9,7 +9,6 @@
 
 // TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what to do in
 // this case.
-// TODO: parse Route messages to determine gateway addresses
 // TODO: validate rtattrs before using them
 // TODO: consider ENOBUFS errno from recv as resync point
 
@@ -19,13 +18,16 @@ struct ifaddrmsg;
 struct rtmsg;
 struct mnl_socket;
 struct nlattr;
+namespace monkas
+{
 
+// TODO: wrap this into a own class with parsing and getters
 using RtAttributes = std::vector<const nlattr *>;
 
-class RtNetlinkEthernetLinkAndIpAddressMonitor
+class RtnlNetworkMonitor
 {
   public:
-    RtNetlinkEthernetLinkAndIpAddressMonitor();
+    RtnlNetworkMonitor();
     int run();
 
   private:
@@ -35,7 +37,6 @@ class RtNetlinkEthernetLinkAndIpAddressMonitor
      * received */
     void sendDumpRequest(uint16_t msgType);
 
-    // TODO: consider passing nlmsghdr instead of the bool flag
     void parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi);
     void parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa);
     void parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rt);
@@ -46,7 +47,7 @@ class RtNetlinkEthernetLinkAndIpAddressMonitor
 
     int mnlMessageCallback(const nlmsghdr *n);
 
-    NetworkInterfaceDescriptor &ensureNameAndIndexCurrent(int ifIndex, const RtAttributes &attributes);
+    NetworkInterface &ensureNameAndIndexCurrent(int ifIndex, const RtAttributes &attributes);
 
     static void parseAttribute(const nlattr *a, uint16_t maxType, RtAttributes &attrs, uint64_t &counter);
     static int dipatchMnlDataCallbackToSelf(const struct nlmsghdr *n, void *self);
@@ -81,9 +82,8 @@ class RtNetlinkEthernetLinkAndIpAddressMonitor
   private:
     std::vector<char> m_buffer;
     std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
-    std::map<int, NetworkInterfaceDescriptor> m_cache;
+    std::map<int, NetworkInterface> m_cache;
 
-    // TODO: fill -> enumerate
     enum class CacheState
     {
         EnumeringLinks,
@@ -107,9 +107,10 @@ class RtNetlinkEthernetLinkAndIpAddressMonitor
         uint64_t seenAttributes{};
         uint64_t resolveIfNameByAttributes{};
         uint64_t resolveIfNameByIfIndexToName{};
-        uint64_t addressUpdatesProcessed{};
-        uint64_t linkUpdatesProcessed{};
+        uint64_t addressMessagesSeen{};
+        uint64_t linkMessagesSeen{};
+        uint64_t routeMessagesSeen{};
     } m_stats;
 };
-
+} // namespace monkas
 #endif

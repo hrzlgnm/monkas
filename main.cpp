@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "RtNetlinkEthernetLinkAndIpAddressMonitor.h"
+#include "RtnlNetworkMonitor.h"
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     FLAGS_log_prefix = true;
     gflags::ParseCommandLineFlags(&argc, &argv, false);
     VLOG(3) << "command line flags: " << gflags::CommandlineFlagsIntoString();
-    RtNetlinkEthernetLinkAndIpAddressMonitor mon;
+    monkas::RtnlNetworkMonitor mon;
 
     return mon.run();
 }

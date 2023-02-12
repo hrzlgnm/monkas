@@ -1,4 +1,4 @@
-# monkaS
+# monkas
 Netlink Socket experiments using libmnl
 
 # Denpendencies
@@ -16,5 +16,5 @@ sudo apt install build-essential cmake libnml-dev libgoogle-glog-dev
 ```console
 cmake -B build -S .
 cmake --build build
-build/monkaS
+build/monkas
 ```
