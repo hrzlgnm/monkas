@@ -16,6 +16,11 @@ bool NetworkInterfaceDescriptor::hasName() const
     return !m_name.empty();
 }
 
+void NetworkInterfaceDescriptor::touch()
+{
+    m_lastChanged = std::chrono::steady_clock::now();
+}
+
 const std::string &NetworkInterfaceDescriptor::name() const
 {
     return m_name;
@@ -23,9 +28,9 @@ const std::string &NetworkInterfaceDescriptor::name() const
 
 void NetworkInterfaceDescriptor::setName(const std::string &name)
 {
+    touch();
     if (m_name != name)
     {
-        m_lastChanged = std::chrono::steady_clock::now();
         m_name = name;
         VLOG(1) << this << " "
                 << "name changed to: " << name << "\n";
@@ -36,7 +41,7 @@ void NetworkInterfaceDescriptor::setIndex(int index)
 {
     if (m_index != index)
     {
-        m_lastChanged = std::chrono::steady_clock::now();
+        touch();
         m_index = index;
         VLOG(1) << this << " "
                 << "index changed to: " << index << "\n";
@@ -50,6 +55,7 @@ NetworkInterfaceDescriptor::OperationalState NetworkInterfaceDescriptor::operati
 
 void NetworkInterfaceDescriptor::setOperationalState(OperationalState operstate)
 {
+    touch();
     if (m_operState != operstate)
     {
         m_lastChanged = std::chrono::steady_clock::now();
@@ -65,9 +71,9 @@ std::string NetworkInterfaceDescriptor::hardwareAddress() const
 
 void NetworkInterfaceDescriptor::setHardwareAddress(const std::string &hwaddr)
 {
+    touch();
     if (m_hardwareAddress != hwaddr)
     {
-        m_lastChanged = std::chrono::steady_clock::now();
         m_hardwareAddress = hwaddr;
         VLOG(1) << this << " " << m_name << " hwaddr changed to: " << hwaddr << "\n";
     }
@@ -75,10 +81,10 @@ void NetworkInterfaceDescriptor::setHardwareAddress(const std::string &hwaddr)
 
 void NetworkInterfaceDescriptor::addAddress(const std::string &addr)
 {
+    touch();
     auto res = m_addresses.emplace(addr);
     if (res.second)
     {
-        m_lastChanged = std::chrono::steady_clock::now();
         VLOG(1) << this << " " << m_name << " addr added: " << addr << "\n";
     }
     else
@@ -89,10 +95,10 @@ void NetworkInterfaceDescriptor::addAddress(const std::string &addr)
 
 void NetworkInterfaceDescriptor::delAddress(const std::string &addr)
 {
+    touch();
     auto res = m_addresses.erase(addr);
     if (res > 0)
     {
-        m_lastChanged = std::chrono::steady_clock::now();
         VLOG(1) << this << " " << m_name << " addr removed: " << addr << "\n";
     }
     else

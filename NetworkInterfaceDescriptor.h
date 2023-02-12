@@ -39,6 +39,7 @@ class NetworkInterfaceDescriptor
     bool hasName() const;
 
   private:
+    void touch();
     // TODO: only use public api
     friend std::ostream &operator<<(std::ostream &o, const NetworkInterfaceDescriptor &s);
     int m_index{};
