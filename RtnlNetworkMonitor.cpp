@@ -304,7 +304,7 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
     if (rtm->rtm_family != AF_INET)
     {
         m_stats.msgsDiscarded++;
-        VLOG(4) << "ignoring address family: " << rtm->rtm_family;
+        VLOG(4) << "ignoring address family: " << static_cast<int>(rtm->rtm_family);
         return;
     }
     auto attributes = parseAttributes(nlhdr, sizeof(*rtm), RTA_MAX);
