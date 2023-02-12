@@ -81,7 +81,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::startReceiving()
                 m_sequenceCounter = 0; // stop sequence checks
                 LOG(INFO) << "cache is filled with all requested information";
                 LOG(INFO) << "tracking changes for: " << m_cache.size() << " interfaces";
-                printStatsForNeds();
+                printStatsForNerds();
             }
         }
         ret = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
@@ -232,7 +232,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleLinkMessage(const ifinfomsg
         VLOG(2) << "removing interface " << cacheEntry.name();
         m_cache.erase(ifi->ifi_index);
     }
-    printStatsForNeds();
+    printStatsForNerds();
 }
 
 void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
@@ -303,7 +303,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg
             }
         }
     }
-    printStatsForNeds();
+    printStatsForNerds();
 }
 
 void RtNetlinkEthernetLinkAndIpAddressMonitor::parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype)
@@ -313,7 +313,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::parseAttributes(const nlmsghdr *n
     mnl_attr_parse(n, offset, &RtNetlinkEthernetLinkAndIpAddressMonitor::dispatchMnlAttributeCallbackToSelf, this);
 }
 
-void RtNetlinkEthernetLinkAndIpAddressMonitor::printStatsForNeds()
+void RtNetlinkEthernetLinkAndIpAddressMonitor::printStatsForNerds()
 {
     if (m_cacheState != CacheState::WaitForChanges)
     {

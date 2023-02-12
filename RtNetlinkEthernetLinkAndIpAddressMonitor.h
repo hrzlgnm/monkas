@@ -28,7 +28,7 @@ class RtNetlinkEthernetLinkAndIpAddressMonitor
     void parseAttributes(const struct nlmsghdr *n, size_t offset, uint16_t maxtype);
     NetworkInterfaceDescriptor &ensureNameAndIndexCurrent(int interface_index);
 
-    void printStatsForNeds();
+    void printStatsForNerds();
 
     int mnlMessageCallback(const struct nlmsghdr *n);
     int mnlAttributeCallback(const nlattr *a);
