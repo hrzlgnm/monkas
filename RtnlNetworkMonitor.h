@@ -106,7 +106,6 @@ class RtnlNetworkMonitor
         uint64_t msgsDiscarded{};
         uint64_t seenAttributes{};
         uint64_t resolveIfNameByAttributes{};
-        uint64_t resolveIfNameByIfIndexToName{};
         uint64_t addressMessagesSeen{};
         uint64_t linkMessagesSeen{};
         uint64_t routeMessagesSeen{};

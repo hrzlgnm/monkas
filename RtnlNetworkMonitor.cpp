@@ -1,20 +1,15 @@
 #include "RtnlNetworkMonitor.h"
 #include "ip/Address.h"
 
-#include <arpa/inet.h>
 #include <glog/logging.h>
 #include <libmnl/libmnl.h>
-#include <linux/if_link.h>
 #include <linux/rtnetlink.h>
 #include <memory.h>
-#include <net/if.h>
 #include <net/if_arp.h>
 
-#include <assert.h>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <thread>
 
 namespace
 {
@@ -195,18 +190,7 @@ NetworkInterface &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, con
     }
     else
     {
-        std::vector<char> namebuf(IF_NAMESIZE, '\0');
-        auto name = if_indextoname(ifIndex, &namebuf[0]);
-        if (name)
-        {
-            VLOG(3) << "resolved name via if_indextoname";
-            m_stats.resolveIfNameByIfIndexToName++;
-            cacheEntry.setName(name);
-        }
-        else
-        {
-            LOG(WARNING) << "failed to determine interface name from index " << ifIndex << "\n";
-        }
+        LOG(WARNING) << "failed to determine interface name from attributes" << ifIndex << "\n";
     }
     return cacheEntry;
 }
@@ -333,7 +317,7 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
             auto itr = m_cache.find(outIfIndex);
             if (itr != m_cache.end() && itr->second.gatewayAddress())
             {
-                VLOG(2) << "Removing gateway " << itr->second.gatewayAddress() << " due to linkdown";
+                VLOG(1) << "Removing gateway " << itr->second.gatewayAddress() << " due to linkdown";
                 itr->second.setGatewayAddress(ip::Address());
             }
         }
@@ -386,7 +370,6 @@ void RtnlNetworkMonitor::printStatsForNerds()
     VLOG(1) << "                    " << m_stats.routeMessagesSeen << " route messages";
     VLOG(1) << "* resolved ifname";
     VLOG(1) << "                    " << m_stats.resolveIfNameByAttributes << " via attributes";
-    VLOG(1) << "                    " << m_stats.resolveIfNameByIfIndexToName << " via if_indextoname";
 
     VLOG(1) << "----------- Interface details in cache ----------";
     for (const auto &c : m_cache)
