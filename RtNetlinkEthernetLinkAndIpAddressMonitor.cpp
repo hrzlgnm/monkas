@@ -92,6 +92,10 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::startReceiving()
                 LOG(INFO) << "tracking changes for: " << m_cache.size() << " interfaces";
                 printStatsForNerds();
             }
+            else
+            {
+                LOG(WARNING) << "Unexpected MNL_CB_STOP value";
+            }
         }
         receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
     }
