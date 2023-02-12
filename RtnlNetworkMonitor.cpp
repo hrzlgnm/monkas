@@ -92,7 +92,7 @@ void RtnlNetworkMonitor::startReceiving()
             else if (isEnumeratingRoutes())
             {
                 m_cacheState = CacheState::WaitForChangeNotifications;
-                LOG(INFO) << "cache is filled with all requested information";
+                LOG(INFO) << "Done with enumeration of initial information";
                 LOG(INFO) << "tracking changes for: " << m_cache.size() << " interfaces";
                 printStatsForNerds();
             }
