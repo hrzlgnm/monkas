@@ -14,6 +14,7 @@ enum class AddressFamily
     IPv4,
     IPv6,
 };
+int asLinuxAf(AddressFamily f);
 std::ostream &operator<<(std::ostream &o, AddressFamily a);
 
 constexpr auto IPV6_ADDR_LEN = 16;
@@ -24,11 +25,12 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     Address() = default;
     explicit operator bool() const;
     AddressFamily adressFamily() const;
-    static Address fromBytes(const uint8_t *bytes, size_type len);
     std::string toString() const;
 
+    static Address fromBytes(const uint8_t *bytes, size_type len);
+
   private:
-    AddressFamily m_af{AddressFamily::Unspecified};
+    AddressFamily m_addressFamily{AddressFamily::Unspecified};
 };
 std::ostream &operator<<(std::ostream &o, const Address &a);
 

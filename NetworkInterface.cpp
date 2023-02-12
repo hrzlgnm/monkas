@@ -111,29 +111,33 @@ void NetworkInterface::setGatewayAddress(const ip::Address &gateway)
     }
 }
 
-std::set<network::NetworkAddress> NetworkInterface::addresses() const
+std::set<network::NetworkAddress> NetworkInterface::networkAddresses() const
 {
-    return m_addresses;
+    return m_networkAddresses;
 }
 
-void NetworkInterface::addAddress(const network::NetworkAddress &address)
+void NetworkInterface::addNetworkAddress(const network::NetworkAddress &address)
 {
     touch();
-    auto res = m_addresses.emplace(address);
-    if (res.second)
+    if (address.ip())
     {
-        VLOG(1) << this << " " << m_name << " addr added: " << address << "\n";
-    }
-    else
-    {
-        VLOG(1) << this << " " << m_name << " addr is already known: " << address << "\n";
+        bool isNew = m_networkAddresses.erase(address) == 0;
+        m_networkAddresses.insert(address);
+        if (isNew)
+        {
+            VLOG(1) << this << " " << m_name << " addr added: " << address << "\n";
+        }
+        else
+        {
+            VLOG(1) << this << " " << m_name << " addr updated: " << address << "\n";
+        }
     }
 }
 
-void NetworkInterface::delAddress(const network::NetworkAddress &address)
+void NetworkInterface::removeNetworkAddress(const network::NetworkAddress &address)
 {
     touch();
-    auto res = m_addresses.erase(address);
+    auto res = m_networkAddresses.erase(address);
     if (res > 0)
     {
         VLOG(1) << this << " " << m_name << " addr removed: " << address << "\n";
@@ -184,11 +188,11 @@ std::ostream &operator<<(std::ostream &o, const NetworkInterface &s)
     {
         o << " bcast=" << s.m_broadcastAddress;
     }
-    if (!s.m_addresses.empty())
+    if (!s.m_networkAddresses.empty())
     {
         o << " addrs=[";
         bool first = true;
-        for (const auto &a : s.m_addresses)
+        for (const auto &a : s.m_networkAddresses)
         {
             if (!first)
             {
@@ -197,7 +201,7 @@ std::ostream &operator<<(std::ostream &o, const NetworkInterface &s)
             o << a;
             first = false;
         }
-        o << " ]";
+        o << "]";
     }
     if (s.m_gateway)
     {

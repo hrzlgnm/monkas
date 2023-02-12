@@ -11,11 +11,6 @@ namespace monkas
 {
 using Duration = std::chrono::duration<int64_t, std::milli>;
 
-// TODO: address struct with family, address, prefix length
-// ideas:
-// ethernet: Address: public std::array<uint8_t, 6>;
-// ip: Ipv4Address: public std::array<uint8_t, 4>;
-//     Ipv6Address: public std::array<uint8_t, 16>;
 // TODO: stats for nerds per interface descriptor
 class NetworkInterface
 {
@@ -51,16 +46,18 @@ class NetworkInterface
     const ip::Address &gatewayAddress() const;
     void setGatewayAddress(const ip::Address &gateway);
 
-    std::set<network::NetworkAddress> addresses() const;
+    std::set<network::NetworkAddress> networkAddresses() const;
 
-    void addAddress(const network::NetworkAddress &address);
-    void delAddress(const network::NetworkAddress &address);
+    void addNetworkAddress(const network::NetworkAddress &address);
+    void removeNetworkAddress(const network::NetworkAddress &address);
 
     Duration age() const;
+
     bool hasName() const;
 
   private:
     void touch();
+
     // TODO: only use public api
     friend std::ostream &operator<<(std::ostream &o, const NetworkInterface &s);
     int m_index{};
@@ -68,7 +65,7 @@ class NetworkInterface
     ethernet::Address m_ethernetAddress;
     ethernet::Address m_broadcastAddress;
     OperationalState m_operState{OperationalState::Unknown};
-    std::set<network::NetworkAddress> m_addresses;
+    std::set<network::NetworkAddress> m_networkAddresses;
     ip::Address m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
 };

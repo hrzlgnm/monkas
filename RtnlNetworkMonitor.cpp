@@ -157,7 +157,7 @@ int RtnlNetworkMonitor::mnlMessageCallback(const nlmsghdr *n)
     return MNL_CB_OK;
 }
 
-void RtnlNetworkMonitor::parseAttribute(const nlattr *a, uint16_t maxType, RtAttributes &attrs, uint64_t &counter)
+void RtnlNetworkMonitor::parseAttribute(const nlattr *a, uint16_t maxType, RtnlAttributes &attrs, uint64_t &counter)
 {
     const auto type = mnl_attr_get_type(a);
     if (mnl_attr_type_valid(a, maxType) > 0)
@@ -171,7 +171,7 @@ void RtnlNetworkMonitor::parseAttribute(const nlattr *a, uint16_t maxType, RtAtt
     }
 }
 
-NetworkInterface &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, const RtAttributes &attributes)
+NetworkInterface &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, const RtnlAttributes &attributes)
 {
     auto &cacheEntry = m_cache[ifIndex];
     cacheEntry.setIndex(ifIndex);
@@ -214,6 +214,7 @@ NetworkInterface &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, con
 void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi)
 {
     m_stats.linkMessagesSeen++;
+    // TODO ifi_type filters
     if (ifi->ifi_type != ARPHRD_ETHER)
     {
         VLOG(4) << "ignoring non ethernet network interface with index: " << ifi->ifi_index;
@@ -301,14 +302,14 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
         }
     }
     const network::NetworkAddress networkAddress{
-        address.adressFamily(), address, broadcast, ifa->ifa_prefixlen, network::fromIfaScope(ifa->ifa_scope), flags};
+        address.adressFamily(), address, broadcast, ifa->ifa_prefixlen, network::fromRtnlScope(ifa->ifa_scope), flags};
     if (nlhdr->nlmsg_type == RTM_NEWADDR)
     {
-        cacheEntry.addAddress(networkAddress);
+        cacheEntry.addNetworkAddress(networkAddress);
     }
     else if (nlhdr->nlmsg_type == RTM_DELADDR)
     {
-        cacheEntry.delAddress(networkAddress);
+        cacheEntry.removeNetworkAddress(networkAddress);
     }
     printStatsForNerds();
 }
@@ -316,7 +317,28 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
 void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
 {
     m_stats.routeMessagesSeen++;
+    if (rtm->rtm_family != AF_INET)
+    {
+        m_stats.msgsDiscarded++;
+        VLOG(4) << "ignoring address family: " << rtm->rtm_family;
+        return;
+    }
     auto attributes = parseAttributes(nlhdr, sizeof(*rtm), RTA_MAX);
+    if (nlhdr->nlmsg_type == RTM_DELROUTE)
+    {
+        // remove ipv4 routing default gateway when a linkdown was detected for the interface
+        if (rtm->rtm_flags & RTNH_F_LINKDOWN && attributes[RTA_OIF])
+        {
+            auto outIfIndex = mnl_attr_get_u32(attributes[RTA_OIF]);
+            auto itr = m_cache.find(outIfIndex);
+            if (itr != m_cache.end() && itr->second.gatewayAddress())
+            {
+                VLOG(2) << "Removing gateway " << itr->second.gatewayAddress() << " due to linkdown";
+                itr->second.setGatewayAddress(ip::Address());
+            }
+        }
+        return;
+    }
     if (attributes[RTA_GATEWAY] && attributes[RTA_OIF])
     {
         auto outif = mnl_attr_get_u32(attributes[RTA_OIF]);
@@ -331,10 +353,10 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
     }
 }
 
-RtAttributes RtnlNetworkMonitor::parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxType)
+RtnlAttributes RtnlNetworkMonitor::parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxType)
 {
-    RtAttributes::size_type typesToAllocate = maxType + 1;
-    RtAttributes attributes{typesToAllocate};
+    RtnlAttributes::size_type typesToAllocate = maxType + 1;
+    RtnlAttributes attributes{typesToAllocate};
     MnlAttributeCallbackArgs arg{&attributes, &maxType, &m_stats.seenAttributes};
     mnl_attr_parse(n, offset, &RtnlNetworkMonitor::dispatchMnlAttributeCallback, &arg);
     return attributes;

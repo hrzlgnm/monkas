@@ -50,9 +50,9 @@ uint32_t NetworkAddress::flags() const
     return m_flags;
 }
 
-AddressScope fromIfaScope(uint8_t ifaScope)
+AddressScope fromRtnlScope(uint8_t rtnlScope)
 {
-    switch (ifaScope)
+    switch (rtnlScope)
     {
     case RT_SCOPE_SITE:
         return AddressScope::Site;

@@ -8,6 +8,7 @@ namespace monkas
 namespace network
 {
 using AddressFamily = ip::AddressFamily;
+
 enum class AddressScope : uint8_t
 {
     Global,
@@ -18,7 +19,7 @@ enum class AddressScope : uint8_t
 };
 std::ostream &operator<<(std::ostream &o, AddressScope a);
 
-AddressScope fromIfaScope(uint8_t ifaScope);
+AddressScope fromRtnlScope(uint8_t rtnlScope);
 
 class NetworkAddress
 {

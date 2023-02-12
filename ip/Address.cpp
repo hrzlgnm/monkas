@@ -8,7 +8,7 @@ namespace monkas
 {
 namespace ip
 {
-inline int as_inet_af(AddressFamily f)
+int asLinuxAf(AddressFamily f)
 {
     switch (f)
     {
@@ -41,12 +41,12 @@ std::ostream &operator<<(std::ostream &o, AddressFamily a)
 
 Address::operator bool() const
 {
-    return m_af != AddressFamily::Unspecified;
+    return m_addressFamily != AddressFamily::Unspecified;
 }
 
 AddressFamily Address::adressFamily() const
 {
-    return m_af;
+    return m_addressFamily;
 }
 
 Address Address::fromBytes(const uint8_t *bytes, size_type len)
@@ -55,7 +55,7 @@ Address Address::fromBytes(const uint8_t *bytes, size_type len)
     {
         Address a;
         std::copy_n(bytes, len, a.begin());
-        a.m_af = (len == IPV6_ADDR_LEN ? AddressFamily::IPv6 : AddressFamily::IPv4);
+        a.m_addressFamily = (len == IPV6_ADDR_LEN ? AddressFamily::IPv6 : AddressFamily::IPv4);
         return a;
     }
     return Address();
@@ -64,7 +64,7 @@ Address Address::fromBytes(const uint8_t *bytes, size_type len)
 std::string Address::toString() const
 {
     char out[INET6_ADDRSTRLEN];
-    if (inet_ntop(as_inet_af(m_af), data(), out, sizeof(out)))
+    if (inet_ntop(asLinuxAf(m_addressFamily), data(), out, sizeof(out)))
     {
         return std::string(out);
     }

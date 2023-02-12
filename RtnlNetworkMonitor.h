@@ -21,8 +21,8 @@ struct nlattr;
 namespace monkas
 {
 
-// TODO: wrap this into a own class with parsing and getters
-using RtAttributes = std::vector<const nlattr *>;
+// TODO: wrap this into a own class with validation and getters
+using RtnlAttributes = std::vector<const nlattr *>;
 
 class RtnlNetworkMonitor
 {
@@ -41,20 +41,20 @@ class RtnlNetworkMonitor
     void parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa);
     void parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rt);
 
-    RtAttributes parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype);
+    RtnlAttributes parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype);
 
     void printStatsForNerds();
 
     int mnlMessageCallback(const nlmsghdr *n);
 
-    NetworkInterface &ensureNameAndIndexCurrent(int ifIndex, const RtAttributes &attributes);
+    NetworkInterface &ensureNameAndIndexCurrent(int ifIndex, const RtnlAttributes &attributes);
 
-    static void parseAttribute(const nlattr *a, uint16_t maxType, RtAttributes &attrs, uint64_t &counter);
+    static void parseAttribute(const nlattr *a, uint16_t maxType, RtnlAttributes &attrs, uint64_t &counter);
     static int dipatchMnlDataCallbackToSelf(const struct nlmsghdr *n, void *self);
 
     struct MnlAttributeCallbackArgs
     {
-        RtAttributes *attrs;
+        RtnlAttributes *attrs;
         uint16_t *maxType;
         uint64_t *counter;
     };

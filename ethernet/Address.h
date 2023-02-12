@@ -15,9 +15,10 @@ class Address : public std::array<uint8_t, ADDR_LEN>
 {
   public:
     Address() = default;
-    static Address fromBytes(const uint8_t *bytes, size_type len);
     std::string toString() const;
     explicit operator bool() const;
+
+    static Address fromBytes(const uint8_t *bytes, size_type len);
 };
 std::ostream &operator<<(std::ostream &o, const Address &a);
 
