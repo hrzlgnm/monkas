@@ -2,6 +2,7 @@
 
 #include <arpa/inet.h>
 #include <glog/logging.h>
+#include <libmnl/libmnl.h>
 #include <linux/if_link.h>
 #include <linux/rtnetlink.h>
 #include <memory.h>
@@ -27,10 +28,12 @@ RtNetlinkEthernetLinkAndIpAddressMonitor::RtNetlinkEthernetLinkAndIpAddressMonit
 {
     m_stats.startTime = std::chrono::steady_clock::now();
     m_buffer.resize(MNL_SOCKET_BUFFER_SIZE);
-    m_lastSeenAttributes.resize(IFLA_MAX + 1);
     unsigned groups = toNetlinkMulticastFlag(RTNLGRP_LINK);
+    groups |= toNetlinkMulticastFlag(RTNLGRP_NOTIFY);
     groups |= toNetlinkMulticastFlag(RTNLGRP_IPV4_IFADDR);
     groups |= toNetlinkMulticastFlag(RTNLGRP_IPV6_IFADDR);
+    groups |= toNetlinkMulticastFlag(RTNLGRP_IPV4_ROUTE);
+    groups |= toNetlinkMulticastFlag(RTNLGRP_IPV6_ROUTE);
     VLOG(1) << "Joining RTnetlink multicast groups " << std::hex << std::setfill('0') << std::setw(8) << groups;
     if (mnl_socket_bind(m_mnlSocket.get(), groups, MNL_SOCKET_AUTOPID) < 0)
     {
@@ -42,61 +45,67 @@ int RtNetlinkEthernetLinkAndIpAddressMonitor::run()
 {
     LOG(INFO) << "requesting RTM_GETLINK";
     // start with link information, to setup the cache to only contain ethernet devices
-    request(RTM_GETLINK);
+    sendDumpRequest(RTM_GETLINK);
     startReceiving();
     return 0;
 }
 
 void RtNetlinkEthernetLinkAndIpAddressMonitor::startReceiving()
 {
-    auto ret = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
-    while (ret > 0)
+    auto receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
+    while (receiveResult > 0)
     {
         m_stats.packetsReceived++;
-        m_stats.bytesReceived += ret;
+        m_stats.bytesReceived += receiveResult;
         if (VLOG_IS_ON(5))
         {
             fflush(stderr);
             fflush(stdout);
-            mnl_nlmsg_fprintf(stdout, &m_buffer[0], ret, 0);
+            mnl_nlmsg_fprintf(stdout, &m_buffer[0], receiveResult, 0);
         }
-        ret = mnl_cb_run(&m_buffer[0], ret, m_sequenceCounter, m_portid,
-                         &RtNetlinkEthernetLinkAndIpAddressMonitor::dipatchMnlDataCallbackToSelf, this);
-        if (ret < MNL_CB_STOP)
+        auto seqNo = isEnumerating() ? m_sequenceNumber : 0;
+        auto callbackResult = mnl_cb_run(&m_buffer[0], receiveResult, seqNo, m_portid,
+                                         &RtNetlinkEthernetLinkAndIpAddressMonitor::dipatchMnlDataCallbackToSelf, this);
+        if (callbackResult == MNL_CB_ERROR)
         {
             PLOG(WARNING) << "bork";
             break;
         }
-        if (ret == MNL_CB_STOP)
+        if (callbackResult == MNL_CB_STOP)
         {
-            if (m_cacheState == CacheState::FillLinkInfo)
+            if (isEnumeratingLinks())
             {
-                m_cacheState = CacheState::FillAddressInfo;
+                m_cacheState = CacheState::EnumeratingAddresses;
                 LOG(INFO) << "requesting RTM_GETADDR";
-                request(RTM_GETADDR);
+                sendDumpRequest(RTM_GETADDR);
             }
-            else if (m_cacheState == CacheState::FillAddressInfo)
+            else if (isEnumeratingAddresses())
             {
-                m_cacheState = CacheState::WaitForChanges;
-                m_sequenceCounter = 0; // stop sequence checks
+                m_cacheState = CacheState::EnumeratingRoutes;
+                LOG(INFO) << "requesting RTM_GETROUTE";
+                sendDumpRequest(RTM_GETROUTE);
+            }
+            else if (isEnumeratingRoutes())
+            {
+                m_cacheState = CacheState::WaitForChangeNotifications;
                 LOG(INFO) << "cache is filled with all requested information";
                 LOG(INFO) << "tracking changes for: " << m_cache.size() << " interfaces";
                 printStatsForNerds();
             }
         }
-        ret = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
+        receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
     }
 }
 
-void RtNetlinkEthernetLinkAndIpAddressMonitor::request(uint16_t msgType)
+void RtNetlinkEthernetLinkAndIpAddressMonitor::sendDumpRequest(uint16_t msgType)
 {
-    ++m_sequenceCounter;
     nlmsghdr *nlh = mnl_nlmsg_put_header(&m_buffer[0]);
     nlh->nlmsg_type = msgType;
     nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
-    nlh->nlmsg_seq = m_sequenceCounter;
-    rtgenmsg *rt = (rtgenmsg *)mnl_nlmsg_put_extra_header(nlh, sizeof(struct rtgenmsg));
-    rt->rtgen_family = AF_PACKET;
+    nlh->nlmsg_seq = ++m_sequenceNumber;
+    ifinfomsg *ifi = (ifinfomsg *)mnl_nlmsg_put_extra_header(nlh, sizeof(struct ifinfomsg));
+    ifi->ifi_family = AF_UNSPEC;
+    mnl_attr_put_u32(nlh, IFLA_EXT_MASK, 1 << 3); // RTEXT_FILTER_SKIP_STATS
     auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0)
     {
@@ -115,17 +124,22 @@ int RtNetlinkEthernetLinkAndIpAddressMonitor::mnlMessageCallback(const nlmsghdr 
     case RTM_NEWLINK:
         // fallthrough
     case RTM_DELLINK: {
-        ifinfomsg *ifi = (ifinfomsg *)mnl_nlmsg_get_payload(n);
-        parseAttributes(n, sizeof(*ifi), IFLA_MAX);
-        handleLinkMessage(ifi, t == RTM_NEWLINK);
+        const ifinfomsg *ifi = (const ifinfomsg *)mnl_nlmsg_get_payload(n);
+        parseLinkMessage(n, ifi);
     }
     break;
     case RTM_NEWADDR:
         // fallthrough
     case RTM_DELADDR: {
-        ifaddrmsg *ifa = (ifaddrmsg *)mnl_nlmsg_get_payload(n);
-        parseAttributes(n, sizeof(*ifa), IFA_MAX);
-        handleAddrMessage(ifa, t == RTM_NEWADDR);
+        const ifaddrmsg *ifa = (const ifaddrmsg *)mnl_nlmsg_get_payload(n);
+        parseAddressMessage(n, ifa);
+    }
+    break;
+    case RTM_NEWROUTE:
+        // fallthrough
+    case RTM_DELROUTE: {
+        const rtmsg *rt = (const rtmsg *)mnl_nlmsg_get_payload(n);
+        parseRouteMessage(n, rt);
     }
     break;
     default:
@@ -135,43 +149,44 @@ int RtNetlinkEthernetLinkAndIpAddressMonitor::mnlMessageCallback(const nlmsghdr 
     return MNL_CB_OK;
 }
 
-int RtNetlinkEthernetLinkAndIpAddressMonitor::mnlAttributeCallback(const nlattr *a)
+void RtNetlinkEthernetLinkAndIpAddressMonitor::parseAttribute(const nlattr *a, uint16_t maxType, RtAttributes &attrs,
+                                                              uint64_t &counter)
 {
-    if (mnl_attr_type_valid(a, m_maxAttributeType) >= 0)
+    if (mnl_attr_type_valid(a, maxType) >= 0)
     {
-        m_stats.parsedAttributes++;
+        counter++;
         auto type = mnl_attr_get_type(a);
-        m_lastSeenAttributes[type] = a;
+        attrs.at(type) = a;
     }
-    return MNL_CB_OK;
 }
 
-NetworkInterfaceDescriptor &RtNetlinkEthernetLinkAndIpAddressMonitor::ensureNameAndIndexCurrent(int interfaceIndex)
+NetworkInterfaceDescriptor &RtNetlinkEthernetLinkAndIpAddressMonitor::ensureNameAndIndexCurrent(
+    int ifIndex, const RtAttributes &attributes)
 {
-    auto &cacheEntry = m_cache[interfaceIndex];
-    cacheEntry.setIndex(interfaceIndex);
+    auto &cacheEntry = m_cache[ifIndex];
+    cacheEntry.setIndex(ifIndex);
     if (cacheEntry.hasName())
     {
         // sometimes interfaces are renamed, account for that
-        if (m_lastSeenAttributes[IFLA_IFNAME])
+        if (attributes[IFLA_IFNAME])
         {
-            auto nameFromAttributes{mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME])};
+            auto nameFromAttributes{mnl_attr_get_str(attributes[IFLA_IFNAME])};
             cacheEntry.setName(nameFromAttributes);
         }
         return cacheEntry;
     }
     // it's safe to use IFLA_IFNAME here as IFA_LABEL is the same id
     // we should be receiving link messages as first anyway
-    if (m_lastSeenAttributes[IFLA_IFNAME])
+    if (attributes[IFLA_IFNAME])
     {
         VLOG(2) << "using name from already parsed attributes";
         m_stats.resolveIfNameByAttributes++;
-        cacheEntry.setName(mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFNAME]));
+        cacheEntry.setName(mnl_attr_get_str(attributes[IFLA_IFNAME]));
     }
     else
     {
         std::vector<char> namebuf(IF_NAMESIZE, '\0');
-        auto name = if_indextoname(interfaceIndex, &namebuf[0]);
+        auto name = if_indextoname(ifIndex, &namebuf[0]);
         if (name)
         {
             VLOG(2) << "resolved name via if_indextoname";
@@ -180,84 +195,81 @@ NetworkInterfaceDescriptor &RtNetlinkEthernetLinkAndIpAddressMonitor::ensureName
         }
         else
         {
-            LOG(WARNING) << "failed to determine interface name from index " << interfaceIndex << "\n";
+            LOG(WARNING) << "failed to determine interface name from index " << ifIndex << "\n";
         }
     }
     return cacheEntry;
 }
 
-void RtNetlinkEthernetLinkAndIpAddressMonitor::handleLinkMessage(const ifinfomsg *ifi, bool isNew)
+void RtNetlinkEthernetLinkAndIpAddressMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi)
 {
+    m_stats.linkUpdatesProcessed++;
     if (ifi->ifi_type != ARPHRD_ETHER)
     {
         VLOG(4) << "ignoring non ethernet network interface with index: " << ifi->ifi_index;
         m_stats.msgsDiscarded++;
         return;
     }
-    m_stats.linkUpdatesProcessed++;
-    auto &cacheEntry = ensureNameAndIndexCurrent(ifi->ifi_index);
-    if (isNew)
+    if (nlhdr->nlmsg_type == RTM_DELLINK)
     {
-        if (m_lastSeenAttributes[IFLA_CARRIER])
-        {
-            VLOG(3) << "carrier " << static_cast<int>(mnl_attr_get_u8(m_lastSeenAttributes[IFLA_CARRIER]));
-        }
-        if (m_lastSeenAttributes[IFLA_IFALIAS])
-        {
-            VLOG(3) << "ifalias " << mnl_attr_get_str(m_lastSeenAttributes[IFLA_IFALIAS]);
-        }
-        if (m_lastSeenAttributes[IFLA_OPERSTATE])
-        {
-            auto operstate{mnl_attr_get_u16(m_lastSeenAttributes[IFLA_OPERSTATE])};
-            cacheEntry.setOperationalState(static_cast<OperationalState>(operstate));
-        }
-        if (m_lastSeenAttributes[IFLA_ADDRESS])
-        {
-            std::ostringstream strm;
-            const uint8_t *hwaddr = (const uint8_t *)mnl_attr_get_payload(m_lastSeenAttributes[IFLA_ADDRESS]);
-            const auto len = mnl_attr_get_payload_len(m_lastSeenAttributes[IFLA_ADDRESS]);
-            for (int i = 0; i < len; i++)
-            {
-                strm << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hwaddr[i]);
-                if (i + 1 != len)
-                {
-                    strm << ':';
-                }
-            }
-            cacheEntry.setHardwareAddress(strm.str());
-        }
-    }
-    else
-    {
-        VLOG(2) << "removing interface " << cacheEntry.name();
+        VLOG(2) << "removing interface with index" << ifi->ifi_index;
         m_cache.erase(ifi->ifi_index);
+        return;
+    }
+    auto attributes = parseAttributes(nlhdr, sizeof(*ifi), IFLA_MAX);
+
+    auto &cacheEntry = ensureNameAndIndexCurrent(ifi->ifi_index, attributes);
+    if (attributes[IFLA_CARRIER])
+    {
+        VLOG(3) << "carrier " << static_cast<int>(mnl_attr_get_u8(attributes[IFLA_CARRIER]));
+    }
+    if (attributes[IFLA_IFALIAS])
+    {
+        VLOG(3) << "ifalias " << mnl_attr_get_str(attributes[IFLA_IFALIAS]);
+    }
+    if (attributes[IFLA_OPERSTATE])
+    {
+        auto operstate{mnl_attr_get_u16(attributes[IFLA_OPERSTATE])};
+        cacheEntry.setOperationalState(static_cast<OperationalState>(operstate));
+    }
+    if (attributes[IFLA_ADDRESS])
+    {
+        std::ostringstream strm;
+        const uint8_t *hwaddr = (const uint8_t *)mnl_attr_get_payload(attributes[IFLA_ADDRESS]);
+        const auto len = mnl_attr_get_payload_len(attributes[IFLA_ADDRESS]);
+        for (int i = 0; i < len; i++)
+        {
+            strm << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hwaddr[i]);
+            if (i + 1 != len)
+            {
+                strm << ':';
+            }
+        }
+        cacheEntry.setHardwareAddress(strm.str());
     }
     printStatsForNerds();
 }
 
-void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg *ifa, bool isNew)
+void RtNetlinkEthernetLinkAndIpAddressMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa)
 {
+    m_stats.addressUpdatesProcessed++;
     if (m_cache.find(ifa->ifa_index) == m_cache.cend())
     {
-        VLOG(4) << "ignoring unkown network interface with index: " << ifa->ifa_index;
+        VLOG(4) << "unknown network interface index: " << ifa->ifa_index;
         m_stats.msgsDiscarded++;
         return;
     }
-    m_stats.addressUpdatesProcessed++;
-    auto &cacheEntry = ensureNameAndIndexCurrent(ifa->ifa_index);
-    if (m_lastSeenAttributes[IFA_PROTO])
+    auto attributes = parseAttributes(nlhdr, sizeof(*ifa), IFA_MAX);
+    auto &cacheEntry = ensureNameAndIndexCurrent(ifa->ifa_index, attributes);
+    // TODO: do we want to track flags? Perhaps for link state determination if operstatus is not given.
+    if (attributes[IFA_FLAGS])
     {
-        auto proto{mnl_attr_get_u8(m_lastSeenAttributes[IFA_PROTO])};
-        VLOG(3) << "proto " << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(proto);
-    }
-    if (m_lastSeenAttributes[IFA_FLAGS])
-    {
-        auto flags{mnl_attr_get_u32(m_lastSeenAttributes[IFA_FLAGS])};
+        auto flags{mnl_attr_get_u32(attributes[IFA_FLAGS])};
         VLOG(3) << "flags " << std::setw(8) << std::setfill('0') << std::hex << flags;
     }
-    if (m_lastSeenAttributes[IFA_ADDRESS])
+    if (attributes[IFA_ADDRESS])
     {
-        void *addr = mnl_attr_get_payload(m_lastSeenAttributes[IFA_ADDRESS]);
+        void *addr = mnl_attr_get_payload(attributes[IFA_ADDRESS]);
         char out[INET6_ADDRSTRLEN];
         if (inet_ntop(ifa->ifa_family, addr, out, sizeof(out)))
         {
@@ -293,11 +305,11 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg
                 strm << ":" << ifa->ifa_scope;
                 break;
             }
-            if (isNew)
+            if (nlhdr->nlmsg_type == RTM_NEWADDR)
             {
                 cacheEntry.addAddress(strm.str());
             }
-            else
+            else if (nlhdr->nlmsg_type == RTM_DELADDR)
             {
                 cacheEntry.delAddress(strm.str());
             }
@@ -306,16 +318,33 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::handleAddrMessage(const ifaddrmsg
     printStatsForNerds();
 }
 
-void RtNetlinkEthernetLinkAndIpAddressMonitor::parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype)
+void RtNetlinkEthernetLinkAndIpAddressMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
 {
-    m_maxAttributeType = maxtype;
-    std::fill(m_lastSeenAttributes.begin(), m_lastSeenAttributes.end(), nullptr);
-    mnl_attr_parse(n, offset, &RtNetlinkEthernetLinkAndIpAddressMonitor::dispatchMnlAttributeCallbackToSelf, this);
+    auto attributes = parseAttributes(nlhdr, sizeof(*rtm), RTA_MAX);
+    if (attributes[RTA_GATEWAY])
+    {
+        void *addr = mnl_attr_get_payload(attributes[RTA_GATEWAY]);
+        char out[INET6_ADDRSTRLEN];
+        if (inet_ntop(rtm->rtm_family, addr, out, sizeof(out)))
+        {
+            VLOG(1) << "Interface index " << mnl_attr_get_u32(attributes[RTA_OIF]) << " Gateway address: " << out;
+        }
+    }
+}
+
+RtAttributes RtNetlinkEthernetLinkAndIpAddressMonitor::parseAttributes(const nlmsghdr *n, size_t offset,
+                                                                       uint16_t maxType)
+{
+    RtAttributes::size_type typesToAlloc = maxType + 1;
+    RtAttributes attributes{typesToAlloc};
+    MnlAttributeCallbackArgs arg{&attributes, &maxType, &m_stats.seenAttributes};
+    mnl_attr_parse(n, offset, &RtNetlinkEthernetLinkAndIpAddressMonitor::dispatchMnlAttributeCallback, &arg);
+    return attributes;
 }
 
 void RtNetlinkEthernetLinkAndIpAddressMonitor::printStatsForNerds()
 {
-    if (m_cacheState != CacheState::WaitForChanges)
+    if (m_cacheState != CacheState::WaitForChangeNotifications)
     {
         return;
     }
@@ -329,7 +358,7 @@ void RtNetlinkEthernetLinkAndIpAddressMonitor::printStatsForNerds()
     VLOG(1) << "received            " << m_stats.bytesReceived << " bytes in " << m_stats.packetsReceived << " pakets";
     VLOG(1) << "received            " << m_stats.msgsReceived << " netlink messages";
     VLOG(1) << "discarded           " << m_stats.msgsDiscarded << " netlink messages";
-    VLOG(1) << "seen                " << m_stats.parsedAttributes << " attributes";
+    VLOG(1) << "seen                " << m_stats.seenAttributes << " attributes";
     VLOG(1) << "                    " << m_stats.linkUpdatesProcessed << " link updates";
     VLOG(1) << "                    " << m_stats.addressUpdatesProcessed << " address updates";
     VLOG(1) << "resolved ifname";
@@ -349,7 +378,9 @@ int RtNetlinkEthernetLinkAndIpAddressMonitor::dipatchMnlDataCallbackToSelf(const
     return reinterpret_cast<RtNetlinkEthernetLinkAndIpAddressMonitor *>(self)->mnlMessageCallback(n);
 }
 
-int RtNetlinkEthernetLinkAndIpAddressMonitor::dispatchMnlAttributeCallbackToSelf(const nlattr *a, void *self)
+int RtNetlinkEthernetLinkAndIpAddressMonitor::dispatchMnlAttributeCallback(const nlattr *a, void *ud)
 {
-    return reinterpret_cast<RtNetlinkEthernetLinkAndIpAddressMonitor *>(self)->mnlAttributeCallback(a);
+    auto args = reinterpret_cast<MnlAttributeCallbackArgs *>(ud);
+    parseAttribute(a, *args->maxType, *args->attrs, *args->counter);
+    return MNL_CB_OK;
 }
