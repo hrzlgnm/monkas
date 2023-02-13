@@ -10,27 +10,29 @@ DECLARE_bool(nerdstats);
 DEFINE_bool(nerdstats, false, "Enable stats for nerds");
 
 DECLARE_uint32(family);
-DEFINE_uint32(family, 0, "Preferred address family (4|6)");
+DEFINE_uint32(family, 0, "Preferred address family <4|6>");
 
-// TODO: Use qt event loop with QSocketNotifier for async netlink reading
-// TODO: Implement some kind of IPC
+// TODO: Use qt event loop with QSocketNotifier for async rtnl
+// TODO: Implement some kind of IPC with pub/sub
+
 int main(int argc, char *argv[])
 {
     google::InitGoogleLogging(argv[0]);
     FLAGS_logtostderr = true;
-    gflags::ParseCommandLineFlags(&argc, &argv, false);
-    monkas::Options options{};
+    gflags::SetUsageMessage("<flags>\n");
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+    monkas::RuntimeOptions options{};
     if (FLAGS_nerdstats)
     {
-        options |= monkas::OptFlag::StatsForNerds;
+        options |= monkas::RuntimeFlag::StatsForNerds;
     }
     if (FLAGS_family == 4)
     {
-        options |= monkas::OptFlag::PreferredFamilyV4;
+        options |= monkas::RuntimeFlag::PreferredFamilyV4;
     }
     if (FLAGS_family == 6)
     {
-        options |= monkas::OptFlag::PreferredFamilyV6;
+        options |= monkas::RuntimeFlag::PreferredFamilyV6;
     }
 
     monkas::RtnlNetworkMonitor mon(options);

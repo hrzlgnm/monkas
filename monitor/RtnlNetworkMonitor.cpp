@@ -23,7 +23,7 @@ inline constexpr size_t SOCKET_BUFFER_SIZE = (1u << 14);
 namespace monkas
 {
 
-RtnlNetworkMonitor::RtnlNetworkMonitor(const Options &options)
+RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
     : m_buffer(SOCKET_BUFFER_SIZE),
       m_mnlSocket{mnl_socket_open(NETLINK_ROUTE), mnl_socket_close}, m_portid{mnl_socket_get_portid(m_mnlSocket.get())},
       m_runtimeOptions(options)
@@ -36,12 +36,12 @@ RtnlNetworkMonitor::RtnlNetworkMonitor(const Options &options)
     /// TODO: add notion of preferred address family
     unsigned groups = toRtnlGroupFlag(RTNLGRP_LINK);
     groups |= toRtnlGroupFlag(RTNLGRP_NOTIFY);
-    if (!(m_runtimeOptions & OptFlag::PreferredFamilyV6))
+    if (!(m_runtimeOptions & RuntimeFlag::PreferredFamilyV6))
     {
         groups |= toRtnlGroupFlag(RTNLGRP_IPV4_IFADDR);
         groups |= toRtnlGroupFlag(RTNLGRP_IPV4_ROUTE);
     }
-    if (!(m_runtimeOptions & OptFlag::PreferredFamilyV4))
+    if (!(m_runtimeOptions & RuntimeFlag::PreferredFamilyV4))
     {
         groups |= toRtnlGroupFlag(RTNLGRP_IPV6_IFADDR);
         groups |= toRtnlGroupFlag(RTNLGRP_IPV6_ROUTE);
@@ -258,13 +258,13 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
         m_stats.msgsDiscarded++;
         return;
     }
-    if (m_runtimeOptions & OptFlag::PreferredFamilyV4 && ifa->ifa_family != AF_INET)
+    if (m_runtimeOptions & RuntimeFlag::PreferredFamilyV4 && ifa->ifa_family != AF_INET)
     {
         m_stats.msgsDiscarded++;
         return;
     }
 
-    if (m_runtimeOptions & OptFlag::PreferredFamilyV6 && ifa->ifa_family != AF_INET6)
+    if (m_runtimeOptions & RuntimeFlag::PreferredFamilyV6 && ifa->ifa_family != AF_INET6)
     {
         m_stats.msgsDiscarded++;
         return;
@@ -332,7 +332,7 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
         VLOG(4) << "ignoring address family: " << rtm->rtm_family;
         return;
     }
-    if (m_runtimeOptions & OptFlag::PreferredFamilyV6 && rtm->rtm_family != AF_INET6)
+    if (m_runtimeOptions & RuntimeFlag::PreferredFamilyV6 && rtm->rtm_family != AF_INET6)
     {
         m_stats.msgsDiscarded++;
         return;
@@ -380,7 +380,7 @@ RtnlAttributes RtnlNetworkMonitor::parseAttributes(const nlmsghdr *n, size_t off
 // TODO: enable/disable via command line options instead of VLOG
 void RtnlNetworkMonitor::printStatsForNerdsIfEnabled()
 {
-    if (isEnumerating() || !(m_runtimeOptions & OptFlag::StatsForNerds))
+    if (isEnumerating() || !(m_runtimeOptions & RuntimeFlag::StatsForNerds))
     {
         return;
     }
@@ -420,15 +420,15 @@ int RtnlNetworkMonitor::dispatchMnlAttributeCallback(const nlattr *a, void *ud)
     return MNL_CB_OK;
 }
 
-Options &operator|=(Options &o, OptFlag f)
+RuntimeOptions &operator|=(RuntimeOptions &o, RuntimeFlag f)
 {
-    o |= static_cast<Options>(f);
+    o |= static_cast<RuntimeOptions>(f);
     return o;
 }
 
-Options operator&(Options o, OptFlag f)
+RuntimeOptions operator&(RuntimeOptions o, RuntimeFlag f)
 {
-    return o & static_cast<Options>(f);
+    return o & static_cast<RuntimeOptions>(f);
 }
 
 } // namespace monkas

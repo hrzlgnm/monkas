@@ -13,6 +13,7 @@ pkg_check_modules(gflags REQUIRED IMPORTED_TARGET gflags)
 
 add_executable(${PROJECT_NAME})
 
+# TODO: make monka lib and main link with lib
 target_sources(${PROJECT_NAME}
     PRIVATE
         ethernet/Address.cpp

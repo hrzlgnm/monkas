@@ -34,21 +34,21 @@ inline std::ostream &operator<<(std::ostream &os, uint8_t c)
 // TODO: wrap this into a own class with validating getters
 using RtnlAttributes = std::vector<const nlattr *>;
 
-enum class OptFlag : uint32_t
+enum class RuntimeFlag : uint32_t
 {
     StatsForNerds = 1,
     PreferredFamilyV4 = 2,
     PreferredFamilyV6 = 4,
 };
 
-using Options = uint32_t;
-Options &operator|=(Options &o, OptFlag f);
-Options operator&(Options o, OptFlag f);
+using RuntimeOptions = uint32_t;
+RuntimeOptions &operator|=(RuntimeOptions &o, RuntimeFlag f);
+RuntimeOptions operator&(RuntimeOptions o, RuntimeFlag f);
 
 class RtnlNetworkMonitor
 {
   public:
-    explicit RtnlNetworkMonitor(const Options &options);
+    explicit RtnlNetworkMonitor(const RuntimeOptions &options);
     int run();
 
   private:
@@ -127,8 +127,7 @@ class RtnlNetworkMonitor
         uint64_t routeMessagesSeen{};
     } m_stats;
 
-    Options m_runtimeOptions;
-    ;
+    RuntimeOptions m_runtimeOptions;
 };
 } // namespace monkas
 #endif
