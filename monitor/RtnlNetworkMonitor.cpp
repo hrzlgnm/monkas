@@ -101,13 +101,13 @@ void RtnlNetworkMonitor::startReceiving()
                 m_cacheState = CacheState::WaitingForChanges;
                 LOG(INFO) << "Done with enumeration of initial information";
                 LOG(INFO) << "Tracking changes for " << m_cache.size() << " interfaces";
-                printStatsForNerdsIfEnabled();
             }
             else
             {
                 PLOG(WARNING) << "Unexpected MNL_CB_STOP";
             }
         }
+        printStatsForNerdsIfEnabled();
         receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
     }
 }
@@ -246,7 +246,6 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
         auto ethernetAddress = ethernet::Address::fromBytes(addr, len);
         cacheEntry.setBroadcastAddress(ethernetAddress);
     }
-    printStatsForNerdsIfEnabled();
 }
 
 void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa)
@@ -320,7 +319,6 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     {
         cacheEntry.removeNetworkAddress(networkAddress);
     }
-    printStatsForNerdsIfEnabled();
 }
 
 void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
