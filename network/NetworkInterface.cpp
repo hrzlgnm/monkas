@@ -50,6 +50,7 @@ void NetworkInterface::setIndex(int index)
     }
 }
 
+// TODO: fallback to flags
 NetworkInterface::OperationalState NetworkInterface::operationalState() const
 {
     return m_operState;

@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstdint>
-#include <functional>
 #include <iosfwd>
 
 namespace monkas
@@ -16,6 +15,9 @@ class Address : public std::array<uint8_t, ADDR_LEN>
   public:
     Address() = default;
     std::string toString() const;
+    /**
+     * @return true if any of the octets of the address is not zero
+     */
     explicit operator bool() const;
 
     static Address fromBytes(const uint8_t *bytes, size_type len);

@@ -10,19 +10,18 @@ namespace network
 
 NetworkAddress::NetworkAddress(AddressFamily addresFamily, const ip::Address &address, const ip::Address &broadcast,
                                uint8_t prefixLen, AddressScope scope, uint32_t flags)
-    : m_addressFamily{addresFamily}, m_ip{address}, m_broadcast{broadcast},
-      m_prefixLenght{prefixLen}, m_scope{scope}, m_flags{flags}
+    : m_af{addresFamily}, m_ip{address}, m_brd{broadcast}, m_prefixlen{prefixLen}, m_scope{scope}, m_flags{flags}
 {
 }
 
 NetworkAddress::operator bool() const
 {
-    return m_addressFamily != AddressFamily::Unspecified;
+    return m_af != AddressFamily::Unspecified;
 }
 
 AddressFamily NetworkAddress::adressFamily() const
 {
-    return m_addressFamily;
+    return m_af;
 }
 
 const ip::Address &NetworkAddress::ip() const
@@ -32,12 +31,12 @@ const ip::Address &NetworkAddress::ip() const
 
 const ip::Address &NetworkAddress::broadcast() const
 {
-    return m_broadcast;
+    return m_brd;
 }
 
-uint8_t NetworkAddress::prefixLenght() const
+uint8_t NetworkAddress::prefixLength() const
 {
-    return m_prefixLenght;
+    return m_prefixlen;
 }
 
 AddressScope NetworkAddress::scope() const
@@ -61,7 +60,7 @@ AddressScope fromRtnlScope(uint8_t rtnlScope)
     case RT_SCOPE_HOST:
         return AddressScope::Host;
     case RT_SCOPE_NOWHERE:
-        return AddressScope::NoWhere;
+        return AddressScope::Nowhere;
     case RT_SCOPE_UNIVERSE:
     default:
         return AddressScope::Global;
@@ -80,7 +79,7 @@ std::ostream &operator<<(std::ostream &o, AddressScope a)
     case AddressScope::Host:
         o << "host";
         break;
-    case AddressScope::NoWhere:
+    case AddressScope::Nowhere:
         o << "nowhere";
         break;
     case AddressScope::Global:
@@ -93,11 +92,16 @@ std::ostream &operator<<(std::ostream &o, AddressScope a)
 
 std::ostream &operator<<(std::ostream &o, const NetworkAddress &a)
 {
-    o << a.adressFamily() << " " << a.ip() << "/" << static_cast<int>(a.prefixLenght());
+    o << a.adressFamily() << " " << a.ip() << "/" << static_cast<int>(a.prefixLength());
     o << " scope " << a.scope();
     if (a.broadcast())
     {
         o << " brd " << a.broadcast();
+    }
+    // TODO: to readable
+    if (a.flags())
+    {
+        o << " f " << std::hex << a.flags() << std::dec;
     }
     return o;
 }

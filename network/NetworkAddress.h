@@ -15,7 +15,7 @@ enum class AddressScope : uint8_t
     Site,
     Link,
     Host,
-    NoWhere,
+    Nowhere,
 };
 std::ostream &operator<<(std::ostream &o, AddressScope a);
 
@@ -26,11 +26,15 @@ class NetworkAddress
   public:
     NetworkAddress(AddressFamily addresFamily, const ip::Address &address, const ip::Address &broadcast,
                    uint8_t prefixLen, AddressScope scope, uint32_t flags);
+    /**
+     * @returns true if AddressFamily is not Unspecified
+     */
     explicit operator bool() const;
+
     AddressFamily adressFamily() const;
     const ip::Address &ip() const;
     const ip::Address &broadcast() const;
-    uint8_t prefixLenght() const;
+    uint8_t prefixLength() const;
     AddressScope scope() const;
     uint32_t flags() const;
 
@@ -39,10 +43,10 @@ class NetworkAddress
     {
         return a.m_ip < b.m_ip;
     }
-    AddressFamily m_addressFamily;
+    AddressFamily m_af;
     ip::Address m_ip;
-    ip::Address m_broadcast;
-    uint8_t m_prefixLenght;
+    ip::Address m_brd;
+    uint8_t m_prefixlen;
     AddressScope m_scope;
     uint32_t m_flags;
 };

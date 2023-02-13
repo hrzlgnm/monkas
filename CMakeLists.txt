@@ -12,6 +12,7 @@ pkg_check_modules(libglog REQUIRED IMPORTED_TARGET libglog)
 pkg_check_modules(gflags REQUIRED IMPORTED_TARGET gflags)
 
 add_executable(${PROJECT_NAME})
+
 target_sources(${PROJECT_NAME}
     PRIVATE
         ethernet/Address.cpp
@@ -19,12 +20,12 @@ target_sources(${PROJECT_NAME}
         ip/Address.cpp
         ip/Address.h
         main.cpp
+        monitor/RtnlNetworkMonitor.cpp
+        monitor/RtnlNetworkMonitor.h
         network/NetworkAddress.cpp
         network/NetworkAddress.h
-        RtnlNetworkMonitor.cpp
-        RtnlNetworkMonitor.h
-        NetworkInterface.cpp
-        NetworkInterface.h
+        network/NetworkInterface.cpp
+        network/NetworkInterface.h
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -1,74 +1,91 @@
 #ifndef RTNLNETWORKMONITOR_H
 #define RTNLNETWORKMONITOR_H
 
-#include "NetworkInterface.h"
+#include "network/NetworkInterface.h"
+#include <cstdint>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
+#include <type_traits>
+#include <typeinfo>
 #include <vector>
 
-// TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what to do in
-// this case.
-// TODO: validate rtattrs before using them
+// TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what do we want
+// to do in this case?
 // TODO: consider ENOBUFS errno from recv as resync point
 
+struct mnl_socket;
 struct nlmsghdr;
 struct ifinfomsg;
 struct ifaddrmsg;
 struct rtmsg;
-struct mnl_socket;
 struct nlattr;
+
 namespace monkas
 {
 
-// TODO: wrap this into a own class with validation and getters
+// neat ADL trick to treat uint8_t as numbers
+inline std::ostream &operator<<(std::ostream &os, uint8_t c)
+{
+    return os << static_cast<unsigned int>(c);
+}
+
+// TODO: wrap this into a own class with validating getters
 using RtnlAttributes = std::vector<const nlattr *>;
+
+enum class OptFlag : uint32_t
+{
+    StatsForNerds = 1,
+    PreferredFamilyV4 = 2,
+    PreferredFamilyV6 = 4,
+};
+
+using Options = uint32_t;
+Options &operator|=(Options &o, OptFlag f);
+Options operator&(Options o, OptFlag f);
 
 class RtnlNetworkMonitor
 {
   public:
-    RtnlNetworkMonitor();
+    explicit RtnlNetworkMonitor(const Options &options);
     int run();
 
   private:
     void startReceiving();
 
-    /* @note: only one such request can be in progress until the reply is fully
-     * received */
+    /* @note: only one such request can be in progress until the reply is received */
     void sendDumpRequest(uint16_t msgType);
 
     void parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi);
     void parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa);
     void parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rt);
 
-    RtnlAttributes parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype);
-
-    void printStatsForNerds();
-
-    int mnlMessageCallback(const nlmsghdr *n);
-
     NetworkInterface &ensureNameAndIndexCurrent(int ifIndex, const RtnlAttributes &attributes);
 
-    static void parseAttribute(const nlattr *a, uint16_t maxType, RtnlAttributes &attrs, uint64_t &counter);
-    static int dipatchMnlDataCallbackToSelf(const struct nlmsghdr *n, void *self);
+    void printStatsForNerdsIfEnabled();
 
+    int mnlMessageCallback(const nlmsghdr *n);
+    static int dispatchMnMessageCallbackToSelf(const struct nlmsghdr *n, void *self);
+
+    RtnlAttributes parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype);
+    static void parseAttribute(const nlattr *a, uint16_t maxType, RtnlAttributes &attrs, uint64_t &counter);
     struct MnlAttributeCallbackArgs
     {
         RtnlAttributes *attrs;
         uint16_t *maxType;
         uint64_t *counter;
     };
-
     static int dispatchMnlAttributeCallback(const struct nlattr *a, void *self);
 
     inline bool isEnumerating()
     {
-        return m_cacheState != CacheState::WaitForChangeNotifications;
+        return m_cacheState != CacheState::WaitingForChanges;
     }
 
     inline bool isEnumeratingLinks() const
     {
-        return m_cacheState == CacheState::EnumeringLinks;
+        return m_cacheState == CacheState::EnumeratingLinks;
     }
     inline bool isEnumeratingAddresses() const
     {
@@ -80,20 +97,20 @@ class RtnlNetworkMonitor
     }
 
   private:
-    std::vector<char> m_buffer;
+    std::vector<uint8_t> m_buffer;
     std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
+    unsigned m_portid{};
+    unsigned m_sequenceNumber{};
+
     std::map<int, NetworkInterface> m_cache;
 
     enum class CacheState
     {
-        EnumeringLinks,
+        EnumeratingLinks,
         EnumeratingAddresses,
         EnumeratingRoutes,
-        WaitForChangeNotifications
-    } m_cacheState{CacheState::EnumeringLinks};
-
-    unsigned m_portid{};
-    unsigned m_sequenceNumber{};
+        WaitingForChanges
+    } m_cacheState{CacheState::EnumeratingLinks};
 
     struct Statistics
     {
@@ -105,11 +122,13 @@ class RtnlNetworkMonitor
         uint64_t msgsReceived{};
         uint64_t msgsDiscarded{};
         uint64_t seenAttributes{};
-        uint64_t resolveIfNameByAttributes{};
         uint64_t addressMessagesSeen{};
         uint64_t linkMessagesSeen{};
         uint64_t routeMessagesSeen{};
     } m_stats;
+
+    Options m_runtimeOptions;
+    ;
 };
 } // namespace monkas
 #endif

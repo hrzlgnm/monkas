@@ -3,7 +3,9 @@
 
 #include <array>
 #include <cstdint>
+#include <iosfwd>
 #include <string>
+
 namespace monkas
 {
 namespace ip
@@ -14,6 +16,7 @@ enum class AddressFamily
     IPv4,
     IPv6,
 };
+
 int asLinuxAf(AddressFamily f);
 std::ostream &operator<<(std::ostream &o, AddressFamily a);
 
@@ -23,7 +26,12 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
 {
   public:
     Address() = default;
+
+    /**
+     * @returns true if address is not unspecified
+     */
     explicit operator bool() const;
+
     AddressFamily adressFamily() const;
     std::string toString() const;
 
@@ -36,13 +44,5 @@ std::ostream &operator<<(std::ostream &o, const Address &a);
 
 } // namespace ip
 } // namespace monkas
-namespace std
-{
-// specialize std::hash<> for ethernet::Address
-template <> struct hash<monkas::ip::Address>
-{
-    size_t operator()(const monkas::ip::Address &a) const noexcept;
-};
-} // namespace std
 
 #endif

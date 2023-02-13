@@ -13,27 +13,39 @@
 
 namespace
 {
-unsigned toNetlinkMulticastFlag(rtnetlink_groups group)
+unsigned toRtnlGroupFlag(rtnetlink_groups group)
 {
     return (1 << (group - 1));
 }
+inline constexpr size_t SOCKET_BUFFER_SIZE = (1u << 14);
 } // namespace
 
 namespace monkas
 {
 
-RtnlNetworkMonitor::RtnlNetworkMonitor()
-    : m_mnlSocket{mnl_socket_open(NETLINK_ROUTE), mnl_socket_close}, m_portid{mnl_socket_get_portid(m_mnlSocket.get())}
+RtnlNetworkMonitor::RtnlNetworkMonitor(const Options &options)
+    : m_buffer(SOCKET_BUFFER_SIZE),
+      m_mnlSocket{mnl_socket_open(NETLINK_ROUTE), mnl_socket_close}, m_portid{mnl_socket_get_portid(m_mnlSocket.get())},
+      m_runtimeOptions(options)
 {
+    if (!m_mnlSocket.get())
+    {
+        PLOG(FATAL) << "mnl_socket_open";
+    }
     m_stats.startTime = std::chrono::steady_clock::now();
-    m_buffer.resize(MNL_SOCKET_BUFFER_SIZE);
     /// TODO: add notion of preferred address family
-    unsigned groups = toNetlinkMulticastFlag(RTNLGRP_LINK);
-    groups |= toNetlinkMulticastFlag(RTNLGRP_NOTIFY);
-    groups |= toNetlinkMulticastFlag(RTNLGRP_IPV4_IFADDR);
-    groups |= toNetlinkMulticastFlag(RTNLGRP_IPV6_IFADDR);
-    groups |= toNetlinkMulticastFlag(RTNLGRP_IPV4_ROUTE);
-    groups |= toNetlinkMulticastFlag(RTNLGRP_IPV6_ROUTE);
+    unsigned groups = toRtnlGroupFlag(RTNLGRP_LINK);
+    groups |= toRtnlGroupFlag(RTNLGRP_NOTIFY);
+    if (!(m_runtimeOptions & OptFlag::PreferredFamilyV6))
+    {
+        groups |= toRtnlGroupFlag(RTNLGRP_IPV4_IFADDR);
+        groups |= toRtnlGroupFlag(RTNLGRP_IPV4_ROUTE);
+    }
+    if (!(m_runtimeOptions & OptFlag::PreferredFamilyV4))
+    {
+        groups |= toRtnlGroupFlag(RTNLGRP_IPV6_IFADDR);
+        groups |= toRtnlGroupFlag(RTNLGRP_IPV6_ROUTE);
+    }
     VLOG(1) << "Joining RTnetlink multicast groups " << std::hex << std::setfill('0') << std::setw(8) << groups;
     if (mnl_socket_bind(m_mnlSocket.get(), groups, MNL_SOCKET_AUTOPID) < 0)
     {
@@ -43,8 +55,7 @@ RtnlNetworkMonitor::RtnlNetworkMonitor()
 
 int RtnlNetworkMonitor::run()
 {
-    LOG(INFO) << "requesting RTM_GETLINK";
-    // start with link information, to setup the cache to only contain ethernet devices
+    LOG(INFO) << "Requesting RTM_GETLINK";
     sendDumpRequest(RTM_GETLINK);
     startReceiving();
     return 0;
@@ -63,12 +74,12 @@ void RtnlNetworkMonitor::startReceiving()
             fflush(stdout);
             mnl_nlmsg_fprintf(stdout, &m_buffer[0], receiveResult, 0);
         }
-        auto seqNo = isEnumerating() ? m_sequenceNumber : 0;
-        auto callbackResult = mnl_cb_run(&m_buffer[0], receiveResult, seqNo, m_portid,
-                                         &RtnlNetworkMonitor::dipatchMnlDataCallbackToSelf, this);
+        const auto seqNo = isEnumerating() ? m_sequenceNumber : 0;
+        const auto callbackResult = mnl_cb_run(&m_buffer[0], receiveResult, seqNo, m_portid,
+                                               &RtnlNetworkMonitor::dispatchMnMessageCallbackToSelf, this);
         if (callbackResult == MNL_CB_ERROR)
         {
-            PLOG(WARNING) << "bork";
+            PLOG(WARNING) << "mnl_cb_run";
             break;
         }
         if (callbackResult == MNL_CB_STOP)
@@ -76,25 +87,25 @@ void RtnlNetworkMonitor::startReceiving()
             if (isEnumeratingLinks())
             {
                 m_cacheState = CacheState::EnumeratingAddresses;
-                LOG(INFO) << "requesting RTM_GETADDR";
+                LOG(INFO) << "Requesting RTM_GETADDR";
                 sendDumpRequest(RTM_GETADDR);
             }
             else if (isEnumeratingAddresses())
             {
                 m_cacheState = CacheState::EnumeratingRoutes;
-                LOG(INFO) << "requesting RTM_GETROUTE";
+                LOG(INFO) << "Requesting RTM_GETROUTE";
                 sendDumpRequest(RTM_GETROUTE);
             }
             else if (isEnumeratingRoutes())
             {
-                m_cacheState = CacheState::WaitForChangeNotifications;
+                m_cacheState = CacheState::WaitingForChanges;
                 LOG(INFO) << "Done with enumeration of initial information";
-                LOG(INFO) << "tracking changes for: " << m_cache.size() << " interfaces";
-                printStatsForNerds();
+                LOG(INFO) << "Tracking changes for " << m_cache.size() << " interfaces";
+                printStatsForNerdsIfEnabled();
             }
             else
             {
-                LOG(WARNING) << "Unexpected MNL_CB_STOP value";
+                PLOG(WARNING) << "Unexpected MNL_CB_STOP";
             }
         }
         receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
@@ -128,21 +139,21 @@ int RtnlNetworkMonitor::mnlMessageCallback(const nlmsghdr *n)
     case RTM_NEWLINK:
         // fallthrough
     case RTM_DELLINK: {
-        const ifinfomsg *ifi = (const ifinfomsg *)mnl_nlmsg_get_payload(n);
+        const ifinfomsg *ifi = reinterpret_cast<const ifinfomsg *>(mnl_nlmsg_get_payload(n));
         parseLinkMessage(n, ifi);
     }
     break;
     case RTM_NEWADDR:
         // fallthrough
     case RTM_DELADDR: {
-        const ifaddrmsg *ifa = (const ifaddrmsg *)mnl_nlmsg_get_payload(n);
+        const ifaddrmsg *ifa = reinterpret_cast<const ifaddrmsg *>(mnl_nlmsg_get_payload(n));
         parseAddressMessage(n, ifa);
     }
     break;
     case RTM_NEWROUTE:
         // fallthrough
     case RTM_DELROUTE: {
-        const rtmsg *rt = (const rtmsg *)mnl_nlmsg_get_payload(n);
+        const rtmsg *rt = reinterpret_cast<const rtmsg *>(mnl_nlmsg_get_payload(n));
         parseRouteMessage(n, rt);
     }
     break;
@@ -173,7 +184,7 @@ NetworkInterface &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, con
     cacheEntry.setIndex(ifIndex);
     if (cacheEntry.hasName())
     {
-        // sometimes interfaces are renamed, account for that
+        // Sometimes interfaces are renamed, account for that
         if (attributes[IFLA_IFNAME])
         {
             auto nameFromAttributes{mnl_attr_get_str(attributes[IFLA_IFNAME])};
@@ -181,17 +192,18 @@ NetworkInterface &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, con
         }
         return cacheEntry;
     }
-    // it's safe to use IFLA_IFNAME here as IFA_LABEL is the same id
+    // It's safe to use IFLA_IFNAME here as IFA_LABEL is the same id
     // we should be receiving link messages as first anyway
+    // TOOD: perhaps pass this attribute type as additional parameter to be sure
     if (attributes[IFLA_IFNAME])
     {
-        VLOG(3) << "using name from attributes";
-        m_stats.resolveIfNameByAttributes++;
-        cacheEntry.setName(mnl_attr_get_str(attributes[IFLA_IFNAME]));
+        const auto nameFromAttributes = mnl_attr_get_str(attributes[IFLA_IFNAME]);
+        cacheEntry.setName(nameFromAttributes);
+        VLOG(3) << "Using name " << nameFromAttributes << " from attributes";
     }
     else
     {
-        LOG(WARNING) << "failed to determine interface name from attributes" << ifIndex << "\n";
+        LOG(WARNING) << "Failed to determine interface name from attributes" << ifIndex << "\n";
     }
     return cacheEntry;
 }
@@ -202,7 +214,7 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
     // TODO ifi_type filters
     if (ifi->ifi_type != ARPHRD_ETHER)
     {
-        VLOG(4) << "ignoring non ethernet network interface with index: " << ifi->ifi_index;
+        VLOG(4) << "ignoring non enthernet network interface with index: " << ifi->ifi_index;
         m_stats.msgsDiscarded++;
         return;
     }
@@ -234,7 +246,7 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
         auto ethernetAddress = ethernet::Address::fromBytes(addr, len);
         cacheEntry.setBroadcastAddress(ethernetAddress);
     }
-    printStatsForNerds();
+    printStatsForNerdsIfEnabled();
 }
 
 void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa)
@@ -242,10 +254,22 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     m_stats.addressMessagesSeen++;
     if (m_cache.find(ifa->ifa_index) == m_cache.cend())
     {
-        VLOG(4) << "unknown network interface index: " << ifa->ifa_index;
+        VLOG(4) << "Unknown network interface index: " << ifa->ifa_index;
         m_stats.msgsDiscarded++;
         return;
     }
+    if (m_runtimeOptions & OptFlag::PreferredFamilyV4 && ifa->ifa_family != AF_INET)
+    {
+        m_stats.msgsDiscarded++;
+        return;
+    }
+
+    if (m_runtimeOptions & OptFlag::PreferredFamilyV6 && ifa->ifa_family != AF_INET6)
+    {
+        m_stats.msgsDiscarded++;
+        return;
+    }
+
     auto attributes = parseAttributes(nlhdr, sizeof(*ifa), IFA_MAX);
 
     uint32_t flags = ifa->ifa_flags; // will be overwritten if IFA_FLAGS is present
@@ -296,7 +320,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     {
         cacheEntry.removeNetworkAddress(networkAddress);
     }
-    printStatsForNerds();
+    printStatsForNerdsIfEnabled();
 }
 
 void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
@@ -305,9 +329,15 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
     if (rtm->rtm_family != AF_INET)
     {
         m_stats.msgsDiscarded++;
-        VLOG(4) << "ignoring address family: " << static_cast<int>(rtm->rtm_family);
+        VLOG(4) << "ignoring address family: " << rtm->rtm_family;
         return;
     }
+    if (m_runtimeOptions & OptFlag::PreferredFamilyV6 && rtm->rtm_family != AF_INET6)
+    {
+        m_stats.msgsDiscarded++;
+        return;
+    }
+
     auto attributes = parseAttributes(nlhdr, sizeof(*rtm), RTA_MAX);
     if (nlhdr->nlmsg_type == RTM_DELROUTE)
     {
@@ -348,39 +378,37 @@ RtnlAttributes RtnlNetworkMonitor::parseAttributes(const nlmsghdr *n, size_t off
 }
 
 // TODO: enable/disable via command line options instead of VLOG
-void RtnlNetworkMonitor::printStatsForNerds()
+void RtnlNetworkMonitor::printStatsForNerdsIfEnabled()
 {
-    if (m_cacheState != CacheState::WaitForChangeNotifications)
+    if (isEnumerating() || !(m_runtimeOptions & OptFlag::StatsForNerds))
     {
         return;
     }
-    VLOG(1) << "--------------- Stats for nerds -----------------";
-    VLOG(1) << "uptime              "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
-                                                                     m_stats.startTime)
-                   .count()
-            << "ms";
-    VLOG(1) << "sent                " << m_stats.bytesSent << " bytes in " << m_stats.packetsSent << " packets";
-    VLOG(1) << "received            " << m_stats.bytesReceived << " bytes in " << m_stats.packetsReceived << " pakets";
-    VLOG(1) << "received            " << m_stats.msgsReceived << " netlink messages";
-    VLOG(1) << "discarded           " << m_stats.msgsDiscarded << " netlink messages";
-    VLOG(1) << "* seen";
-    VLOG(1) << "                    " << m_stats.seenAttributes << " attribute entries";
-    VLOG(1) << "                    " << m_stats.linkMessagesSeen << " link messages";
-    VLOG(1) << "                    " << m_stats.addressMessagesSeen << " address messages";
-    VLOG(1) << "                    " << m_stats.routeMessagesSeen << " route messages";
-    VLOG(1) << "* resolved ifname";
-    VLOG(1) << "                    " << m_stats.resolveIfNameByAttributes << " via attributes";
+    LOG(INFO) << "--------------- Stats for nerds -----------------";
+    LOG(INFO) << "uptime    "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
+                                                                       m_stats.startTime)
+                     .count()
+              << "ms";
+    LOG(INFO) << "sent      " << m_stats.bytesSent << " bytes in " << m_stats.packetsSent << " packets";
+    LOG(INFO) << "received  " << m_stats.bytesReceived << " bytes in " << m_stats.packetsReceived << " packets";
+    LOG(INFO) << "received  " << m_stats.msgsReceived << " rtnl messages";
+    LOG(INFO) << "discarded " << m_stats.msgsDiscarded << " rtnl messages";
+    LOG(INFO) << "* seen";
+    LOG(INFO) << "          " << m_stats.seenAttributes << " attribute entries";
+    LOG(INFO) << "          " << m_stats.linkMessagesSeen << " link messages";
+    LOG(INFO) << "          " << m_stats.addressMessagesSeen << " address messages";
+    LOG(INFO) << "          " << m_stats.routeMessagesSeen << " route messages";
 
-    VLOG(1) << "----------- Interface details in cache ----------";
+    LOG(INFO) << "----------- Interface details in cache ----------";
     for (const auto &c : m_cache)
     {
-        VLOG(1) << c.second;
+        LOG(INFO) << c.second;
     }
-    VLOG(1) << "-------------------------------------------------";
+    LOG(INFO) << "-------------------------------------------------";
 }
 
-int RtnlNetworkMonitor::dipatchMnlDataCallbackToSelf(const nlmsghdr *n, void *self)
+int RtnlNetworkMonitor::dispatchMnMessageCallbackToSelf(const nlmsghdr *n, void *self)
 {
     return reinterpret_cast<RtnlNetworkMonitor *>(self)->mnlMessageCallback(n);
 }
@@ -390,6 +418,17 @@ int RtnlNetworkMonitor::dispatchMnlAttributeCallback(const nlattr *a, void *ud)
     auto args = reinterpret_cast<MnlAttributeCallbackArgs *>(ud);
     parseAttribute(a, *args->maxType, *args->attrs, *args->counter);
     return MNL_CB_OK;
+}
+
+Options &operator|=(Options &o, OptFlag f)
+{
+    o |= static_cast<Options>(f);
+    return o;
+}
+
+Options operator&(Options o, OptFlag f)
+{
+    return o & static_cast<Options>(f);
 }
 
 } // namespace monkas

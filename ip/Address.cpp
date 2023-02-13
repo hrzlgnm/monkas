@@ -30,7 +30,7 @@ std::ostream &operator<<(std::ostream &o, AddressFamily a)
         o << "inet";
         break;
     case AddressFamily::IPv6:
-        o << "ine6";
+        o << "inet6";
         break;
     case AddressFamily::Unspecified:
         o << "unspec";
