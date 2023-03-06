@@ -1,14 +1,11 @@
 #ifndef RTNLNETWORKMONITOR_H
 #define RTNLNETWORKMONITOR_H
 
-#include "network/NetworkInterface.h"
+#include "network/NetworkInterfaceStatusTracker.h"
 #include <cstdint>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
-#include <type_traits>
-#include <typeinfo>
 #include <vector>
 
 // TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what do we want
@@ -61,7 +58,7 @@ class RtnlNetworkMonitor
     void parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa);
     void parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rt);
 
-    NetworkInterface &ensureNameAndIndexCurrent(int ifIndex, const RtnlAttributes &attributes);
+    NetworkInterfaceStatusTracker &ensureNameAndIndexCurrent(int ifIndex, const RtnlAttributes &attributes);
 
     void printStatsForNerdsIfEnabled();
 
@@ -102,7 +99,7 @@ class RtnlNetworkMonitor
     unsigned m_portid{};
     unsigned m_sequenceNumber{};
 
-    std::map<int, NetworkInterface> m_cache;
+    std::map<int, NetworkInterfaceStatusTracker> m_cache;
 
     enum class CacheState
     {
@@ -130,4 +127,5 @@ class RtnlNetworkMonitor
     RuntimeOptions m_runtimeOptions;
 };
 } // namespace monkas
+
 #endif

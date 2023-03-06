@@ -49,6 +49,15 @@ AddressFamily Address::adressFamily() const
     return m_addressFamily;
 }
 
+Address::size_type Address::addressLength() const
+{
+    if (m_addressFamily == AddressFamily::IPv4)
+        return IPV4_ADDR_LEN;
+    if (m_addressFamily == AddressFamily::IPv6)
+        return IPV6_ADDR_LEN;
+    return 0;
+}
+
 Address Address::fromBytes(const uint8_t *bytes, size_type len)
 {
     if (len == IPV6_ADDR_LEN || len == IPV4_ADDR_LEN)
@@ -74,6 +83,17 @@ std::string Address::toString() const
 std::ostream &operator<<(std::ostream &o, const Address &a)
 {
     return o << a.toString();
+}
+
+bool operator<(const Address &lhs, const Address &rhs)
+{
+    if (lhs.adressFamily() == rhs.adressFamily())
+    {
+        const auto addressLenght = lhs.addressLength();
+        return std::lexicographical_compare(lhs.begin(), lhs.begin() + addressLenght, rhs.begin(),
+                                            rhs.begin() + addressLenght);
+    }
+    return lhs.addressLength() < rhs.addressLength();
 }
 
 } // namespace ip

@@ -1,10 +1,11 @@
-#ifndef NETWORKINTERFACE_H
-#define NETWORKINTERFACE_H
+#ifndef NETWORKINTERFACESTATUSTRACKER_H
+#define NETWORKINTERFACESTATUSTRACKER_H
 
 #include "ethernet/Address.h"
 #include "network/NetworkAddress.h"
 #include <chrono>
 #include <set>
+#include <sstream>
 #include <string>
 
 namespace monkas
@@ -12,7 +13,7 @@ namespace monkas
 using Duration = std::chrono::duration<int64_t, std::milli>;
 
 // TODO: stats for nerds per interface descriptor
-class NetworkInterface
+class NetworkInterfaceStatusTracker
 {
   public:
     enum class OperationalState : uint8_t
@@ -26,7 +27,7 @@ class NetworkInterface
         Up,
     };
 
-    NetworkInterface();
+    NetworkInterfaceStatusTracker();
 
     int index() const;
     void setIndex(int index);
@@ -59,7 +60,7 @@ class NetworkInterface
     void touch();
 
     // TODO: only use public api
-    friend std::ostream &operator<<(std::ostream &o, const NetworkInterface &s);
+    friend std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s);
     int m_index{};
     std::string m_name;
     ethernet::Address m_ethernetAddress;
@@ -69,6 +70,27 @@ class NetworkInterface
     ip::Address m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
 };
-using OperationalState = NetworkInterface::OperationalState;
+using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
+std::ostream &operator<<(std::ostream &o, OperationalState op);
+
 } // namespace monkas
+template <> struct fmt::formatter<monkas::NetworkInterfaceStatusTracker> : fmt::formatter<std::string>
+{
+    auto format(const monkas::NetworkInterfaceStatusTracker &addr, format_context &ctx) -> decltype(ctx.out())
+    {
+        std::ostringstream strm;
+        strm << addr;
+        return format_to(ctx.out(), "{}", strm.str());
+    }
+};
+
+template <> struct fmt::formatter<monkas::OperationalState> : fmt::formatter<std::string>
+{
+    auto format(const monkas::OperationalState op, format_context &ctx) -> decltype(ctx.out())
+    {
+        std::ostringstream strm;
+        strm << op;
+        return format_to(ctx.out(), "{}", strm.str());
+    }
+};
 #endif

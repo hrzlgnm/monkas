@@ -7,10 +7,11 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(libmnl REQUIRED IMPORTED_TARGET libmnl)
-# TODO: migrate to https://github.com/gabime/spdlog instead of glog
-pkg_check_modules(libglog REQUIRED IMPORTED_TARGET libglog)
 pkg_check_modules(gflags REQUIRED IMPORTED_TARGET gflags)
-
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
 add_executable(${PROJECT_NAME})
 
 # TODO: make monka lib and main link with lib
@@ -25,14 +26,14 @@ target_sources(${PROJECT_NAME}
         monitor/RtnlNetworkMonitor.h
         network/NetworkAddress.cpp
         network/NetworkAddress.h
-        network/NetworkInterface.cpp
-        network/NetworkInterface.h
+        network/NetworkInterfaceStatusTracker.cpp
+        network/NetworkInterfaceStatusTracker.h
 )
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         PkgConfig::gflags
-        PkgConfig::libglog
         PkgConfig::libmnl
+        spdlog::spdlog
 )
 

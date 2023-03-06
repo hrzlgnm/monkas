@@ -1,11 +1,12 @@
 #include "RtnlNetworkMonitor.h"
 #include "ip/Address.h"
 
-#include <glog/logging.h>
 #include <libmnl/libmnl.h>
 #include <linux/rtnetlink.h>
 #include <memory.h>
 #include <net/if_arp.h>
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
 
 #include <iomanip>
 #include <iostream>
@@ -19,7 +20,19 @@ unsigned toRtnlGroupFlag(rtnetlink_groups group)
 }
 inline constexpr size_t SOCKET_BUFFER_SIZE = (1u << 14);
 } // namespace
-
+namespace spdlog
+{
+template <typename T> void pfatal(const T &msg)
+{
+    spdlog::flush_on(spdlog::level::critical);
+    spdlog::critical("{} failed: {}[{}]", msg, strerror(errno), errno);
+    std::abort();
+}
+template <typename T> void pwarn(const T &msg)
+{
+    spdlog::warn("{} failed: {}[{}]", msg, strerror(errno), errno);
+}
+} // namespace spdlog
 namespace monkas
 {
 
@@ -30,7 +43,7 @@ RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
 {
     if (!m_mnlSocket.get())
     {
-        PLOG(FATAL) << "mnl_socket_open";
+        spdlog::pfatal("mnl_socket_open");
     }
     m_stats.startTime = std::chrono::steady_clock::now();
     /// TODO: add notion of preferred address family
@@ -46,16 +59,16 @@ RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
         groups |= toRtnlGroupFlag(RTNLGRP_IPV6_IFADDR);
         groups |= toRtnlGroupFlag(RTNLGRP_IPV6_ROUTE);
     }
-    VLOG(1) << "Joining RTnetlink multicast groups " << std::hex << std::setfill('0') << std::setw(8) << groups;
+    spdlog::debug("Joining RTnetlink multicast groups {}", groups);
     if (mnl_socket_bind(m_mnlSocket.get(), groups, MNL_SOCKET_AUTOPID) < 0)
     {
-        PLOG(FATAL) << "mnl_socket_bind";
+        spdlog::pfatal("mnl_socket_bind");
     }
 }
 
 int RtnlNetworkMonitor::run()
 {
-    LOG(INFO) << "Requesting RTM_GETLINK";
+    spdlog::info("Requesting RTM_GETLINK");
     sendDumpRequest(RTM_GETLINK);
     startReceiving();
     return 0;
@@ -68,7 +81,7 @@ void RtnlNetworkMonitor::startReceiving()
     {
         m_stats.packetsReceived++;
         m_stats.bytesReceived += receiveResult;
-        if (VLOG_IS_ON(5))
+        if (spdlog::get_level() == spdlog::level::trace)
         {
             fflush(stderr);
             fflush(stdout);
@@ -79,7 +92,7 @@ void RtnlNetworkMonitor::startReceiving()
                                                &RtnlNetworkMonitor::dispatchMnMessageCallbackToSelf, this);
         if (callbackResult == MNL_CB_ERROR)
         {
-            PLOG(WARNING) << "mnl_cb_run";
+            spdlog::pwarn("mnl_cb_run");
             break;
         }
         if (callbackResult == MNL_CB_STOP)
@@ -87,24 +100,24 @@ void RtnlNetworkMonitor::startReceiving()
             if (isEnumeratingLinks())
             {
                 m_cacheState = CacheState::EnumeratingAddresses;
-                LOG(INFO) << "Requesting RTM_GETADDR";
+                spdlog::info("Requesting RTM_GETADDR");
                 sendDumpRequest(RTM_GETADDR);
             }
             else if (isEnumeratingAddresses())
             {
                 m_cacheState = CacheState::EnumeratingRoutes;
-                LOG(INFO) << "Requesting RTM_GETROUTE";
+                spdlog::info("Requesting RTM_GETROUTE");
                 sendDumpRequest(RTM_GETROUTE);
             }
             else if (isEnumeratingRoutes())
             {
                 m_cacheState = CacheState::WaitingForChanges;
-                LOG(INFO) << "Done with enumeration of initial information";
-                LOG(INFO) << "Tracking changes for " << m_cache.size() << " interfaces";
+                spdlog::info("Done with enumeration of initial information");
+                spdlog::info("Tracking changes for {} interfaces", m_cache.size());
             }
             else
             {
-                PLOG(WARNING) << "Unexpected MNL_CB_STOP";
+                spdlog::pwarn("Unexpected MNL_CB_STOP");
             }
         }
         printStatsForNerdsIfEnabled();
@@ -124,7 +137,7 @@ void RtnlNetworkMonitor::sendDumpRequest(uint16_t msgType)
     auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0)
     {
-        PLOG(FATAL) << "mnl_socket_sendto";
+        spdlog::pfatal("mnl_socket_sendto");
     }
     m_stats.packetsSent++;
     m_stats.bytesSent += ret;
@@ -158,7 +171,7 @@ int RtnlNetworkMonitor::mnlMessageCallback(const nlmsghdr *n)
     }
     break;
     default:
-        LOG(WARNING) << "ignoring unexpected message type: " << t;
+        spdlog::warn("ignoring unexpected message type: {}", t);
         break;
     }
     return MNL_CB_OK;
@@ -174,11 +187,11 @@ void RtnlNetworkMonitor::parseAttribute(const nlattr *a, uint16_t maxType, RtnlA
     }
     else
     {
-        PLOG(WARNING) << "ignoring unexpected nlattr type " << type;
+        spdlog::warn("ignoring unexpected nlattr type {}", type);
     }
 }
 
-NetworkInterface &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, const RtnlAttributes &attributes)
+NetworkInterfaceStatusTracker &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, const RtnlAttributes &attributes)
 {
     auto &cacheEntry = m_cache[ifIndex];
     cacheEntry.setIndex(ifIndex);
@@ -199,11 +212,11 @@ NetworkInterface &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, con
     {
         const auto nameFromAttributes = mnl_attr_get_str(attributes[IFLA_IFNAME]);
         cacheEntry.setName(nameFromAttributes);
-        VLOG(3) << "Using name " << nameFromAttributes << " from attributes";
+        spdlog::debug("Using name {} from attributes", nameFromAttributes);
     }
     else
     {
-        LOG(WARNING) << "Failed to determine interface name from attributes" << ifIndex << "\n";
+        spdlog::warn("Failed to determine interface name from attributes {}", ifIndex);
     }
     return cacheEntry;
 }
@@ -214,13 +227,13 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
     // TODO ifi_type filters
     if (ifi->ifi_type != ARPHRD_ETHER)
     {
-        VLOG(4) << "ignoring non enthernet network interface with index: " << ifi->ifi_index;
+        spdlog::trace("ignoring non enthernet network interface with index: {}", ifi->ifi_index);
         m_stats.msgsDiscarded++;
         return;
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK)
     {
-        VLOG(2) << "removing interface with index" << ifi->ifi_index;
+        spdlog::trace("removing interface with index", ifi->ifi_index);
         m_cache.erase(ifi->ifi_index);
         return;
     }
@@ -253,7 +266,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     m_stats.addressMessagesSeen++;
     if (m_cache.find(ifa->ifa_index) == m_cache.cend())
     {
-        VLOG(4) << "Unknown network interface index: " << ifa->ifa_index;
+        spdlog::trace("Unknown network interface index: ", ifa->ifa_index);
         m_stats.msgsDiscarded++;
         return;
     }
@@ -288,7 +301,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
         {
             const uint8_t *addr = (const uint8_t *)mnl_attr_get_payload(attributes[IFA_BROADCAST]);
             broadcast = ip::Address::fromBytes(addr, addr_len);
-            VLOG(1) << "broadcast " << broadcast;
+            spdlog::trace("broadcast {}", broadcast);
         }
     }
     if (attributes[IFA_LOCAL])
@@ -327,7 +340,7 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
     if (rtm->rtm_family != AF_INET)
     {
         m_stats.msgsDiscarded++;
-        VLOG(4) << "ignoring address family: " << rtm->rtm_family;
+        spdlog::trace("ignoring address family: {}", rtm->rtm_family);
         return;
     }
     if (m_runtimeOptions & RuntimeFlag::PreferredFamilyV6 && rtm->rtm_family != AF_INET6)
@@ -346,7 +359,7 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
             auto itr = m_cache.find(outIfIndex);
             if (itr != m_cache.end() && itr->second.gatewayAddress())
             {
-                VLOG(1) << "Removing gateway " << itr->second.gatewayAddress() << " due to linkdown";
+                spdlog::trace("Removing gateway {} due to linkdown", itr->second.gatewayAddress());
                 itr->second.setGatewayAddress(ip::Address());
             }
         }
@@ -382,28 +395,26 @@ void RtnlNetworkMonitor::printStatsForNerdsIfEnabled()
     {
         return;
     }
-    LOG(INFO) << "--------------- Stats for nerds -----------------";
-    LOG(INFO) << "uptime    "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
-                                                                       m_stats.startTime)
-                     .count()
-              << "ms";
-    LOG(INFO) << "sent      " << m_stats.bytesSent << " bytes in " << m_stats.packetsSent << " packets";
-    LOG(INFO) << "received  " << m_stats.bytesReceived << " bytes in " << m_stats.packetsReceived << " packets";
-    LOG(INFO) << "received  " << m_stats.msgsReceived << " rtnl messages";
-    LOG(INFO) << "discarded " << m_stats.msgsDiscarded << " rtnl messages";
-    LOG(INFO) << "* seen";
-    LOG(INFO) << "          " << m_stats.seenAttributes << " attribute entries";
-    LOG(INFO) << "          " << m_stats.linkMessagesSeen << " link messages";
-    LOG(INFO) << "          " << m_stats.addressMessagesSeen << " address messages";
-    LOG(INFO) << "          " << m_stats.routeMessagesSeen << " route messages";
+    spdlog::info("--------------- Stats for nerds -----------------");
+    spdlog::info("uptime    {}ms", std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - m_stats.startTime)
+                                       .count());
+    spdlog::info("sent      {} bytes in {} packets", m_stats.bytesSent, m_stats.packetsSent);
+    spdlog::info("received  {} bytes in {} packets", m_stats.bytesReceived, m_stats.packetsReceived);
+    spdlog::info("received  {} rtnl messages", m_stats.msgsReceived);
+    spdlog::info("discarded {} rtnl messages", m_stats.msgsDiscarded);
+    spdlog::info("* seen");
+    spdlog::info("          {} attribute entries", m_stats.seenAttributes);
+    spdlog::info("          {} link messages", m_stats.linkMessagesSeen);
+    spdlog::info("          {} address messages", m_stats.addressMessagesSeen);
+    spdlog::info("          {} route messages", m_stats.routeMessagesSeen);
 
-    LOG(INFO) << "----------- Interface details in cache ----------";
+    spdlog::info("----------- Interface details in cache ----------");
     for (const auto &c : m_cache)
     {
-        LOG(INFO) << c.second;
+        spdlog::info(c.second);
     }
-    LOG(INFO) << "-------------------------------------------------";
+    spdlog::info("-------------------------------------------------");
 }
 
 int RtnlNetworkMonitor::dispatchMnMessageCallbackToSelf(const nlmsghdr *n, void *self)

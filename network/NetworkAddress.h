@@ -2,6 +2,7 @@
 #define MONKAS_NETWORK_NETWORKADDRESS_H
 
 #include "ip/Address.h"
+#include <sstream>
 
 namespace monkas
 {
@@ -54,5 +55,14 @@ std::ostream &operator<<(std::ostream &o, const NetworkAddress &a);
 
 } // namespace network
 } // namespace monkas
+template <> struct fmt::formatter<monkas::network::NetworkAddress> : fmt::formatter<std::string>
+{
+    auto format(const monkas::network::NetworkAddress &addr, format_context &ctx) -> decltype(ctx.out())
+    {
+        std::ostringstream strm;
+        strm << addr;
+        return format_to(ctx.out(), "{}", strm.str());
+    }
+};
 
 #endif // MONKAS_NETWORK_NETWORKADDRESS_H
