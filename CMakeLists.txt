@@ -4,7 +4,7 @@ project(monkas LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
+include(GNUInstallDirs)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(libmnl REQUIRED IMPORTED_TARGET libmnl)
 pkg_check_modules(gflags REQUIRED IMPORTED_TARGET gflags)
@@ -37,3 +37,4 @@ target_link_libraries(${PROJECT_NAME}
         spdlog::spdlog
 )
 
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})

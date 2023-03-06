@@ -96,5 +96,15 @@ bool operator<(const Address &lhs, const Address &rhs)
     return lhs.addressLength() < rhs.addressLength();
 }
 
+bool operator==(const Address &lhs, const Address &rhs)
+{
+    if (lhs.adressFamily() == rhs.adressFamily())
+    {
+        const auto addressLenght = lhs.addressLength();
+        return std::equal(lhs.begin(), lhs.begin() + addressLenght, rhs.begin(), rhs.begin() + addressLenght);
+    }
+    return false;
+}
+
 } // namespace ip
 } // namespace monkas

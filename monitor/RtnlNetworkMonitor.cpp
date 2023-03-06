@@ -12,17 +12,9 @@
 #include <iostream>
 #include <sstream>
 
-namespace
-{
-unsigned toRtnlGroupFlag(rtnetlink_groups group)
-{
-    return (1 << (group - 1));
-}
-inline constexpr size_t SOCKET_BUFFER_SIZE = (1u << 14);
-} // namespace
 namespace spdlog
 {
-template <typename T> void pfatal(const T &msg)
+template <typename T> [[noreturn]] void pfatal(const T &msg)
 {
     spdlog::flush_on(spdlog::level::critical);
     spdlog::critical("{} failed: {}[{}]", msg, strerror(errno), errno);
@@ -32,21 +24,35 @@ template <typename T> void pwarn(const T &msg)
 {
     spdlog::warn("{} failed: {}[{}]", msg, strerror(errno), errno);
 }
+
 } // namespace spdlog
+namespace
+{
+unsigned toRtnlGroupFlag(rtnetlink_groups group)
+{
+    return (1 << (group - 1));
+}
+inline constexpr size_t SOCKET_BUFFER_SIZE = 32 * 1024;
+static mnl_socket *ensure_mnl_socket(bool nonBlocking)
+{
+    auto s = mnl_socket_open2(NETLINK_ROUTE, nonBlocking ? SOCK_NONBLOCK : 0);
+    if (!s)
+    {
+        spdlog::pfatal("mnl_socket_open2");
+    }
+    return s;
+}
+} // namespace
+
 namespace monkas
 {
 
 RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
-    : m_buffer(SOCKET_BUFFER_SIZE),
-      m_mnlSocket{mnl_socket_open(NETLINK_ROUTE), mnl_socket_close}, m_portid{mnl_socket_get_portid(m_mnlSocket.get())},
-      m_runtimeOptions(options)
+    : m_mnlSocket{ensure_mnl_socket(options & NonBlocking), mnl_socket_close}, m_portid{mnl_socket_get_portid(
+                                                                                   m_mnlSocket.get())},
+      m_buffer(SOCKET_BUFFER_SIZE), m_runtimeOptions(options)
 {
-    if (!m_mnlSocket.get())
-    {
-        spdlog::pfatal("mnl_socket_open");
-    }
     m_stats.startTime = std::chrono::steady_clock::now();
-    /// TODO: add notion of preferred address family
     unsigned groups = toRtnlGroupFlag(RTNLGRP_LINK);
     groups |= toRtnlGroupFlag(RTNLGRP_NOTIFY);
     if (!(m_runtimeOptions & RuntimeFlag::PreferredFamilyV6))
@@ -68,20 +74,30 @@ RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
 
 int RtnlNetworkMonitor::run()
 {
+    m_running = true;
     spdlog::info("Requesting RTM_GETLINK");
     sendDumpRequest(RTM_GETLINK);
-    startReceiving();
+    while (m_running)
+    {
+        receiveAndProcess();
+    }
     return 0;
 }
 
-void RtnlNetworkMonitor::startReceiving()
+void RtnlNetworkMonitor::stop()
+{
+    m_mnlSocket.reset();
+    m_running = false;
+}
+
+void RtnlNetworkMonitor::receiveAndProcess()
 {
     auto receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
     while (receiveResult > 0)
     {
         m_stats.packetsReceived++;
         m_stats.bytesReceived += receiveResult;
-        if (spdlog::get_level() == spdlog::level::trace)
+        if (m_runtimeOptions & DumpPacktes)
         {
             fflush(stderr);
             fflush(stdout);
@@ -113,7 +129,7 @@ void RtnlNetworkMonitor::startReceiving()
             {
                 m_cacheState = CacheState::WaitingForChanges;
                 spdlog::info("Done with enumeration of initial information");
-                spdlog::info("Tracking changes for {} interfaces", m_cache.size());
+                spdlog::info("Tracking changes for {} interfaces", m_trackers.size());
             }
             else
             {
@@ -131,9 +147,9 @@ void RtnlNetworkMonitor::sendDumpRequest(uint16_t msgType)
     nlh->nlmsg_type = msgType;
     nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
     nlh->nlmsg_seq = ++m_sequenceNumber;
-    ifinfomsg *ifi = (ifinfomsg *)mnl_nlmsg_put_extra_header(nlh, sizeof(struct ifinfomsg));
-    ifi->ifi_family = AF_UNSPEC;
-    mnl_attr_put_u32(nlh, IFLA_EXT_MASK, 1 << 3); // RTEXT_FILTER_SKIP_STATS
+    rtgenmsg *gen = (rtgenmsg *)mnl_nlmsg_put_extra_header(nlh, sizeof(struct rtgenmsg));
+    gen->rtgen_family = AF_UNSPEC;
+    mnl_attr_put_u32(nlh, IFLA_EXT_MASK, RTEXT_FILTER_SKIP_STATS);
     auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0)
     {
@@ -191,32 +207,13 @@ void RtnlNetworkMonitor::parseAttribute(const nlattr *a, uint16_t maxType, RtnlA
     }
 }
 
-NetworkInterfaceStatusTracker &RtnlNetworkMonitor::ensureNameAndIndexCurrent(int ifIndex, const RtnlAttributes &attributes)
+NetworkInterfaceStatusTracker &RtnlNetworkMonitor::ensureNameCurrent(int ifIndex, const nlattr *nameAttribute)
 {
-    auto &cacheEntry = m_cache[ifIndex];
-    cacheEntry.setIndex(ifIndex);
-    if (cacheEntry.hasName())
+    auto &cacheEntry = m_trackers[ifIndex];
+    // Sometimes interfaces are renamed, account for that
+    if (nameAttribute)
     {
-        // Sometimes interfaces are renamed, account for that
-        if (attributes[IFLA_IFNAME])
-        {
-            auto nameFromAttributes{mnl_attr_get_str(attributes[IFLA_IFNAME])};
-            cacheEntry.setName(nameFromAttributes);
-        }
-        return cacheEntry;
-    }
-    // It's safe to use IFLA_IFNAME here as IFA_LABEL is the same id
-    // we should be receiving link messages as first anyway
-    // TOOD: perhaps pass this attribute type as additional parameter to be sure
-    if (attributes[IFLA_IFNAME])
-    {
-        const auto nameFromAttributes = mnl_attr_get_str(attributes[IFLA_IFNAME]);
-        cacheEntry.setName(nameFromAttributes);
-        spdlog::debug("Using name {} from attributes", nameFromAttributes);
-    }
-    else
-    {
-        spdlog::warn("Failed to determine interface name from attributes {}", ifIndex);
+        cacheEntry.setName(mnl_attr_get_str(nameAttribute));
     }
     return cacheEntry;
 }
@@ -227,19 +224,18 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
     // TODO ifi_type filters
     if (ifi->ifi_type != ARPHRD_ETHER)
     {
-        spdlog::trace("ignoring non enthernet network interface with index: {}", ifi->ifi_index);
         m_stats.msgsDiscarded++;
         return;
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK)
     {
         spdlog::trace("removing interface with index", ifi->ifi_index);
-        m_cache.erase(ifi->ifi_index);
+        m_trackers.erase(ifi->ifi_index);
         return;
     }
     auto attributes = parseAttributes(nlhdr, sizeof(*ifi), IFLA_MAX);
 
-    auto &cacheEntry = ensureNameAndIndexCurrent(ifi->ifi_index, attributes);
+    auto &cacheEntry = ensureNameCurrent(ifi->ifi_index, attributes[IFLA_IFNAME]);
     if (attributes[IFLA_OPERSTATE])
     {
         auto operstate{mnl_attr_get_u16(attributes[IFLA_OPERSTATE])};
@@ -264,9 +260,8 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
 void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa)
 {
     m_stats.addressMessagesSeen++;
-    if (m_cache.find(ifa->ifa_index) == m_cache.cend())
+    if (m_trackers.find(ifa->ifa_index) == m_trackers.cend())
     {
-        spdlog::trace("Unknown network interface index: ", ifa->ifa_index);
         m_stats.msgsDiscarded++;
         return;
     }
@@ -288,7 +283,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     ip::Address address;
     ip::Address broadcast;
 
-    auto &cacheEntry = ensureNameAndIndexCurrent(ifa->ifa_index, attributes);
+    auto &cacheEntry = ensureNameCurrent(ifa->ifa_index, attributes[IFA_LABEL]);
     if (attributes[IFA_FLAGS])
     {
         flags = {mnl_attr_get_u32(attributes[IFA_FLAGS])};
@@ -340,7 +335,6 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
     if (rtm->rtm_family != AF_INET)
     {
         m_stats.msgsDiscarded++;
-        spdlog::trace("ignoring address family: {}", rtm->rtm_family);
         return;
     }
     if (m_runtimeOptions & RuntimeFlag::PreferredFamilyV6 && rtm->rtm_family != AF_INET6)
@@ -356,11 +350,19 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
         if (rtm->rtm_flags & RTNH_F_LINKDOWN && attributes[RTA_OIF])
         {
             auto outIfIndex = mnl_attr_get_u32(attributes[RTA_OIF]);
-            auto itr = m_cache.find(outIfIndex);
-            if (itr != m_cache.end() && itr->second.gatewayAddress())
+            auto itr = m_trackers.find(outIfIndex);
+            if (itr != m_trackers.end() && itr->second.gatewayAddress())
             {
-                spdlog::trace("Removing gateway {} due to linkdown", itr->second.gatewayAddress());
-                itr->second.setGatewayAddress(ip::Address());
+                itr->second.clearGatewayAddress(GatewayClearReason::LinkDown);
+            }
+        }
+        else if (attributes[RTA_GATEWAY] && attributes[RTA_OIF])
+        {
+            auto outIfIndex = mnl_attr_get_u32(attributes[RTA_OIF]);
+            auto itr = m_trackers.find(outIfIndex);
+            if (itr != m_trackers.end())
+            {
+                itr->second.clearGatewayAddress(GatewayClearReason::RouteDeleted);
             }
         }
         return;
@@ -368,13 +370,12 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
     if (attributes[RTA_GATEWAY] && attributes[RTA_OIF])
     {
         auto outif = mnl_attr_get_u32(attributes[RTA_OIF]);
-        auto itr = m_cache.find(outif);
-        if (itr != m_cache.end())
+        auto itr = m_trackers.find(outif);
+        if (itr != m_trackers.end())
         {
             const uint8_t *addr = (const uint8_t *)mnl_attr_get_payload(attributes[RTA_GATEWAY]);
             auto len = mnl_attr_get_payload_len(attributes[RTA_GATEWAY]);
-            auto gatewayAddress = ip::Address::fromBytes(addr, len);
-            itr->second.setGatewayAddress(gatewayAddress);
+            itr->second.setGatewayAddress(ip::Address::fromBytes(addr, len));
         }
     }
 }
@@ -410,7 +411,7 @@ void RtnlNetworkMonitor::printStatsForNerdsIfEnabled()
     spdlog::info("          {} route messages", m_stats.routeMessagesSeen);
 
     spdlog::info("----------- Interface details in cache ----------");
-    for (const auto &c : m_cache)
+    for (const auto &c : m_trackers)
     {
         spdlog::info(c.second);
     }

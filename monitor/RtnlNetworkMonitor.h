@@ -31,25 +31,26 @@ inline std::ostream &operator<<(std::ostream &os, uint8_t c)
 // TODO: wrap this into a own class with validating getters
 using RtnlAttributes = std::vector<const nlattr *>;
 
-enum class RuntimeFlag : uint32_t
+enum RuntimeFlag : uint32_t
 {
     StatsForNerds = 1,
     PreferredFamilyV4 = 2,
     PreferredFamilyV6 = 4,
+    DumpPacktes = 8,
+    NonBlocking = 16,
 };
 
 using RuntimeOptions = uint32_t;
-RuntimeOptions &operator|=(RuntimeOptions &o, RuntimeFlag f);
-RuntimeOptions operator&(RuntimeOptions o, RuntimeFlag f);
 
 class RtnlNetworkMonitor
 {
   public:
     explicit RtnlNetworkMonitor(const RuntimeOptions &options);
     int run();
+    void stop();
 
   private:
-    void startReceiving();
+    void receiveAndProcess();
 
     /* @note: only one such request can be in progress until the reply is received */
     void sendDumpRequest(uint16_t msgType);
@@ -58,7 +59,7 @@ class RtnlNetworkMonitor
     void parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa);
     void parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rt);
 
-    NetworkInterfaceStatusTracker &ensureNameAndIndexCurrent(int ifIndex, const RtnlAttributes &attributes);
+    NetworkInterfaceStatusTracker &ensureNameCurrent(int ifIndex, const nlattr *nameAttribute);
 
     void printStatsForNerdsIfEnabled();
 
@@ -94,12 +95,13 @@ class RtnlNetworkMonitor
     }
 
   private:
-    std::vector<uint8_t> m_buffer;
     std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
+    std::vector<uint8_t> m_buffer;
+    bool m_running{false};
     unsigned m_portid{};
     unsigned m_sequenceNumber{};
 
-    std::map<int, NetworkInterfaceStatusTracker> m_cache;
+    std::map<int, NetworkInterfaceStatusTracker> m_trackers;
 
     enum class CacheState
     {

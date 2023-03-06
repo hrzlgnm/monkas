@@ -26,11 +26,14 @@ class NetworkInterfaceStatusTracker
         Dormant,
         Up,
     };
+    enum class GatewayClearReason : uint8_t
+    {
+        LinkDown,
+        RouteDeleted,
+        AllIPv4AddressesRemoved,
+    };
 
     NetworkInterfaceStatusTracker();
-
-    int index() const;
-    void setIndex(int index);
 
     const std::string &name() const;
     void setName(const std::string &name);
@@ -46,6 +49,7 @@ class NetworkInterfaceStatusTracker
 
     const ip::Address &gatewayAddress() const;
     void setGatewayAddress(const ip::Address &gateway);
+    void clearGatewayAddress(GatewayClearReason r);
 
     std::set<network::NetworkAddress> networkAddresses() const;
 
@@ -61,7 +65,6 @@ class NetworkInterfaceStatusTracker
 
     // TODO: only use public api
     friend std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s);
-    int m_index{};
     std::string m_name;
     ethernet::Address m_ethernetAddress;
     ethernet::Address m_broadcastAddress;
@@ -72,6 +75,8 @@ class NetworkInterfaceStatusTracker
 };
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
 std::ostream &operator<<(std::ostream &o, OperationalState op);
+using GatewayClearReason = NetworkInterfaceStatusTracker::GatewayClearReason;
+std::ostream &operator<<(std::ostream &o, GatewayClearReason r);
 
 } // namespace monkas
 template <> struct fmt::formatter<monkas::NetworkInterfaceStatusTracker> : fmt::formatter<std::string>
@@ -93,4 +98,14 @@ template <> struct fmt::formatter<monkas::OperationalState> : fmt::formatter<std
         return format_to(ctx.out(), "{}", strm.str());
     }
 };
+template <> struct fmt::formatter<monkas::GatewayClearReason> : fmt::formatter<std::string>
+{
+    auto format(const monkas::GatewayClearReason r, format_context &ctx) -> decltype(ctx.out())
+    {
+        std::ostringstream strm;
+        strm << r;
+        return format_to(ctx.out(), "{}", strm.str());
+    }
+};
+
 #endif

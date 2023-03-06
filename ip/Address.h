@@ -45,6 +45,7 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
 };
 std::ostream &operator<<(std::ostream &o, const Address &a);
 bool operator<(const Address &lhs, const Address &rhs);
+bool operator==(const Address &lhs, const Address &rhs);
 
 } // namespace ip
 } // namespace monkas

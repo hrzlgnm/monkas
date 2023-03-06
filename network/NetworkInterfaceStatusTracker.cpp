@@ -1,22 +1,20 @@
 #include "NetworkInterfaceStatusTracker.h"
+#include "ip/Address.h"
+#include "network/NetworkAddress.h"
 
 #include <spdlog/spdlog.h>
 #include <string_view>
+
 namespace monkas
 {
 template <typename T>
-void logChange(const T &t, NetworkInterfaceStatusTracker *that, const std::string_view &description)
+void logTrace(const T &t, NetworkInterfaceStatusTracker *that, const std::string_view &description)
 {
-    spdlog::trace("{} {} changed to: {}", (void *)that, description, t);
+    spdlog::trace("{} {}: {}", static_cast<void *>(that), description, t);
 }
 
 NetworkInterfaceStatusTracker::NetworkInterfaceStatusTracker() : m_lastChanged(std::chrono::steady_clock::now())
 {
-}
-
-int NetworkInterfaceStatusTracker::index() const
-{
-    return m_index;
 }
 
 bool NetworkInterfaceStatusTracker::hasName() const
@@ -40,17 +38,7 @@ void NetworkInterfaceStatusTracker::setName(const std::string &name)
     if (m_name != name)
     {
         m_name = name;
-        logChange(name, this, "name");
-    }
-}
-
-void NetworkInterfaceStatusTracker::setIndex(int index)
-{
-    if (m_index != index)
-    {
-        touch();
-        m_index = index;
-        logChange(index, this, "index");
+        logTrace(name, this, "name changed to");
     }
 }
 
@@ -67,7 +55,7 @@ void NetworkInterfaceStatusTracker::setOperationalState(OperationalState opersta
     {
         m_lastChanged = std::chrono::steady_clock::now();
         m_operState = operstate;
-        logChange(operstate, this, "operational state");
+        logTrace(operstate, this, "operational state changed to");
     }
 }
 
@@ -87,7 +75,7 @@ void NetworkInterfaceStatusTracker::setEthernetAddress(const ethernet::Address &
     if (m_ethernetAddress != address)
     {
         m_ethernetAddress = address;
-        logChange(address, this, "ethernet address");
+        logTrace(address, this, "ethernet address changed to");
     }
 }
 
@@ -97,7 +85,7 @@ void NetworkInterfaceStatusTracker::setBroadcastAddress(const ethernet::Address 
     if (m_broadcastAddress != address)
     {
         m_broadcastAddress = address;
-        logChange(address, this, "broadcast address");
+        logTrace(address, this, "broadcast address changed to");
     }
 }
 
@@ -112,7 +100,16 @@ void NetworkInterfaceStatusTracker::setGatewayAddress(const ip::Address &gateway
     if (m_gateway != gateway)
     {
         m_gateway = gateway;
-        logChange(gateway, this, "gateway address");
+        logTrace(gateway, this, "gateway address changed to");
+    }
+}
+
+void NetworkInterfaceStatusTracker::clearGatewayAddress(GatewayClearReason r)
+{
+    if (m_gateway)
+    {
+        m_gateway = ip::Address();
+        logTrace(r, this, "gateway cleared due to");
     }
 }
 
@@ -130,11 +127,11 @@ void NetworkInterfaceStatusTracker::addNetworkAddress(const network::NetworkAddr
         m_networkAddresses.insert(address);
         if (isNew)
         {
-            spdlog::trace("{} {} addr added: {}", (void *)this, m_name, address);
+            logTrace(address, this, "address added");
         }
         else
         {
-            spdlog::trace("{} {} addr updated: {}", (void *)this, m_name, address);
+            logTrace(address, this, "address updated");
         }
     }
 }
@@ -145,11 +142,18 @@ void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::NetworkA
     auto res = m_networkAddresses.erase(address);
     if (res > 0)
     {
-        spdlog::trace("{} {} addr removed: {}", (void *)this, m_name, address);
+        logTrace(address, this, "address removed");
+        if (std::count_if(std::begin(m_networkAddresses), std::end(m_networkAddresses),
+                          [](const network::NetworkAddress &a) -> bool {
+                              return a.adressFamily() == ip::AddressFamily::IPv4;
+                          }) == 0)
+        {
+            clearGatewayAddress(GatewayClearReason::AllIPv4AddressesRemoved);
+        }
     }
     else
     {
-        spdlog::trace("{} {} addr not known: {}", (void *)this, m_name, address);
+        logTrace(address, this, "address unknown");
     }
 }
 
@@ -178,7 +182,7 @@ std::string to_string(NetworkInterfaceStatusTracker::OperationalState o)
     case OperState::Unknown:
         // fallthrough
     default:
-        return "Uknown";
+        return "Unknown";
     }
 }
 
@@ -186,9 +190,26 @@ std::ostream &operator<<(std::ostream &o, OperationalState op)
 {
     return o << to_string(op);
 }
+
+std::ostream &operator<<(std::ostream &o, GatewayClearReason r)
+{
+    switch (r)
+    {
+    case GatewayClearReason::LinkDown:
+        o << "LinkDown";
+        break;
+    case GatewayClearReason::RouteDeleted:
+        o << "RouteDeleted";
+        break;
+    case GatewayClearReason::AllIPv4AddressesRemoved:
+        o << "AllIPv4AddressesRemoved";
+        break;
+    }
+    return o;
+}
 std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s)
 {
-    o << s.index() << ": " << s.name();
+    o << s.name();
     if (s.m_ethernetAddress)
     {
         o << " ether " << s.m_ethernetAddress;

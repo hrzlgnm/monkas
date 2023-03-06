@@ -1,14 +1,16 @@
+#include "monitor/RtnlNetworkMonitor.h"
+#include <cstdint>
+#include <gflags/gflags.h>
 #include <gflags/gflags_declare.h>
 #include <iostream>
-
-#include "monitor/RtnlNetworkMonitor.h"
-
-#include <gflags/gflags.h>
-#include <spdlog/common.h>
+#include <network/NetworkAddress.h>
 #include <spdlog/spdlog.h>
 
 DECLARE_bool(nerdstats);
 DEFINE_bool(nerdstats, false, "Enable stats for nerds");
+
+DECLARE_bool(dumppackets);
+DEFINE_bool(dumppackets, false, "Enable dumping of rtnl packets");
 
 DECLARE_uint32(family);
 DEFINE_uint32(family, 0, "Preferred address family <4|6>");
@@ -27,6 +29,10 @@ int main(int argc, char *argv[])
     {
         options |= monkas::RuntimeFlag::StatsForNerds;
     }
+    if (FLAGS_dumppackets)
+    {
+        options |= monkas::RuntimeFlag::DumpPacktes;
+    }
     if (FLAGS_family == 4)
     {
         options |= monkas::RuntimeFlag::PreferredFamilyV4;
@@ -35,7 +41,6 @@ int main(int argc, char *argv[])
     {
         options |= monkas::RuntimeFlag::PreferredFamilyV6;
     }
-
     monkas::RtnlNetworkMonitor mon(options);
 
     return mon.run();

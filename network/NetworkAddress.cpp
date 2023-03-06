@@ -1,5 +1,6 @@
 #include "NetworkAddress.h"
 
+#include <algorithm>
 #include <iostream>
 #include <linux/rtnetlink.h>
 
@@ -104,6 +105,11 @@ std::ostream &operator<<(std::ostream &o, const NetworkAddress &a)
         o << " f " << std::hex << a.flags() << std::dec;
     }
     return o;
+}
+
+bool operator<(const NetworkAddress &lhs, const NetworkAddress &rhs)
+{
+    return lhs.ip() < rhs.ip();
 }
 
 } // namespace network

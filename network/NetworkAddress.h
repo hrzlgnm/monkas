@@ -40,10 +40,6 @@ class NetworkAddress
     uint32_t flags() const;
 
   private:
-    friend bool operator<(const NetworkAddress &a, const NetworkAddress &b)
-    {
-        return a.m_ip < b.m_ip;
-    }
     AddressFamily m_af;
     ip::Address m_ip;
     ip::Address m_brd;
@@ -52,6 +48,7 @@ class NetworkAddress
     uint32_t m_flags;
 };
 std::ostream &operator<<(std::ostream &o, const NetworkAddress &a);
+bool operator<(const NetworkAddress &lhs, const NetworkAddress &rhs);
 
 } // namespace network
 } // namespace monkas
