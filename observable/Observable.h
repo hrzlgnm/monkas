@@ -12,6 +12,7 @@ template <typename... Args> class Observable
     using Observer = std::function<void(Args...)>;
     using Observers = std::list<Observer>;
     using Token = typename Observers::const_iterator;
+
     Token addListener(const Observer &observer)
     {
         return m_observers.insert(m_observers.end(), observer);
@@ -44,6 +45,10 @@ template <typename... Args> class Observable
     }
 
   private:
+    Observable(const Observable &) = delete;
+    Observable &operator=(const Observable &) = delete;
+    Observable(Observable &&) = delete;
+
     Observers m_observers;
     std::forward_list<Token> m_tokensToRemove;
     bool m_broadCasting{false};
