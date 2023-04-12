@@ -17,6 +17,7 @@ add_executable(${PROJECT_NAME})
 # TODO: make monka lib and main link with lib
 target_sources(${PROJECT_NAME}
     PRIVATE
+        observable/Observable.h
         ethernet/Address.cpp
         ethernet/Address.h
         ip/Address.cpp
