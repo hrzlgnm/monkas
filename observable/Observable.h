@@ -29,6 +29,8 @@ template <typename... Args> class Observable
     void broadcast(Args... args)
     {
         m_broadCasting = true;
+        // @todo catch exceptions
+        // @todo don't observers that were removed during dispatch
         for (const auto &observer : m_observers)
         {
             observer(std::forward<Args>(args)...);
