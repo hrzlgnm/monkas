@@ -30,7 +30,7 @@ template <typename... Args> class Observable
     {
         m_broadCasting = true;
         // @todo catch exceptions
-        // @todo don't observers that were removed during dispatch
+        // @todo don't call observers that were removed during dispatch
         for (const auto &observer : m_observers)
         {
             observer(std::forward<Args>(args)...);
