@@ -296,7 +296,6 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
         {
             const uint8_t *addr = (const uint8_t *)mnl_attr_get_payload(attributes[IFA_BROADCAST]);
             broadcast = ip::Address::fromBytes(addr, addr_len);
-            spdlog::trace("broadcast {}", broadcast);
         }
     }
     if (attributes[IFA_LOCAL])
