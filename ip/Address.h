@@ -1,5 +1,4 @@
-#ifndef MONKAS_IP_ADDRESS_H
-#define MONKAS_IP_ADDRESS_H
+#pragma once
 
 #include <array>
 #include <cstdint>
@@ -56,4 +55,3 @@ template <> struct fmt::formatter<monkas::ip::Address> : fmt::formatter<std::str
         return format_to(ctx.out(), "{}", addr.toString());
     }
 };
-#endif

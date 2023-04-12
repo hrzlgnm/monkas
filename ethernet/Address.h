@@ -1,5 +1,4 @@
-#ifndef MONKAS_ETHERNET_ADDESS_H
-#define MONKAS_ETHERNET_ADDESS_H
+#pragma once
 
 #include <array>
 #include <cstdint>
@@ -35,4 +34,3 @@ template <> struct fmt::formatter<monkas::ethernet::Address> : fmt::formatter<st
     }
 };
 
-#endif

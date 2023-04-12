@@ -1,5 +1,4 @@
-#ifndef RTNLNETWORKMONITOR_H
-#define RTNLNETWORKMONITOR_H
+#pragma once
 
 #include "network/NetworkInterfaceStatusTracker.h"
 #include <cstdint>
@@ -130,4 +129,3 @@ class RtnlNetworkMonitor
 };
 } // namespace monkas
 
-#endif

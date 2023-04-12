@@ -1,5 +1,4 @@
-#ifndef MONKAS_NETWORK_NETWORKADDRESS_H
-#define MONKAS_NETWORK_NETWORKADDRESS_H
+#pragma once
 
 #include "ip/Address.h"
 #include <sstream>
@@ -62,4 +61,3 @@ template <> struct fmt::formatter<monkas::network::NetworkAddress> : fmt::format
     }
 };
 
-#endif // MONKAS_NETWORK_NETWORKADDRESS_H

@@ -1,5 +1,4 @@
-#ifndef NETWORKINTERFACESTATUSTRACKER_H
-#define NETWORKINTERFACESTATUSTRACKER_H
+#pragma once
 
 #include "ethernet/Address.h"
 #include "network/NetworkAddress.h"
@@ -108,4 +107,3 @@ template <> struct fmt::formatter<monkas::GatewayClearReason> : fmt::formatter<s
     }
 };
 
-#endif

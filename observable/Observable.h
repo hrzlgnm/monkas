@@ -1,5 +1,4 @@
-#ifndef BROADCASTER_H
-#define BROADCASTER_H
+#pragma once
 
 #include <forward_list>
 #include <functional>
@@ -48,4 +47,3 @@ template <typename... Args> class Observable
     bool m_broadCasting{false};
 };
 
-#endif // BROADCASTER_H
