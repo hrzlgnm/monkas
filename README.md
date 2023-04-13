@@ -14,7 +14,7 @@ sudo apt install build-essential cmake libnml-dev libspdlog-dev
 
 # Quick Start
 ```console
-cmake -B build -S .
+cmake -DBUILD_EXAMPLES=ON -B build -S .
 cmake --build build
-build/monkas
+build/examples/cli/monkas
 ```
