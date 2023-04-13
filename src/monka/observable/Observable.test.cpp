@@ -60,8 +60,8 @@ TEST_CASE("Observable tests", "[observable]")
         int last_a = 0;
         o.addListener([](int) { throw std::runtime_error("banana"); });
         o.addListener([&last_a](int a) { last_a = a; });
-        o.broadcast(5);
-        o.broadcast(6);
+        REQUIRE_NOTHROW(o.broadcast(5));
+        REQUIRE_NOTHROW(o.broadcast(6));
         REQUIRE(last_a == 6);
     }
 }
