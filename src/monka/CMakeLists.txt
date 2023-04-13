@@ -8,9 +8,10 @@ set(PUBLIC_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/${TARGET_NAME})
 
 set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/ethernet/Address.h
-    ${PUBLIC_INCLUDE_DIR}/monitor/RtnlNetworkMonitor.h
-    ${PUBLIC_INCLUDE_DIR}/network/NetworkAddress.h
     ${PUBLIC_INCLUDE_DIR}/ip/Address.h
+    ${PUBLIC_INCLUDE_DIR}/network/NetworkAddress.h
+    ${PUBLIC_INCLUDE_DIR}/monitor/NetworkInterfaceStatusTracker.h
+    ${PUBLIC_INCLUDE_DIR}/monitor/RtnlNetworkMonitor.h
 )
 
 target_include_directories(${TARGET_NAME}
@@ -26,7 +27,6 @@ target_sources(${TARGET_NAME}
         ip/Address.cpp
         network/NetworkAddress.cpp
         monitor/NetworkInterfaceStatusTracker.cpp
-        monitor/NetworkInterfaceStatusTracker.h
         monitor/RtnlNetworkMonitor.cpp
         observable/Observable.h
         ${PUBLIC_HEADERS}
