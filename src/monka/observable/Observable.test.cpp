@@ -35,7 +35,7 @@ TEST_CASE("Observable tests", "[observable]")
         REQUIRE(last_a == 0);
     }
 
-    SECTION("unregistered listener during dispatch is no called when broadcasting")
+    SECTION("unregistered listener during dispatch is not called when broadcasting")
     {
         int a_count = 0;
         int b_count = 0;
