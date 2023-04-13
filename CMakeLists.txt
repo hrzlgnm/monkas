@@ -9,15 +9,18 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(libmnl REQUIRED IMPORTED_TARGET libmnl)
 pkg_check_modules(gflags REQUIRED IMPORTED_TARGET gflags)
 
+option(BUILD_TESTS OFF)
+option(BUILD_EXAMPLES OFF)
+
 if(NOT TARGET spdlog)
     # Stand-alone build
     find_package(spdlog REQUIRED)
 endif()
-
-add_subdirectory(external/Catch2)
+if(BUILD_TESTS)
+    add_subdirectory(external/Catch2)
 include(CTest)
+endif()
 
-option(BUILD_EXAMPLES OFF)
 if(BUILD_EXAMPLES) 
     add_subdirectory(examples)
 endif()
