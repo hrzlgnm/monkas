@@ -16,12 +16,14 @@ if(NOT TARGET spdlog)
     # Stand-alone build
     find_package(spdlog REQUIRED)
 endif()
+
 if(BUILD_TESTS)
     add_subdirectory(external/Catch2)
-include(CTest)
+    include(CTest)
 endif()
 
 if(BUILD_EXAMPLES) 
     add_subdirectory(examples)
 endif()
+
 add_subdirectory(src)
