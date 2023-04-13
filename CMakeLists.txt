@@ -12,30 +12,12 @@ if(NOT TARGET spdlog)
     # Stand-alone build
     find_package(spdlog REQUIRED)
 endif()
-add_executable(${PROJECT_NAME})
 
-# TODO: make monka lib and main link with lib
-target_sources(${PROJECT_NAME}
-    PRIVATE
-        observable/Observable.h
-        ethernet/Address.cpp
-        ethernet/Address.h
-        ip/Address.cpp
-        ip/Address.h
-        main.cpp
-        monitor/RtnlNetworkMonitor.cpp
-        monitor/RtnlNetworkMonitor.h
-        network/NetworkAddress.cpp
-        network/NetworkAddress.h
-        network/NetworkInterfaceStatusTracker.cpp
-        network/NetworkInterfaceStatusTracker.h
-)
+option(BUILD_EXAMPLES OFF)
+if(BUILD_EXAMPLES) 
+    add_subdirectory(examples)
+endif()
 
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-        PkgConfig::gflags
-        PkgConfig::libmnl
-        spdlog::spdlog
-)
+add_subdirectory(external/Catch2)
 
-install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+add_subdirectory(src)

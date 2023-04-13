@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ethernet/Address.h"
-#include "network/NetworkAddress.h"
 #include <chrono>
+#include <ethernet/Address.h>
+#include <network/NetworkAddress.h>
 #include <set>
 #include <sstream>
 #include <string>

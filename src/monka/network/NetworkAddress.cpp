@@ -1,4 +1,4 @@
-#include "NetworkAddress.h"
+#include <network/NetworkAddress.h>
 
 #include <algorithm>
 #include <iostream>
