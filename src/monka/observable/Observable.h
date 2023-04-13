@@ -1,8 +1,11 @@
 #pragma once
 
+#include <exception>
 #include <forward_list>
 #include <functional>
+#include <iterator>
 #include <list>
+#include <spdlog/spdlog.h>
 #include <utility>
 
 template <typename... Args> class Observable
@@ -30,11 +33,20 @@ template <typename... Args> class Observable
     void broadcast(Args... args)
     {
         m_broadCasting = true;
-        // @todo catch exceptions
-        // @todo don't call observers that were removed during dispatch
-        for (const auto &observer : m_observers)
+        for (auto itr{std::cbegin(m_observers)}; itr != std::cend(m_observers); ++itr)
         {
-            observer(std::forward<Args>(args)...);
+            if (std::find(std::cbegin(m_tokensToRemove), std::cend(m_tokensToRemove), itr) ==
+                std::cend(m_tokensToRemove))
+            {
+                try
+                {
+                    (*itr)(std::forward<Args>(args)...);
+                }
+                catch (const std::exception &e)
+                {
+                    spdlog::error("Caught an unexpected exception from observer: {}", e.what());
+                }
+            }
         }
         m_broadCasting = false;
         for (const auto token : m_tokensToRemove)

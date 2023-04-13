@@ -13,11 +13,18 @@ if(NOT TARGET spdlog)
     find_package(spdlog REQUIRED)
 endif()
 
+add_subdirectory(external/Catch2)
+include(CTest)
+
+
 option(BUILD_EXAMPLES OFF)
 if(BUILD_EXAMPLES) 
     add_subdirectory(examples)
 endif()
 
-add_subdirectory(external/Catch2)
+
+
+
 
 add_subdirectory(src)
+

@@ -40,4 +40,18 @@ target_link_libraries(${TARGET_NAME}
 )
 
 
+add_executable(monka_tests)
+
+target_sources(monka_tests
+    PRIVATE
+        observable/Observable.test.cpp
+)
+
+target_link_libraries(monka_tests
+    PRIVATE
+        monka::monka
+        Catch2::Catch2WithMain
+        
+)
+catch_discover_tests(monka_tests)
 
