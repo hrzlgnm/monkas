@@ -1,0 +1,9 @@
+image: gcc
+before_script:
+  - apt-get update --yes
+  - apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev
+
+build:
+  script:
+    - cmake -DBUILD_EXAMPLES=ON -B build -S .
+    - cmake --build build
