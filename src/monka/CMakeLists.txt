@@ -14,6 +14,9 @@ set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/monitor/RtnlNetworkMonitor.h
 )
 
+target_compile_definitions(${TARGET_NAME}
+    PUBLIC SPDLOG_FMT_EXTERNAL)
+
 target_include_directories(${TARGET_NAME}
     PUBLIC
         ${PUBLIC_INCLUDE_DIR}
