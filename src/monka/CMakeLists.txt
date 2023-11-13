@@ -1,8 +1,7 @@
-
 set(TARGET_NAME monka)
 
-add_library(${TARGET_NAME})
-add_library(${TARGET_NAME}::${TARGET_NAME} ALIAS ${TARGET_NAME})
+add_library(${TARGET_NAME} OBJECT)
+add_library(${TARGET_NAME}::lib ALIAS ${TARGET_NAME})
 
 set(PUBLIC_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/${TARGET_NAME})
 
@@ -28,10 +27,11 @@ target_sources(${TARGET_NAME}
     PRIVATE
         ethernet/Address.cpp
         ip/Address.cpp
-        network/NetworkAddress.cpp
         monitor/NetworkInterfaceStatusTracker.cpp
         monitor/RtnlNetworkMonitor.cpp
+        network/NetworkAddress.cpp
         observable/Observable.h
+        observable/Observable.test.cpp
         ${PUBLIC_HEADERS}
 )
 
@@ -40,20 +40,7 @@ target_link_libraries(${TARGET_NAME}
         PkgConfig::gflags
         PkgConfig::libmnl
         spdlog::spdlog
+        doctest::doctest
+        doctest::dll
 )
 
-if(BUILD_TESTS)
-    add_executable(monka_tests)
-
-    target_sources(monka_tests
-        PRIVATE
-            observable/Observable.test.cpp
-    )
-
-    target_link_libraries(monka_tests
-        PRIVATE
-            monka::monka
-            Catch2::Catch2WithMain
-    )
-    catch_discover_tests(monka_tests)
-endif()

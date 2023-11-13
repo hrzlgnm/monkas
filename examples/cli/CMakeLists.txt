@@ -5,7 +5,8 @@ target_sources(monkas
         main.cpp
 )
 
+target_compile_definitions(monkas PRIVATE DOCTEST_CONFIG_DISABLE)
 target_link_libraries(monkas
     PRIVATE
-        monka::monka
+        monka::lib
 )

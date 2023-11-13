@@ -13,17 +13,16 @@ option(BUILD_TESTS OFF)
 option(BUILD_EXAMPLES OFF)
 
 if(NOT TARGET spdlog)
-    # Stand-alone build
-    find_package(spdlog REQUIRED)
+  find_package(spdlog REQUIRED)
 endif()
 
 if(BUILD_TESTS)
-    add_subdirectory(external/Catch2)
-    include(CTest)
+  include(CTest)
+  add_subdirectory(external/doctest)
 endif()
 
-if(BUILD_EXAMPLES) 
-    add_subdirectory(examples)
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()
 
 add_subdirectory(src)

@@ -1,9 +1,10 @@
 image: gcc
 before_script:
   - apt-get update --yes
-  - apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev
+  - apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev ninja-build
 
 build:
   script:
-    - cmake -DBUILD_EXAMPLES=ON -B build -S .
-    - cmake --build build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON -DBUILD_TESTS=ON -G Ninja -B build -S .
+    - cmake --build build --config Release
+    - cd build && ctest --no-tests=error --verbose

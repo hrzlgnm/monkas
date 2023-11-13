@@ -1,23 +1,24 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <memory>
 #include <observable/Observable.h>
 #include <stdexcept>
 
-TEST_CASE("Observable tests", "[observable]")
+namespace
+{
+TEST_SUITE_BEGIN("[observable]");
+TEST_CASE("Observable tests")
 {
     Observable<int> o;
-
-    SECTION("registering listener and calling broadcast calls listener")
+    int last_a = 0;
+    SUBCASE("registering listener and calling broadcast calls listener")
     {
-        int last_a = 0;
         o.addListener([&last_a](int a) { last_a = a; });
         o.broadcast(5);
         REQUIRE(last_a == 5);
     }
 
-    SECTION("registering two listener and calling broadcast calls listener")
+    SUBCASE("registering two listener and calling broadcast calls listener")
     {
-        int last_a = 0;
         int last_b = 0;
         o.addListener([&last_a](int a) { last_a = a; });
         o.addListener([&last_b](int b) { last_b = b; });
@@ -26,16 +27,15 @@ TEST_CASE("Observable tests", "[observable]")
         REQUIRE(last_b == 5);
     }
 
-    SECTION("unregistered listener is no called when broadcasting")
+    SUBCASE("unregistered listener is no called when broadcasting")
     {
-        int last_a = 0;
         const auto t = o.addListener([&last_a](int a) { last_a = a; });
         o.removeListener(t);
         o.broadcast(5);
         REQUIRE(last_a == 0);
     }
 
-    SECTION("unregistered listener during dispatch is not called when broadcasting")
+    SUBCASE("unregistered listener during dispatch is not called when broadcasting")
     {
         int a_count = 0;
         int b_count = 0;
@@ -55,9 +55,8 @@ TEST_CASE("Observable tests", "[observable]")
         REQUIRE(b_count == 0);
     }
 
-    SECTION("if one of two listeners throws the second one is still called")
+    SUBCASE("if one of two listeners throws the second one is still called")
     {
-        int last_a = 0;
         o.addListener([](int) { throw std::runtime_error("banana"); });
         o.addListener([&last_a](int a) { last_a = a; });
         REQUIRE_NOTHROW(o.broadcast(5));
@@ -65,3 +64,5 @@ TEST_CASE("Observable tests", "[observable]")
         REQUIRE(last_a == 6);
     }
 }
+TEST_SUITE_END();
+} // namespace
