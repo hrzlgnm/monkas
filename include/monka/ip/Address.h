@@ -38,6 +38,8 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     std::string toString() const;
 
     static Address fromBytes(const uint8_t *bytes, size_type len);
+    static Address fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes);
+    static Address fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes);
 
   private:
     AddressFamily m_addressFamily{AddressFamily::Unspecified};

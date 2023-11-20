@@ -1,3 +1,4 @@
+#include <doctest/doctest.h>
 #include <ip/Address.h>
 
 #include <algorithm>
@@ -70,6 +71,16 @@ Address Address::fromBytes(const uint8_t *bytes, size_type len)
     return Address();
 }
 
+Address Address::fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes)
+{
+    return fromBytes(bytes.data(), bytes.size());
+}
+
+Address Address::fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes)
+{
+    return fromBytes(bytes.data(), bytes.size());
+}
+
 std::string Address::toString() const
 {
     char out[INET6_ADDRSTRLEN];
@@ -108,3 +119,33 @@ bool operator==(const Address &lhs, const Address &rhs)
 
 } // namespace ip
 } // namespace monkas
+//
+namespace
+{
+using namespace monkas::ip;
+TEST_SUITE_BEGIN("[ip::Address]");
+TEST_CASE("toString")
+{
+    std::array<uint8_t, 4> bytes{127, 0, 0, 1};
+    REQUIRE(Address::fromBytes(bytes.data(), bytes.size()).toString() == "127.0.0.1");
+
+    std::array<uint8_t, 16> bytes6{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+    REQUIRE(Address::fromBytes(bytes6.data(), bytes6.size()).toString() == "::1");
+}
+TEST_CASE("operator ==")
+{
+    std::array<uint8_t, 4> bytes{127, 0, 0, 1};
+    REQUIRE(Address::fromBytes(bytes.data(), bytes.size()) == Address::fromBytes(bytes.data(), bytes.size()));
+}
+
+TEST_CASE("operator <")
+{
+    std::array<uint8_t, 4> localhost4{127, 0, 0, 1};
+    std::array<uint8_t, 4> localhost4_other{127, 0, 1, 1};
+
+    REQUIRE(Address::fromBytes(localhost4) < Address::fromBytes(localhost4_other));
+
+    std::array<uint8_t, 16> localhost6{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+    REQUIRE(Address::fromBytes(localhost4) < Address::fromBytes(localhost6));
+}
+} // namespace
