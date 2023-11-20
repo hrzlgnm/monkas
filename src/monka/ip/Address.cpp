@@ -123,29 +123,38 @@ bool operator==(const Address &lhs, const Address &rhs)
 namespace
 {
 using namespace monkas::ip;
-TEST_SUITE_BEGIN("[ip::Address]");
-TEST_CASE("toString")
-{
-    std::array<uint8_t, 4> bytes{127, 0, 0, 1};
-    REQUIRE(Address::fromBytes(bytes.data(), bytes.size()).toString() == "127.0.0.1");
-
-    std::array<uint8_t, 16> bytes6{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-    REQUIRE(Address::fromBytes(bytes6.data(), bytes6.size()).toString() == "::1");
-}
-TEST_CASE("operator ==")
-{
-    std::array<uint8_t, 4> bytes{127, 0, 0, 1};
-    REQUIRE(Address::fromBytes(bytes.data(), bytes.size()) == Address::fromBytes(bytes.data(), bytes.size()));
-}
-
-TEST_CASE("operator <")
+TEST_SUITE("[ip::Address]")
 {
     std::array<uint8_t, 4> localhost4{127, 0, 0, 1};
-    std::array<uint8_t, 4> localhost4_other{127, 0, 1, 1};
-
-    REQUIRE(Address::fromBytes(localhost4) < Address::fromBytes(localhost4_other));
-
     std::array<uint8_t, 16> localhost6{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-    REQUIRE(Address::fromBytes(localhost4) < Address::fromBytes(localhost6));
+
+    TEST_CASE("toString")
+    {
+        REQUIRE(Address::fromBytes(localhost4).toString() == "127.0.0.1");
+        REQUIRE(Address::fromBytes(localhost6).toString() == "::1");
+    }
+
+    TEST_CASE("operator ==")
+    {
+        REQUIRE(Address::fromBytes(localhost4) == Address::fromBytes(localhost4));
+    }
+
+    TEST_CASE("operator !=")
+    {
+        REQUIRE(Address{} != Address::fromBytes(localhost4));
+
+        REQUIRE(Address{} != Address::fromBytes(localhost6));
+        REQUIRE(Address::fromBytes(localhost4) != Address::fromBytes(localhost6));
+    }
+
+    TEST_CASE("operator <")
+    {
+        REQUIRE(Address{} < Address::fromBytes(localhost4));
+
+        std::array<uint8_t, 4> localhost4_other{127, 0, 1, 1};
+        REQUIRE(Address::fromBytes(localhost4) < Address::fromBytes(localhost4_other));
+
+        REQUIRE(Address::fromBytes(localhost4) < Address::fromBytes(localhost6));
+    }
 }
 } // namespace
