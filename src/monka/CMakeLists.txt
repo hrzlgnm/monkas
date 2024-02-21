@@ -31,7 +31,6 @@ target_sources(${TARGET_NAME}
         monitor/RtnlNetworkMonitor.cpp
         network/NetworkAddress.cpp
         observable/Observable.h
-        observable/Observable.test.cpp
         ${PUBLIC_HEADERS}
 )
 
@@ -40,7 +39,18 @@ target_link_libraries(${TARGET_NAME}
         PkgConfig::gflags
         PkgConfig::libmnl
         spdlog::spdlog
-        doctest::doctest
-        doctest::dll
 )
+
+if (BUILD_TESTS)
+  target_sources(${TARGET_NAME}
+    PRIVATE
+      ip/Address.test.cpp
+      observable/Observable.test.cpp
+  )
+  target_link_libraries(${TARGET_NAME}
+    PRIVATE
+       doctest::doctest
+       doctest::dll
+  )
+endif()
 

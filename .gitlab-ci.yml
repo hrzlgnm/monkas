@@ -3,7 +3,12 @@ before_script:
   - apt-get update --yes
   - apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev ninja-build
 
-build:
+build_defaults:
+  script:
+    - cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -B build -S .
+    - cmake --build build --config Release
+
+build_tests:
   script:
     - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON -DBUILD_TESTS=ON -G Ninja -B build -S .
     - cmake --build build --config Release
