@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <exception>
 #include <forward_list>
 #include <functional>
@@ -65,4 +66,3 @@ template <typename... Args> class Observable
     std::forward_list<Token> m_tokensToRemove;
     bool m_broadCasting{false};
 };
-
