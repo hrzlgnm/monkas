@@ -25,13 +25,13 @@ target_include_directories(${TARGET_NAME}
 
 target_sources(${TARGET_NAME}
     PRIVATE
+        ${PUBLIC_HEADERS}
         ethernet/Address.cpp
         ip/Address.cpp
         monitor/NetworkInterfaceStatusTracker.cpp
         monitor/RtnlNetworkMonitor.cpp
         network/NetworkAddress.cpp
         observable/Observable.h
-        ${PUBLIC_HEADERS}
 )
 
 target_link_libraries(${TARGET_NAME}
@@ -49,8 +49,8 @@ if (BUILD_TESTS)
   )
   target_link_libraries(${TARGET_NAME}
     PRIVATE
-       doctest::doctest
        doctest::dll
+       doctest::doctest
   )
 endif()
 
