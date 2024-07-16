@@ -2,6 +2,7 @@
 #include <monitor/NetworkInterfaceStatusTracker.h>
 #include <network/NetworkAddress.h>
 
+#include <algorithm>
 #include <spdlog/spdlog.h>
 #include <string_view>
 
