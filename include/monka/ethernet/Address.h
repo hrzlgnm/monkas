@@ -21,6 +21,7 @@ class Address : public std::array<uint8_t, ADDR_LEN>
     explicit operator bool() const;
 
     static Address fromBytes(const uint8_t *bytes, size_type len);
+    static Address fromBytes(const std::array<uint8_t, ADDR_LEN> &bytes);
 };
 std::ostream &operator<<(std::ostream &o, const Address &a);
 
@@ -33,4 +34,3 @@ template <> struct fmt::formatter<monkas::ethernet::Address> : fmt::formatter<st
         return format_to(ctx.out(), "{}", addr.toString());
     }
 };
-

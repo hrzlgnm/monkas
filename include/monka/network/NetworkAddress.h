@@ -24,6 +24,7 @@ AddressScope fromRtnlScope(uint8_t rtnlScope);
 class NetworkAddress
 {
   public:
+    NetworkAddress() = default;
     NetworkAddress(AddressFamily addresFamily, const ip::Address &address, const ip::Address &broadcast,
                    uint8_t prefixLen, AddressScope scope, uint32_t flags);
     /**
@@ -39,15 +40,17 @@ class NetworkAddress
     uint32_t flags() const;
 
   private:
-    AddressFamily m_af;
+    AddressFamily m_af{AddressFamily::Unspecified};
     ip::Address m_ip;
     ip::Address m_brd;
-    uint8_t m_prefixlen;
-    AddressScope m_scope;
-    uint32_t m_flags;
+    uint8_t m_prefixlen{0};
+    AddressScope m_scope{AddressScope::Nowhere};
+    uint32_t m_flags{};
 };
+
 std::ostream &operator<<(std::ostream &o, const NetworkAddress &a);
 bool operator<(const NetworkAddress &lhs, const NetworkAddress &rhs);
+bool operator>=(const NetworkAddress &lhs, const NetworkAddress &rhs);
 
 } // namespace network
 } // namespace monkas
@@ -60,4 +63,3 @@ template <> struct fmt::formatter<monkas::network::NetworkAddress> : fmt::format
         return format_to(ctx.out(), "{}", strm.str());
     }
 };
-

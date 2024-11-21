@@ -44,7 +44,9 @@ target_link_libraries(${TARGET_NAME}
 if (BUILD_TESTS)
   target_sources(${TARGET_NAME}
     PRIVATE
+      ethernet/Address.test.cpp
       ip/Address.test.cpp
+      network/NetworkAddress.test.cpp
       observable/Observable.test.cpp
   )
   target_link_libraries(${TARGET_NAME}

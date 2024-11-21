@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cstdio>
-#include <sstream>
+#include <ostream>
 
 namespace monkas
 {
@@ -19,7 +19,10 @@ Address Address::fromBytes(const uint8_t *bytes, size_type len)
     }
     return Address();
 }
-
+Address Address::fromBytes(const std::array<uint8_t, ADDR_LEN> &bytes)
+{
+    return fromBytes(bytes.data(), bytes.size());
+}
 std::string Address::toString() const
 {
     char buf[18]; // 6*2 chars + 5 sep + nul
