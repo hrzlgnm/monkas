@@ -10,9 +10,9 @@ jobs:
   build_release:
     runs-on: ubuntu-latest
     container:
-      image: gcc
+      image: gcc@sha256:a4da41bd17f92a512d2e59f3272ae6315fd01ff4857875f8b6c7dac207410ead
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install dependencies
         run: |
@@ -27,9 +27,9 @@ jobs:
   build_test:
     runs-on: ubuntu-latest
     container:
-      image: gcc
+      image: gcc@sha256:a4da41bd17f92a512d2e59f3272ae6315fd01ff4857875f8b6c7dac207410ead
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install dependencies
         run: |
