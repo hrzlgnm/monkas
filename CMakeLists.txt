@@ -7,6 +7,7 @@ option(BUILD_EXAMPLES "Build examples" ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
 include(GNUInstallDirs)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(libmnl REQUIRED IMPORTED_TARGET libmnl)

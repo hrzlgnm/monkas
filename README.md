@@ -26,7 +26,7 @@ sudo apt install build-essential cmake libmnl-dev libspdlog-dev libgflags-dev
 # Quick Start
 
 ```console
-cmake -DBUILD_EXAMPLES=ON -B build -S .
+cmake -B build -S .
 cmake --build build
 build/examples/cli/monkas
 ```

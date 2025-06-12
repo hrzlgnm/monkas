@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ip/Address.h"
-#include <sstream>
+#include <fmt/ostream.h>
+#include <ip/Address.hpp>
 
 namespace monkas
 {
@@ -48,18 +48,17 @@ class NetworkAddress
     uint32_t m_flags{};
 };
 
-std::ostream &operator<<(std::ostream &o, const NetworkAddress &a);
+bool operator==(const NetworkAddress &lhs, const NetworkAddress &rhs);
+bool operator!=(const NetworkAddress &lhs, const NetworkAddress &rhs);
 bool operator<(const NetworkAddress &lhs, const NetworkAddress &rhs);
 bool operator>=(const NetworkAddress &lhs, const NetworkAddress &rhs);
 
+std::ostream &operator<<(std::ostream &o, const NetworkAddress &a);
+
 } // namespace network
 } // namespace monkas
-template <> struct fmt::formatter<monkas::network::NetworkAddress> : fmt::formatter<std::string>
+
+template <> struct fmt::formatter<monkas::network::NetworkAddress> : fmt::ostream_formatter
 {
-    auto format(const monkas::network::NetworkAddress &addr, format_context &ctx) -> decltype(ctx.out())
-    {
-        std::ostringstream strm;
-        strm << addr;
-        return format_to(ctx.out(), "{}", strm.str());
-    }
 };
+;

@@ -1,10 +1,10 @@
 #pragma once
 
 #include <chrono>
-#include <ethernet/Address.h>
-#include <network/NetworkAddress.h>
+#include <ethernet/Address.hpp>
+#include <fmt/ostream.h>
+#include <network/NetworkAddress.hpp>
 #include <set>
-#include <sstream>
 #include <string>
 
 namespace monkas
@@ -72,38 +72,22 @@ class NetworkInterfaceStatusTracker
     ip::Address m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
 };
+
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
 std::ostream &operator<<(std::ostream &o, OperationalState op);
 using GatewayClearReason = NetworkInterfaceStatusTracker::GatewayClearReason;
 std::ostream &operator<<(std::ostream &o, GatewayClearReason r);
 
 } // namespace monkas
-template <> struct fmt::formatter<monkas::NetworkInterfaceStatusTracker> : fmt::formatter<std::string>
+
+template <> struct fmt::formatter<monkas::NetworkInterfaceStatusTracker> : fmt::ostream_formatter
 {
-    auto format(const monkas::NetworkInterfaceStatusTracker &addr, format_context &ctx) -> decltype(ctx.out())
-    {
-        std::ostringstream strm;
-        strm << addr;
-        return format_to(ctx.out(), "{}", strm.str());
-    }
 };
 
-template <> struct fmt::formatter<monkas::OperationalState> : fmt::formatter<std::string>
+template <> struct fmt::formatter<monkas::OperationalState> : fmt::ostream_formatter
 {
-    auto format(const monkas::OperationalState op, format_context &ctx) -> decltype(ctx.out())
-    {
-        std::ostringstream strm;
-        strm << op;
-        return format_to(ctx.out(), "{}", strm.str());
-    }
-};
-template <> struct fmt::formatter<monkas::GatewayClearReason> : fmt::formatter<std::string>
-{
-    auto format(const monkas::GatewayClearReason r, format_context &ctx) -> decltype(ctx.out())
-    {
-        std::ostringstream strm;
-        strm << r;
-        return format_to(ctx.out(), "{}", strm.str());
-    }
 };
 
+template <> struct fmt::formatter<monkas::GatewayClearReason> : fmt::ostream_formatter
+{
+};

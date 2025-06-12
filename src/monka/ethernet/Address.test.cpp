@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include <ethernet/Address.h>
+#include <ethernet/Address.hpp>
 
 namespace
 {
@@ -11,34 +11,35 @@ TEST_SUITE("[ethernet::Address]")
     std::array<uint8_t, 6> some{1, 2, 3, 4, 5, 0x1A};
     TEST_CASE("toString")
     {
-        REQUIRE(Address::fromBytes(null).toString() == "00:00:00:00:00:00");
-        REQUIRE(Address::fromBytes(some).toString() == "01:02:03:04:05:1a");
+        CHECK(Address::fromBytes(null).toString() == "00:00:00:00:00:00");
+        CHECK(Address::fromBytes(some).toString() == "01:02:03:04:05:1a");
     }
 
     TEST_CASE("operator ==")
     {
-        REQUIRE(Address{} == Address::fromBytes(null));
-        REQUIRE(Address::fromBytes(null) == Address::fromBytes(null));
-        REQUIRE(Address::fromBytes(some) == Address::fromBytes(some));
+        CHECK(Address{} == Address::fromBytes(null));
+        CHECK(Address::fromBytes(null) == Address::fromBytes(null));
+        CHECK(Address::fromBytes(some) == Address::fromBytes(some));
     }
 
     TEST_CASE("operator !=")
     {
-        REQUIRE(Address{} != Address::fromBytes(some));
-        REQUIRE(Address::fromBytes(null) != Address::fromBytes(some));
+        CHECK(Address{} != Address::fromBytes(some));
+        CHECK(Address::fromBytes(null) != Address::fromBytes(some));
     }
 
     TEST_CASE("operator <")
     {
-        REQUIRE(Address{} < Address::fromBytes(some));
+        CHECK(Address{} < Address::fromBytes(some));
 
-        REQUIRE(Address::fromBytes(null) < Address::fromBytes(some));
+        CHECK(Address::fromBytes(null) < Address::fromBytes(some));
     }
+
     TEST_CASE("operator bool")
     {
-        REQUIRE(!Address{});
-        REQUIRE(!Address::fromBytes(null));
-        REQUIRE(Address::fromBytes(some));
+        CHECK(!Address{});
+        CHECK(!Address::fromBytes(null));
+        CHECK(Address::fromBytes(some));
     }
 }
 } // namespace

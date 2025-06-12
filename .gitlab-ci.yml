@@ -1,7 +1,7 @@
 image: gcc
 before_script:
   - apt-get update --yes
-  - apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev ninja-build
+  - apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev ninja-build libasan6 libubsan1
 
 build_defaults:
   script:
@@ -10,6 +10,9 @@ build_defaults:
 
 build_tests:
   script:
-    - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON -DBUILD_TESTS=ON -G Ninja -B build -S .
-    - cmake --build build --config Release
+    - cmake -DCMAKE_BUILD_TYPE=Debug -D CMAKE_C_FLAGS="-fno-omit-frame-pointer -fsanitize=address,undefined" -D CMAKE_CXX_FLAGS="-fno-omit-frame-pointer -fsanitize=address,undefined" -G Ninja -B build -S .
+    - cmake --build build --config Debug
     - cd build && ctest --no-tests=error --verbose
+    - cd examples/cli
+    - ./monkas --help || true
+    - timeout --preserve-status 1 ./monkas -nerdstats -dumppackets || true

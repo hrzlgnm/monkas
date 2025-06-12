@@ -2,8 +2,8 @@
 
 #include <array>
 #include <cstdint>
+#include <fmt/ostream.h>
 #include <iosfwd>
-#include <spdlog/fmt/fmt.h>
 
 namespace monkas
 {
@@ -27,10 +27,7 @@ std::ostream &operator<<(std::ostream &o, const Address &a);
 
 } // namespace ethernet
 } // namespace monkas
-template <> struct fmt::formatter<monkas::ethernet::Address> : fmt::formatter<std::string>
+
+template <> struct fmt::formatter<monkas::ethernet::Address> : fmt::ostream_formatter
 {
-    auto format(const monkas::ethernet::Address &addr, format_context &ctx) -> decltype(ctx.out())
-    {
-        return format_to(ctx.out(), "{}", addr.toString());
-    }
 };

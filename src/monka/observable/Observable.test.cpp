@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 #include <memory>
-#include <observable/Observable.h>
+#include <observable/Observable.hpp>
 #include <stdexcept>
 
 namespace
@@ -55,9 +55,10 @@ TEST_CASE("Observable tests")
         REQUIRE(b_count == 0);
     }
 
-    SUBCASE("if one of two listeners throws the second one is still called")
+    SUBCASE("if two of three listeners throws the last one is still called")
     {
         o.addListener([](int) { throw std::runtime_error("banana"); });
+        o.addListener([](int) { throw 1; });
         o.addListener([&last_a](int a) { last_a = a; });
         REQUIRE_NOTHROW(o.broadcast(5));
         REQUIRE_NOTHROW(o.broadcast(6));

@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include <ip/Address.h>
+#include <ip/Address.hpp>
 
 namespace
 {
@@ -15,38 +15,39 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("toString")
     {
-        REQUIRE(Address::fromBytes(localhost4).toString() == "127.0.0.1");
-        REQUIRE(Address::fromBytes(localhost6).toString() == "::1");
+        CHECK(Address::fromBytes(localhost4).toString() == "127.0.0.1");
+        CHECK(Address::fromBytes(localhost6).toString() == "::1");
     }
 
     TEST_CASE("fromString")
     {
-        REQUIRE(Address::fromString("127.0.0.1").toString() == "127.0.0.1");
-        REQUIRE(Address::fromString("::1").toString() == "::1");
+        CHECK(Address::fromString("127.0.0.1").toString() == "127.0.0.1");
+        CHECK(Address::fromString("::1").toString() == "::1");
     }
 
     TEST_CASE("operator ==")
     {
-        REQUIRE(Address::fromBytes(localhost4) == Address::fromBytes(localhost4));
+        CHECK(Address::fromBytes(localhost4) == Address::fromBytes(localhost4));
     }
 
     TEST_CASE("operator !=")
     {
-        REQUIRE(Address{} != Address::fromBytes(localhost4));
-
-        REQUIRE(Address{} != Address::fromBytes(localhost6));
-        REQUIRE(Address::fromBytes(localhost4) != Address::fromBytes(localhost6));
-        REQUIRE(Address::fromBytes(any6) != Address::fromBytes(any4));
+        CHECK(Address{} != Address::fromBytes(any4));
+        CHECK(Address{} != Address::fromBytes(any6));
+        CHECK(Address::fromBytes(any6) != Address::fromBytes(any4));
+        CHECK(Address::fromBytes(localhost4) != Address::fromBytes(localhost6));
+        CHECK(Address{} != Address::fromBytes(localhost4));
+        CHECK(Address{} != Address::fromBytes(localhost6));
     }
 
     TEST_CASE("operator <")
     {
-        REQUIRE(Address{} < Address::fromBytes(localhost4));
+        CHECK(Address{} < Address::fromBytes(localhost4));
 
         std::array<uint8_t, 4> localhost4_other{127, 0, 1, 1};
-        REQUIRE(Address::fromBytes(localhost4) < Address::fromBytes(localhost4_other));
+        CHECK(Address::fromBytes(localhost4) < Address::fromBytes(localhost4_other));
 
-        REQUIRE(Address::fromBytes(localhost4) < Address::fromBytes(localhost6));
+        CHECK(Address::fromBytes(localhost4) < Address::fromBytes(localhost6));
     }
 }
 } // namespace

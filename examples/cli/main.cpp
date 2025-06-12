@@ -2,8 +2,8 @@
 #include <gflags/gflags.h>
 #include <gflags/gflags_declare.h>
 #include <iostream>
-#include <monitor/RtnlNetworkMonitor.h>
-#include <network/NetworkAddress.h>
+#include <monitor/RtnlNetworkMonitor.hpp>
+#include <network/NetworkAddress.hpp>
 #include <spdlog/spdlog.h>
 
 DECLARE_bool(nerdstats);

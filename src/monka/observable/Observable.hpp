@@ -47,6 +47,10 @@ template <typename... Args> class Observable
                 {
                     spdlog::error("Caught an unexpected exception from observer: {}", e.what());
                 }
+                catch (...)
+                {
+                    spdlog::error("Caught an unexpected and unknown exception from observer");
+                }
             }
         }
         m_broadCasting = false;

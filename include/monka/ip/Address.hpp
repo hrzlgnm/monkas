@@ -2,8 +2,9 @@
 
 #include <array>
 #include <cstdint>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 #include <iosfwd>
-#include <spdlog/fmt/fmt.h>
 #include <string>
 #include <string_view>
 
@@ -52,12 +53,8 @@ bool operator==(const Address &lhs, const Address &rhs);
 bool operator!=(const Address &lhs, const Address &rhs);
 
 } // namespace ip
-  // ace ip
 } // namespace monkas
-template <> struct fmt::formatter<monkas::ip::Address> : fmt::formatter<std::string>
+
+template <> struct fmt::formatter<monkas::ip::Address> : fmt::ostream_formatter
 {
-    auto format(const monkas::ip::Address &addr, format_context &ctx) -> decltype(ctx.out())
-    {
-        return format_to(ctx.out(), "{}", addr.toString());
-    }
 };

@@ -4,8 +4,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
-#include <monitor/NetworkInterfaceStatusTracker.h>
-#include <string>
+#include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <vector>
 
 // TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what do we want
@@ -129,4 +128,3 @@ class RtnlNetworkMonitor
     RuntimeOptions m_runtimeOptions;
 };
 } // namespace monkas
-

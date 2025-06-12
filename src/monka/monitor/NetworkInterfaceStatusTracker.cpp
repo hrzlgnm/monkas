@@ -1,6 +1,6 @@
-#include <ip/Address.h>
-#include <monitor/NetworkInterfaceStatusTracker.h>
-#include <network/NetworkAddress.h>
+#include <ip/Address.hpp>
+#include <monitor/NetworkInterfaceStatusTracker.hpp>
+#include <network/NetworkAddress.hpp>
 
 #include <algorithm>
 #include <spdlog/spdlog.h>
@@ -11,7 +11,7 @@ namespace monkas
 template <typename T>
 void logTrace(const T &t, NetworkInterfaceStatusTracker *that, const std::string_view &description)
 {
-    spdlog::trace("{} {}: {}", static_cast<void *>(that), description, t);
+    spdlog::trace("[{}][{}] {}: {}", static_cast<void *>(that), that->name(), description, t);
 }
 
 NetworkInterfaceStatusTracker::NetworkInterfaceStatusTracker() : m_lastChanged(std::chrono::steady_clock::now())

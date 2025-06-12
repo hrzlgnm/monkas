@@ -4,12 +4,12 @@ add_library(doctest::doctest ALIAS doctest)
 # HACK(hrzgnm): disable clang-tidy checks on doctest
 target_include_directories(doctest SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(doctest_dll dll.cpp)
-add_library(doctest::dll ALIAS doctest_dll)
-target_link_libraries(doctest_dll PRIVATE doctest::doctest)
+add_library(doctest_lib lib.cpp)
+add_library(doctest::lib ALIAS doctest_lib)
+target_link_libraries(doctest_lib PRIVATE doctest::doctest)
 add_executable(doctest_exe main.cpp)
 
-target_link_libraries(doctest_exe PRIVATE doctest::doctest doctest::dll
+target_link_libraries(doctest_exe PRIVATE doctest::doctest doctest::lib
     monka::lib
 )
 add_executable(doctest::exe ALIAS doctest_exe)
@@ -21,5 +21,5 @@ add_test(NAME doctest COMMAND $<TARGET_FILE:doctest_exe> --no-version)
 # HACK(hrzgnm): disable analyzer checks on doctest targets
 set_target_properties(doctest_exe PROPERTIES
     CXX_CPPCHECK "")
-set_target_properties(doctest_dll PROPERTIES
+set_target_properties(doctest_lib PROPERTIES
     CXX_CPPCHECK "")

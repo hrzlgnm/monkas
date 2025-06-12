@@ -1,4 +1,4 @@
-#include <network/NetworkAddress.h>
+#include <network/NetworkAddress.hpp>
 
 #include <iostream>
 #include <linux/rtnetlink.h>
@@ -104,6 +104,17 @@ std::ostream &operator<<(std::ostream &o, const NetworkAddress &a)
         o << " f " << std::hex << a.flags() << std::dec;
     }
     return o;
+}
+
+bool operator==(const NetworkAddress &lhs, const NetworkAddress &rhs)
+{
+    return lhs.adressFamily() == rhs.adressFamily() && lhs.ip() == rhs.ip() && lhs.broadcast() == rhs.broadcast() &&
+           lhs.prefixLength() == rhs.prefixLength() && lhs.scope() == rhs.scope() && lhs.flags() == rhs.flags();
+}
+
+bool operator!=(const NetworkAddress &lhs, const NetworkAddress &rhs)
+{
+    return !(lhs == rhs);
 }
 
 bool operator<(const NetworkAddress &lhs, const NetworkAddress &rhs)

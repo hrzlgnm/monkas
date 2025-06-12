@@ -1,5 +1,5 @@
-#include <ip/Address.h>
-#include <monitor/RtnlNetworkMonitor.h>
+#include <ip/Address.hpp>
+#include <monitor/RtnlNetworkMonitor.hpp>
 
 #include <libmnl/libmnl.h>
 #include <linux/rtnetlink.h>
@@ -48,9 +48,8 @@ namespace monkas
 {
 
 RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
-    : m_mnlSocket{ensure_mnl_socket(options & NonBlocking), mnl_socket_close}, m_portid{mnl_socket_get_portid(
-                                                                                   m_mnlSocket.get())},
-      m_buffer(SOCKET_BUFFER_SIZE), m_runtimeOptions(options)
+    : m_mnlSocket{ensure_mnl_socket(options & NonBlocking), mnl_socket_close},
+      m_portid{mnl_socket_get_portid(m_mnlSocket.get())}, m_buffer(SOCKET_BUFFER_SIZE), m_runtimeOptions(options)
 {
     m_stats.startTime = std::chrono::steady_clock::now();
     unsigned groups = toRtnlGroupFlag(RTNLGRP_LINK);

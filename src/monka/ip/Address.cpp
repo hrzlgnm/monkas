@@ -1,4 +1,4 @@
-#include <ip/Address.h>
+#include <ip/Address.hpp>
 
 #include <algorithm>
 #include <arpa/inet.h>
@@ -60,14 +60,14 @@ Address::size_type Address::addressLength() const
 
 Address Address::fromString(std::string_view address)
 {
-    std::array<uint8_t, IPV6_ADDR_LEN> addr6;
-    if (inet_pton(AF_INET, address.data(), addr6.data()) == 1)
+    std::array<uint8_t, IPV6_ADDR_LEN> addr;
+    if (inet_pton(AF_INET, address.data(), addr.data()) == 1)
     {
-        return Address::fromBytes(addr6.data(), IPV4_ADDR_LEN);
+        return Address::fromBytes(addr.data(), IPV4_ADDR_LEN);
     }
-    if (inet_pton(AF_INET6, address.data(), addr6.data()) == 1)
+    if (inet_pton(AF_INET6, address.data(), addr.data()) == 1)
     {
-        return Address::fromBytes(addr6.data(), IPV6_ADDR_LEN);
+        return Address::fromBytes(addr.data(), IPV6_ADDR_LEN);
     }
     return Address();
 }
@@ -96,12 +96,12 @@ Address Address::fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes)
 
 std::string Address::toString() const
 {
-    char out[INET6_ADDRSTRLEN];
-    if (inet_ntop(asLinuxAf(m_addressFamily), data(), out, sizeof(out)))
+    std::array<char, INET6_ADDRSTRLEN> out;
+    if (inet_ntop(asLinuxAf(m_addressFamily), data(), out.data(), out.size()) != nullptr)
     {
-        return std::string(out);
+        return std::string(out.data());
     }
-    return std::string();
+    return std::string("Unspecified");
 }
 
 std::ostream &operator<<(std::ostream &o, const Address &a)

@@ -6,11 +6,11 @@ add_library(${TARGET_NAME}::lib ALIAS ${TARGET_NAME})
 set(PUBLIC_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/${TARGET_NAME})
 
 set(PUBLIC_HEADERS
-    ${PUBLIC_INCLUDE_DIR}/ethernet/Address.h
-    ${PUBLIC_INCLUDE_DIR}/ip/Address.h
-    ${PUBLIC_INCLUDE_DIR}/network/NetworkAddress.h
-    ${PUBLIC_INCLUDE_DIR}/monitor/NetworkInterfaceStatusTracker.h
-    ${PUBLIC_INCLUDE_DIR}/monitor/RtnlNetworkMonitor.h
+    ${PUBLIC_INCLUDE_DIR}/ethernet/Address.hpp
+    ${PUBLIC_INCLUDE_DIR}/ip/Address.hpp
+    ${PUBLIC_INCLUDE_DIR}/network/NetworkAddress.hpp
+    ${PUBLIC_INCLUDE_DIR}/monitor/NetworkInterfaceStatusTracker.hpp
+    ${PUBLIC_INCLUDE_DIR}/monitor/RtnlNetworkMonitor.hpp
 )
 
 target_compile_definitions(${TARGET_NAME}
@@ -31,7 +31,7 @@ target_sources(${TARGET_NAME}
         monitor/NetworkInterfaceStatusTracker.cpp
         monitor/RtnlNetworkMonitor.cpp
         network/NetworkAddress.cpp
-        observable/Observable.h
+        observable/Observable.hpp
 )
 
 target_link_libraries(${TARGET_NAME}
@@ -51,7 +51,7 @@ if (BUILD_TESTS)
   )
   target_link_libraries(${TARGET_NAME}
     PRIVATE
-       doctest::dll
+       doctest::lib
        doctest::doctest
   )
 endif()
