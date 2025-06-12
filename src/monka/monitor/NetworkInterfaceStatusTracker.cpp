@@ -181,7 +181,6 @@ std::string to_string(NetworkInterfaceStatusTracker::OperationalState o)
     case OperState::Up:
         return "Up";
     case OperState::Unknown:
-        // fallthrough
     default:
         return "Unknown";
     }

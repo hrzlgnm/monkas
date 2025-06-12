@@ -8,10 +8,6 @@
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-
 namespace spdlog
 {
 template <typename T> [[noreturn]] void pfatal(const T &msg)
@@ -165,21 +161,18 @@ int RtnlNetworkMonitor::mnlMessageCallback(const nlmsghdr *n)
     switch (t)
     {
     case RTM_NEWLINK:
-        // fallthrough
     case RTM_DELLINK: {
         const ifinfomsg *ifi = reinterpret_cast<const ifinfomsg *>(mnl_nlmsg_get_payload(n));
         parseLinkMessage(n, ifi);
     }
     break;
     case RTM_NEWADDR:
-        // fallthrough
     case RTM_DELADDR: {
         const ifaddrmsg *ifa = reinterpret_cast<const ifaddrmsg *>(mnl_nlmsg_get_payload(n));
         parseAddressMessage(n, ifa);
     }
     break;
     case RTM_NEWROUTE:
-        // fallthrough
     case RTM_DELROUTE: {
         const rtmsg *rt = reinterpret_cast<const rtmsg *>(mnl_nlmsg_get_payload(n));
         parseRouteMessage(n, rt);
