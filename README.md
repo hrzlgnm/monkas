@@ -1,7 +1,7 @@
 <!--toc:start-->
 
 - [monkas](#monkas)
-- [Denpendencies](#denpendencies)
+- [Denpendencies](#dependencies)
   - [Quick install for debian/ubuntu based distors](#quick-install-for-debianubuntu-based-distors)
 - [Quick Start](#quick-start)
 <!--toc:end-->
@@ -10,17 +10,18 @@
 
 Netlink Socket experiments using libmnl
 
-# Denpendencies
+# Dependencies
 
 - [cmake](https://cmake.org/)
 - [libmnl](https://netfilter.org/projects/libmnl/)
 - [spdlog](https://github.com/gabime/spdlog)
+- [fmt](https://fmt.dev)
 - [gflags](https://github.com/gflags/gflags)
 
 ## Quick install for debian/ubuntu based distors
 
 ```console
-sudo apt install build-essential cmake libmnl-dev libspdlog-dev libgflags-dev
+sudo apt install build-essential cmake libmnl-dev libspdlog-dev libgflags-dev libfmt-dev
 ```
 
 # Quick Start
