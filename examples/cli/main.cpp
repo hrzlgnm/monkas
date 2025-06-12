@@ -16,7 +16,13 @@ DEFINE_uint32(family, 0, "Preferred address family <4|6>");
 DECLARE_string(log_level);
 DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, critical, off");
 
-// TODO: Use qt event loop with QSocketNotifier for async rtnl
+/**
+ * @brief Entry point for the rtnetlink network monitor CLI application.
+ *
+ * Parses command-line flags to configure logging level, monitoring options, and preferred IP family, then initializes and runs the network monitor. Returns the monitor's exit code.
+ *
+ * @return int Exit code from the network monitor.
+ */
 
 int main(int argc, char *argv[])
 {
