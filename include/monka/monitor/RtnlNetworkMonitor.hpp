@@ -24,7 +24,7 @@ namespace monkas
 // neat ADL trick to treat uint8_t as numbers
 inline std::ostream &operator<<(std::ostream &os, uint8_t c)
 {
-    return os << static_cast<unsigned int>(c);
+    return os << static_cast<uint16_t>(c);
 }
 
 // TODO: wrap this into a own class with validating getters
@@ -35,7 +35,7 @@ enum RuntimeFlag : uint32_t
     StatsForNerds = 1,
     PreferredFamilyV4 = 2,
     PreferredFamilyV6 = 4,
-    DumpPacktes = 8,
+    DumpPackets = 8,
     NonBlocking = 16,
 };
 
@@ -97,8 +97,8 @@ class RtnlNetworkMonitor
     std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
     std::vector<uint8_t> m_buffer;
     bool m_running{false};
-    unsigned m_portid{};
-    unsigned m_sequenceNumber{};
+    uint32_t m_portid{};
+    uint32_t m_sequenceNumber{};
 
     std::map<int, NetworkInterfaceStatusTracker> m_trackers;
 

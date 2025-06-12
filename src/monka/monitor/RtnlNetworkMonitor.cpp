@@ -92,7 +92,7 @@ void RtnlNetworkMonitor::receiveAndProcess()
     {
         m_stats.packetsReceived++;
         m_stats.bytesReceived += receiveResult;
-        if (m_runtimeOptions & DumpPacktes)
+        if (m_runtimeOptions & DumpPackets)
         {
             fflush(stderr);
             fflush(stdout);
@@ -309,7 +309,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
         }
     }
     const network::NetworkAddress networkAddress{
-        address.adressFamily(), address, broadcast, ifa->ifa_prefixlen, network::fromRtnlScope(ifa->ifa_scope), flags};
+        address.addressFamily(), address, broadcast, ifa->ifa_prefixlen, network::fromRtnlScope(ifa->ifa_scope), flags};
     if (nlhdr->nlmsg_type == RTM_NEWADDR)
     {
         cacheEntry.addNetworkAddress(networkAddress);
@@ -338,18 +338,18 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
     if (nlhdr->nlmsg_type == RTM_DELROUTE)
     {
         // remove ipv4 routing default gateway when a linkdown was detected for the interface
-        if (rtm->rtm_flags & RTNH_F_LINKDOWN && attributes[RTA_OIF])
+        if (rtm->rtm_flags & RTNH_F_LINKDOWN && attributes[RTA_OF])
         {
-            auto outIfIndex = mnl_attr_get_u32(attributes[RTA_OIF]);
+            auto outIfIndex = mnl_attr_get_u32(attributes[RTA_OF]);
             auto itr = m_trackers.find(outIfIndex);
             if (itr != m_trackers.end() && itr->second.gatewayAddress())
             {
                 itr->second.clearGatewayAddress(GatewayClearReason::LinkDown);
             }
         }
-        else if (attributes[RTA_GATEWAY] && attributes[RTA_OIF])
+        else if (attributes[RTA_GATEWAY] && attributes[RTA_OF])
         {
-            auto outIfIndex = mnl_attr_get_u32(attributes[RTA_OIF]);
+            auto outIfIndex = mnl_attr_get_u32(attributes[RTA_OF]);
             auto itr = m_trackers.find(outIfIndex);
             if (itr != m_trackers.end())
             {
@@ -358,9 +358,9 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
         }
         return;
     }
-    if (attributes[RTA_GATEWAY] && attributes[RTA_OIF])
+    if (attributes[RTA_GATEWAY] && attributes[RTA_OF])
     {
-        auto outif = mnl_attr_get_u32(attributes[RTA_OIF]);
+        auto outif = mnl_attr_get_u32(attributes[RTA_OF]);
         auto itr = m_trackers.find(outif);
         if (itr != m_trackers.end())
         {
