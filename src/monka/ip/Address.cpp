@@ -58,6 +58,20 @@ Address::size_type Address::addressLength() const
     return 0;
 }
 
+Address Address::fromString(std::string_view address)
+{
+    std::array<uint8_t, IPV6_ADDR_LEN> addr6;
+    if (inet_pton(AF_INET, address.data(), addr6.data()) == 1)
+    {
+        return Address::fromBytes(addr6.data(), IPV4_ADDR_LEN);
+    }
+    if (inet_pton(AF_INET6, address.data(), addr6.data()) == 1)
+    {
+        return Address::fromBytes(addr6.data(), IPV6_ADDR_LEN);
+    }
+    return Address();
+}
+
 Address Address::fromBytes(const uint8_t *bytes, size_type len)
 {
     if (len == IPV6_ADDR_LEN || len == IPV4_ADDR_LEN)
@@ -114,6 +128,10 @@ bool operator==(const Address &lhs, const Address &rhs)
         return std::equal(lhs.begin(), lhs.begin() + addressLenght, rhs.begin(), rhs.begin() + addressLenght);
     }
     return false;
+}
+bool operator!=(const Address &lhs, const Address &rhs)
+{
+    return !(lhs == rhs);
 }
 
 } // namespace ip
