@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build_release:
+    runs-on: ubuntu-latest
+    container:
+      image: gcc
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update --yes
+          apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev ninja-build libasan6 libubsan1
+
+      - name: CMake Release build
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -B build -S .
+          cmake --build build --config Release
+
+  build_test:
+    runs-on: ubuntu-latest
+    container:
+      image: gcc
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update --yes
+          apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev ninja-build libasan6 libubsan1
+
+      - name: CMake Debug build with sanitizers
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Debug -D CMAKE_C_FLAGS="-fno-omit-frame-pointer -fsanitize=address,undefined" -D CMAKE_CXX_FLAGS="-fno-omit-frame-pointer -fsanitize=address,undefined" -G Ninja -B build -S .
+          cmake --build build --config Debug
+
+      - name: Run tests
+        run: |
+          cd build && ctest --no-tests=error --verbose
+
+      - name: CLI example help
+        run: |
+          cd examples/cli
+          ./monkas --help || true
+
+      - name: CLI example nerdstats/dumppackets
+        run: |
+          cd examples/cli
+          timeout --preserve-status 1 ./monkas -nerdstats -dumppackets || true
