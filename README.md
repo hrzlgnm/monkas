@@ -1,7 +1,7 @@
 <!--toc:start-->
 
 - [monkas](#monkas)
-- [Denpendencies](#dependencies)
+- [Dependencies](#dependencies)
   - [Quick install for debian/ubuntu based distors](#quick-install-for-debianubuntu-based-distors)
 - [Quick Start](#quick-start)
 <!--toc:end-->

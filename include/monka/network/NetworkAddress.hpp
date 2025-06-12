@@ -25,14 +25,14 @@ class NetworkAddress
 {
   public:
     NetworkAddress() = default;
-    NetworkAddress(AddressFamily addresFamily, const ip::Address &address, const ip::Address &broadcast,
+    NetworkAddress(AddressFamily addressFamily, const ip::Address &address, const ip::Address &broadcast,
                    uint8_t prefixLen, AddressScope scope, uint32_t flags);
     /**
      * @returns true if AddressFamily is not Unspecified
      */
     explicit operator bool() const;
 
-    AddressFamily adressFamily() const;
+    AddressFamily addressFamily() const;
     const ip::Address &ip() const;
     const ip::Address &broadcast() const;
     uint8_t prefixLength() const;
@@ -43,7 +43,7 @@ class NetworkAddress
     AddressFamily m_af{AddressFamily::Unspecified};
     ip::Address m_ip;
     ip::Address m_brd;
-    uint8_t m_prefixlen{0};
+    uint8_t m_prefixlen{};
     AddressScope m_scope{AddressScope::Nowhere};
     uint32_t m_flags{};
 };

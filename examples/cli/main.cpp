@@ -1,7 +1,5 @@
-#include <cstdint>
 #include <gflags/gflags.h>
 #include <gflags/gflags_declare.h>
-#include <iostream>
 #include <monitor/RtnlNetworkMonitor.hpp>
 #include <network/NetworkAddress.hpp>
 #include <spdlog/spdlog.h>
@@ -31,7 +29,7 @@ int main(int argc, char *argv[])
     }
     if (FLAGS_dumppackets)
     {
-        options |= monkas::RuntimeFlag::DumpPacktes;
+        options |= monkas::RuntimeFlag::DumpPackets;
     }
     if (FLAGS_family == 4)
     {

@@ -92,7 +92,7 @@ void RtnlNetworkMonitor::receiveAndProcess()
     {
         m_stats.packetsReceived++;
         m_stats.bytesReceived += receiveResult;
-        if (m_runtimeOptions & DumpPacktes)
+        if (m_runtimeOptions & DumpPackets)
         {
             fflush(stderr);
             fflush(stdout);
@@ -309,7 +309,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
         }
     }
     const network::NetworkAddress networkAddress{
-        address.adressFamily(), address, broadcast, ifa->ifa_prefixlen, network::fromRtnlScope(ifa->ifa_scope), flags};
+        address.addressFamily(), address, broadcast, ifa->ifa_prefixlen, network::fromRtnlScope(ifa->ifa_scope), flags};
     if (nlhdr->nlmsg_type == RTM_NEWADDR)
     {
         cacheEntry.addNetworkAddress(networkAddress);

@@ -146,7 +146,7 @@ void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::NetworkA
         logTrace(address, this, "address removed");
         if (std::count_if(std::begin(m_networkAddresses), std::end(m_networkAddresses),
                           [](const network::NetworkAddress &a) -> bool {
-                              return a.adressFamily() == ip::AddressFamily::IPv4;
+                              return a.addressFamily() == ip::AddressFamily::IPv4;
                           }) == 0)
         {
             clearGatewayAddress(GatewayClearReason::AllIPv4AddressesRemoved);

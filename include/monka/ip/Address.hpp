@@ -35,7 +35,7 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
      */
     explicit operator bool() const;
 
-    AddressFamily adressFamily() const;
+    AddressFamily addressFamily() const;
     size_type addressLength() const;
     std::string toString() const;
 

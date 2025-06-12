@@ -8,9 +8,9 @@ namespace monkas
 namespace network
 {
 
-NetworkAddress::NetworkAddress(AddressFamily addresFamily, const ip::Address &address, const ip::Address &broadcast,
+NetworkAddress::NetworkAddress(AddressFamily addressFamily, const ip::Address &address, const ip::Address &broadcast,
                                uint8_t prefixLen, AddressScope scope, uint32_t flags)
-    : m_af{addresFamily}, m_ip{address}, m_brd{broadcast}, m_prefixlen{prefixLen}, m_scope{scope}, m_flags{flags}
+    : m_af{addressFamily}, m_ip{address}, m_brd{broadcast}, m_prefixlen{prefixLen}, m_scope{scope}, m_flags{flags}
 {
 }
 
@@ -19,7 +19,7 @@ NetworkAddress::operator bool() const
     return m_af != AddressFamily::Unspecified;
 }
 
-AddressFamily NetworkAddress::adressFamily() const
+AddressFamily NetworkAddress::addressFamily() const
 {
     return m_af;
 }
@@ -66,6 +66,7 @@ AddressScope fromRtnlScope(uint8_t rtnlScope)
         return AddressScope::Global;
     }
 }
+
 std::ostream &operator<<(std::ostream &o, AddressScope a)
 {
     switch (a)
@@ -92,7 +93,7 @@ std::ostream &operator<<(std::ostream &o, AddressScope a)
 
 std::ostream &operator<<(std::ostream &o, const NetworkAddress &a)
 {
-    o << a.adressFamily() << " " << a.ip() << "/" << static_cast<int>(a.prefixLength());
+    o << a.addressFamily() << " " << a.ip() << "/" << static_cast<int>(a.prefixLength());
     o << " scope " << a.scope();
     if (a.broadcast())
     {
@@ -108,7 +109,7 @@ std::ostream &operator<<(std::ostream &o, const NetworkAddress &a)
 
 bool operator==(const NetworkAddress &lhs, const NetworkAddress &rhs)
 {
-    return lhs.adressFamily() == rhs.adressFamily() && lhs.ip() == rhs.ip() && lhs.broadcast() == rhs.broadcast() &&
+    return lhs.addressFamily() == rhs.addressFamily() && lhs.ip() == rhs.ip() && lhs.broadcast() == rhs.broadcast() &&
            lhs.prefixLength() == rhs.prefixLength() && lhs.scope() == rhs.scope() && lhs.flags() == rhs.flags();
 }
 

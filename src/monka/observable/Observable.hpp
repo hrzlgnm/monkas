@@ -21,6 +21,7 @@ template <typename... Args> class Observable
     {
         return m_observers.insert(m_observers.end(), observer);
     }
+
     void removeListener(const Token &token)
     {
         if (m_broadCasting)

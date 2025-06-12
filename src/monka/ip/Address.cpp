@@ -44,7 +44,7 @@ Address::operator bool() const
     return m_addressFamily != AddressFamily::Unspecified;
 }
 
-AddressFamily Address::adressFamily() const
+AddressFamily Address::addressFamily() const
 {
     return m_addressFamily;
 }
@@ -111,24 +111,25 @@ std::ostream &operator<<(std::ostream &o, const Address &a)
 
 bool operator<(const Address &lhs, const Address &rhs)
 {
-    if (lhs.adressFamily() == rhs.adressFamily())
+    if (lhs.addressFamily() == rhs.addressFamily())
     {
-        const auto addressLenght = lhs.addressLength();
-        return std::lexicographical_compare(lhs.begin(), lhs.begin() + addressLenght, rhs.begin(),
-                                            rhs.begin() + addressLenght);
+        const auto addressLength = lhs.addressLength();
+        return std::lexicographical_compare(lhs.begin(), lhs.begin() + addressLength, rhs.begin(),
+                                            rhs.begin() + addressLength);
     }
     return lhs.addressLength() < rhs.addressLength();
 }
 
 bool operator==(const Address &lhs, const Address &rhs)
 {
-    if (lhs.adressFamily() == rhs.adressFamily())
+    if (lhs.addressFamily() == rhs.addressFamily())
     {
-        const auto addressLenght = lhs.addressLength();
-        return std::equal(lhs.begin(), lhs.begin() + addressLenght, rhs.begin(), rhs.begin() + addressLenght);
+        const auto addressLength = lhs.addressLength();
+        return std::equal(lhs.begin(), lhs.begin() + addressLength, rhs.begin(), rhs.begin() + addressLength);
     }
     return false;
 }
+
 bool operator!=(const Address &lhs, const Address &rhs)
 {
     return !(lhs == rhs);
