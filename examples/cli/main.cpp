@@ -4,22 +4,19 @@
 #include <network/NetworkAddress.hpp>
 #include <spdlog/spdlog.h>
 
-DECLARE_bool(nerdstats);
 DEFINE_bool(nerdstats, false, "Enable stats for nerds");
 
-DECLARE_bool(dumppackets);
 DEFINE_bool(dumppackets, false, "Enable dumping of rtnl packets");
 
-DECLARE_uint32(family);
 DEFINE_uint32(family, 0, "Preferred address family <4|6>");
 
-DECLARE_string(log_level);
 DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, critical, off");
 
 /**
  * @brief Entry point for the rtnetlink network monitor CLI application.
  *
- * Parses command-line flags to configure logging level, monitoring options, and preferred IP family, then initializes and runs the network monitor. Returns the monitor's exit code.
+ * Parses command-line flags to configure logging level, monitoring options, and preferred IP family, then initializes
+ * and runs the network monitor. Returns the monitor's exit code.
  *
  * @return int Exit code from the network monitor.
  */
