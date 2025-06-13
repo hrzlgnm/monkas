@@ -10,7 +10,12 @@ namespace network
 
 NetworkAddress::NetworkAddress(AddressFamily addressFamily, const ip::Address &address, const ip::Address &broadcast,
                                uint8_t prefixLen, AddressScope scope, uint32_t flags)
-    : m_af{addressFamily}, m_ip{address}, m_brd{broadcast}, m_prefixlen{prefixLen}, m_scope{scope}, m_flags{flags}
+    : m_af{addressFamily}
+    , m_ip{address}
+    , m_brd{broadcast}
+    , m_prefixlen{prefixLen}
+    , m_scope{scope}
+    , m_flags{flags}
 {
 }
 
