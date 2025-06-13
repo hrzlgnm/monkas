@@ -16,19 +16,23 @@ template <typename T> [[noreturn]] void pfatal(const T &msg)
     spdlog::critical("{} failed: {}[{}]", msg, strerror(errno), errno);
     std::abort();
 }
+
 template <typename T> void pwarn(const T &msg)
 {
     spdlog::warn("{} failed: {}[{}]", msg, strerror(errno), errno);
 }
 
 } // namespace spdlog
+
 namespace
 {
 unsigned toRtnlGroupFlag(rtnetlink_groups group)
 {
     return (1 << (group - 1));
 }
+
 inline constexpr size_t SOCKET_BUFFER_SIZE = 32 * 1024;
+
 static mnl_socket *ensure_mnl_socket(bool nonBlocking)
 {
     auto s = mnl_socket_open2(NETLINK_ROUTE, nonBlocking ? SOCK_NONBLOCK : 0);

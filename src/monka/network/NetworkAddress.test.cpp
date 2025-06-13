@@ -7,6 +7,7 @@ namespace
 
 using namespace monkas::network;
 using namespace monkas::ip;
+
 TEST_SUITE("[network::NetworkAddress]")
 {
 

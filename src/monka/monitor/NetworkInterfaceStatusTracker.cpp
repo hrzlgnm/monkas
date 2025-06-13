@@ -207,6 +207,7 @@ std::ostream &operator<<(std::ostream &o, GatewayClearReason r)
     }
     return o;
 }
+
 std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s)
 {
     o << s.name();

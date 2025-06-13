@@ -6,6 +6,7 @@
 namespace
 {
 TEST_SUITE_BEGIN("[observable]");
+
 TEST_CASE("Observable tests")
 {
     Observable<int> o;
@@ -65,5 +66,6 @@ TEST_CASE("Observable tests")
         REQUIRE(last_a == 6);
     }
 }
+
 TEST_SUITE_END();
 } // namespace

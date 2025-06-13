@@ -5,6 +5,7 @@ namespace
 {
 
 using namespace monkas::ip;
+
 TEST_SUITE("[ip::Address]")
 {
     std::array<uint8_t, 4> any4;
