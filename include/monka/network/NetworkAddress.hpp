@@ -61,4 +61,5 @@ std::ostream &operator<<(std::ostream &o, const NetworkAddress &a);
 template <> struct fmt::formatter<monkas::network::NetworkAddress> : fmt::ostream_formatter
 {
 };
+
 ;

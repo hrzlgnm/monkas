@@ -25,6 +25,7 @@ std::ostream &operator<<(std::ostream &o, AddressFamily a);
 
 constexpr auto IPV6_ADDR_LEN = 16;
 constexpr auto IPV4_ADDR_LEN = 4;
+
 class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
 {
   public:
@@ -47,6 +48,7 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
   private:
     AddressFamily m_addressFamily{AddressFamily::Unspecified};
 };
+
 std::ostream &operator<<(std::ostream &o, const Address &a);
 bool operator<(const Address &lhs, const Address &rhs);
 bool operator==(const Address &lhs, const Address &rhs);

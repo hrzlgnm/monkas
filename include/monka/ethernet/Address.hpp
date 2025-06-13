@@ -10,6 +10,7 @@ namespace monkas
 namespace ethernet
 {
 constexpr auto ADDR_LEN = 6;
+
 class Address : public std::array<uint8_t, ADDR_LEN>
 {
   public:
@@ -23,6 +24,7 @@ class Address : public std::array<uint8_t, ADDR_LEN>
     static Address fromBytes(const uint8_t *bytes, size_type len);
     static Address fromBytes(const std::array<uint8_t, ADDR_LEN> &bytes);
 };
+
 std::ostream &operator<<(std::ostream &o, const Address &a);
 
 } // namespace ethernet

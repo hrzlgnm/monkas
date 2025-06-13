@@ -67,12 +67,14 @@ class RtnlNetworkMonitor
 
     RtnlAttributes parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxtype);
     static void parseAttribute(const nlattr *a, uint16_t maxType, RtnlAttributes &attrs, uint64_t &counter);
+
     struct MnlAttributeCallbackArgs
     {
         RtnlAttributes *attrs;
         uint16_t *maxType;
         uint64_t *counter;
     };
+
     static int dispatchMnlAttributeCallback(const struct nlattr *a, void *self);
 
     inline bool isEnumerating()
@@ -84,10 +86,12 @@ class RtnlNetworkMonitor
     {
         return m_cacheState == CacheState::EnumeratingLinks;
     }
+
     inline bool isEnumeratingAddresses() const
     {
         return m_cacheState == CacheState::EnumeratingAddresses;
     }
+
     inline bool isEnumeratingRoutes() const
     {
         return m_cacheState == CacheState::EnumeratingRoutes;

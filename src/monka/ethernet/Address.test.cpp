@@ -4,6 +4,7 @@
 namespace
 {
 using namespace monkas::ethernet;
+
 TEST_SUITE("[ethernet::Address]")
 {
 

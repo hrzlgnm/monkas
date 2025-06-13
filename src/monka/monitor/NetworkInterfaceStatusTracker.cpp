@@ -14,7 +14,8 @@ void logTrace(const T &t, NetworkInterfaceStatusTracker *that, const std::string
     spdlog::trace("[{}][{}] {}: {}", static_cast<void *>(that), that->name(), description, t);
 }
 
-NetworkInterfaceStatusTracker::NetworkInterfaceStatusTracker() : m_lastChanged(std::chrono::steady_clock::now())
+NetworkInterfaceStatusTracker::NetworkInterfaceStatusTracker()
+    : m_lastChanged(std::chrono::steady_clock::now())
 {
 }
 
@@ -207,6 +208,7 @@ std::ostream &operator<<(std::ostream &o, GatewayClearReason r)
     }
     return o;
 }
+
 std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s)
 {
     o << s.name();
