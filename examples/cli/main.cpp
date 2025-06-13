@@ -24,23 +24,16 @@ int main(int argc, char *argv[])
 {
     gflags::SetUsageMessage("<flags>\n");
     gflags::ParseCommandLineFlags(&argc, &argv, true);
-    spdlog::level::level_enum level = spdlog::level::info;
-    if (FLAGS_log_level == "trace")
-        level = spdlog::level::trace;
-    else if (FLAGS_log_level == "debug")
-        level = spdlog::level::debug;
-    else if (FLAGS_log_level == "info")
-        level = spdlog::level::info;
-    else if (FLAGS_log_level == "warn")
-        level = spdlog::level::warn;
-    else if (FLAGS_log_level == "err")
-        level = spdlog::level::err;
-    else if (FLAGS_log_level == "critical")
-        level = spdlog::level::critical;
-    else if (FLAGS_log_level == "off")
-        level = spdlog::level::off;
 
-    spdlog::set_level(level);
+    if (auto level = spdlog::level::from_str(FLAGS_log_level); level == spdlog::level::off && FLAGS_log_level != "off")
+    {
+        SPDLOG_ERROR("invalid log level '{}', using 'info' instead", FLAGS_log_level);
+        spdlog::set_level(spdlog::level::info);
+    }
+    else
+    {
+        spdlog::set_level(level);
+    }
     spdlog::flush_every(std::chrono::seconds(5));
     monkas::RuntimeOptions options{};
     if (FLAGS_nerdstats)
