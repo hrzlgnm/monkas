@@ -47,10 +47,10 @@ jobs:
 
       - name: CLI example help
         run: |
-          cd examples/cli
+          cd build/examples/cli
           ./monkas --help || true
 
       - name: CLI example nerdstats/dumppackets
         run: |
-          cd examples/cli
+          cd build/examples/cli
           timeout --preserve-status 1 ./monkas -nerdstats -dumppackets || true
