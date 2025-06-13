@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
     gflags::SetUsageMessage("<flags>\n");
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
+    std::transform(FLAGS_log_level.begin(), FLAGS_log_level.end(), FLAGS_log_level.begin(), ::tolower);
     if (auto level = spdlog::level::from_str(FLAGS_log_level); level == spdlog::level::off && FLAGS_log_level != "off")
     {
         SPDLOG_ERROR("invalid log level '{}', using 'info' instead", FLAGS_log_level);
