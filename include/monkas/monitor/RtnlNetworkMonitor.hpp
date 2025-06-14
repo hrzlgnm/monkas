@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
@@ -49,7 +50,7 @@ using OperationalStateBroadcaster = Observable<network::Interface, OperationalSt
 using OperationalStateListener = OperationalStateBroadcaster::Observer;
 using OperationalStateListenerToken = OperationalStateBroadcaster::Token;
 
-using NetworkAddressBroadcaster = Observable<network::Interface, NetworkAddresses>;
+using NetworkAddressBroadcaster = Observable<network::Interface, std::reference_wrapper<const NetworkAddresses>>;
 using NetworkAddressListener = NetworkAddressBroadcaster::Observer;
 using NetworkAddressListenerToken = NetworkAddressBroadcaster::Token;
 
