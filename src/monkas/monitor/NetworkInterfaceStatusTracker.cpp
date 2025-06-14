@@ -145,17 +145,18 @@ void NetworkInterfaceStatusTracker::addNetworkAddress(const network::NetworkAddr
 {
     if (address.ip())
     {
-        // TODO: check if really updated
-        bool isNew = m_networkAddresses.erase(address) == 0;
-        m_networkAddresses.insert(address);
-        touch(DirtyFlag::NetworkAddressesChanged);
+        const bool isNew = m_networkAddresses.erase(address) == 0;
         if (isNew)
         {
+            m_networkAddresses.insert(address);
+            touch(DirtyFlag::NetworkAddressesChanged);
             logTrace(address, this, "address added");
         }
         else
         {
-            logTrace(address, this, "address updated");
+            // No material change – keep ordering stable, skip dirty-flag spam
+            m_networkAddresses.insert(address);
+            logTrace(address, this, "address unchanged");
         }
     }
 }
