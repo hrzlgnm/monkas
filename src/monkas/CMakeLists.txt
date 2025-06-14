@@ -20,8 +20,6 @@ target_compile_definitions(${TARGET_NAME}
 target_include_directories(${TARGET_NAME}
     PUBLIC
         ${PUBLIC_INCLUDE_DIR}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_NAME}
 )
 
 target_sources(${TARGET_NAME}
