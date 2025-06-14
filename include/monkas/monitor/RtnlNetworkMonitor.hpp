@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
@@ -45,11 +46,11 @@ enum RuntimeFlag : uint32_t
 using RuntimeOptions = uint32_t;
 
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
-using OperationalStateBroadcaster = Observable<const network::Interface &, OperationalState>;
+using OperationalStateBroadcaster = Observable<network::Interface, OperationalState>;
 using OperationalStateListener = OperationalStateBroadcaster::Observer;
 using OperationalStateListenerToken = OperationalStateBroadcaster::Token;
 
-using NetworkAddressBroadcaster = Observable<const network::Interface &, const NetworkAddresses &>;
+using NetworkAddressBroadcaster = Observable<network::Interface, std::reference_wrapper<const NetworkAddresses>>;
 using NetworkAddressListener = NetworkAddressBroadcaster::Observer;
 using NetworkAddressListenerToken = NetworkAddressBroadcaster::Token;
 
