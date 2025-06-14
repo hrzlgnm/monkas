@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string_view>
 #include <sys/types.h>
+#include <type_traits>
 
 namespace monkas
 {
@@ -299,28 +300,23 @@ std::string dirtyFlagsToString(const DirtyFlags &flags)
     {
         return "None";
     }
+
     std::ostringstream result;
     bool empty = true;
-    for (const auto flag : {
-             DirtyFlag::NameChanged,
-             DirtyFlag::OperationalStateChanged,
-             DirtyFlag::EthernetAddressChanged,
-             DirtyFlag::BroadcastAddressChanged,
-             DirtyFlag::GatewayAddressChanged,
-             DirtyFlag::NetworkAddressesChanged,
-         })
+
+    for (std::underlying_type_t<DirtyFlag> i = 0; i < std::underlying_type_t<DirtyFlag>(DirtyFlag::FlagsCount); ++i)
     {
-        // TODO: use std::to_underlying with c++23
-        if (flags.test(fmt::underlying(flag)))
+        if (flags.test(i))
         {
             if (!empty)
             {
                 result << "|";
             }
-            result << flag;
+            result << DirtyFlag(i);
             empty = false;
         }
     }
+
     return result.str();
 }
 

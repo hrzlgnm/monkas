@@ -7,6 +7,7 @@
 #include <network/NetworkAddress.hpp>
 #include <set>
 #include <string>
+#include <type_traits>
 
 namespace monkas
 {
@@ -41,10 +42,11 @@ class NetworkInterfaceStatusTracker
         BroadcastAddressChanged,
         GatewayAddressChanged,
         NetworkAddressesChanged,
+        // NOTE: keep last
         FlagsCount,
     };
 
-    using DirtyFlags = std::bitset<static_cast<uint8_t>(DirtyFlag::FlagsCount)>;
+    using DirtyFlags = std::bitset<std::underlying_type_t<DirtyFlag>(DirtyFlag::FlagsCount)>;
 
     NetworkInterfaceStatusTracker();
 
