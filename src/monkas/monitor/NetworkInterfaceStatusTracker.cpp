@@ -4,6 +4,7 @@
 #include <network/NetworkAddress.hpp>
 
 #include <algorithm>
+#include <ostream>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <string_view>
@@ -274,22 +275,14 @@ std::ostream &operator<<(std::ostream &o, DirtyFlag d)
     }
 }
 
-class ostrm : public std::ostringstream
-{
-  public:
-    bool empty() const
-    {
-        return rdbuf()->in_avail() == 0;
-    }
-};
-
 std::string dirtyFlagsToString(const DirtyFlags &flags)
 {
     if (flags.none())
     {
         return "None";
     }
-    ostrm result;
+    std::ostringstream result;
+    bool empty = true;
     for (const auto flag : {
              DirtyFlag::NameChanged,
              DirtyFlag::OperationalStateChanged,
@@ -302,11 +295,12 @@ std::string dirtyFlagsToString(const DirtyFlags &flags)
         // TODO: use std::to_underlying with c++23
         if (flags.test(fmt::underlying(flag)))
         {
-            if (!result.empty())
+            if (!empty)
             {
                 result << "|";
             }
             result << flag;
+            empty = false;
         }
     }
     return result.str();

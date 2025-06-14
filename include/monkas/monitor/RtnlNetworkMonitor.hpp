@@ -41,11 +41,13 @@ enum RuntimeFlag : uint32_t
     NonBlocking = 16,
 };
 
+// TODO make this a std::bitset, too
 using RuntimeOptions = uint32_t;
+
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
-using LinkStateBroadcaster = Observable<network::Interface, OperationalState>;
-using LinkStateListener = LinkStateBroadcaster::Observer;
-using LinkStateListenerToken = LinkStateBroadcaster::Token;
+using OperationalStateBroadcaster = Observable<network::Interface, OperationalState>;
+using OperationalStateListener = OperationalStateBroadcaster::Observer;
+using OperationalStateListenerToken = OperationalStateBroadcaster::Token;
 
 class RtnlNetworkMonitor
 {
@@ -54,9 +56,10 @@ class RtnlNetworkMonitor
     int run();
     void stop();
 
-    LinkStateListenerToken addOperationalStateListener(const LinkStateListener &listener);
-
-    void removeOperationalStateListener(const LinkStateListenerToken &token);
+    /* not thread-safe */
+    OperationalStateListenerToken addOperationalStateListener(const OperationalStateListener &listener);
+    /* not thread-safe */
+    void removeOperationalStateListener(const OperationalStateListenerToken &token);
 
   private:
     void receiveAndProcess();
@@ -142,6 +145,6 @@ class RtnlNetworkMonitor
     } m_stats;
 
     RuntimeOptions m_runtimeOptions;
-    LinkStateBroadcaster m_operationalStateBroadcaster;
+    OperationalStateBroadcaster m_operationalStateBroadcaster;
 };
 } // namespace monkas

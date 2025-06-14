@@ -34,6 +34,11 @@ template <typename... Args> class Observable
         m_observers.erase(token);
     }
 
+    bool hasListeners() const
+    {
+        return !m_observers.empty();
+    }
+
     void broadcast(Args... args)
     {
         m_broadCasting = true;

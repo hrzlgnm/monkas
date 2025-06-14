@@ -12,6 +12,8 @@ DEFINE_uint32(family, 0, "Preferred address family <4|6>");
 
 DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, critical, off");
 
+using namespace monkas;
+
 /**
  * @brief Entry point for the rtnetlink network monitor CLI application.
  *
@@ -37,7 +39,7 @@ int main(int argc, char *argv[])
         spdlog::set_level(level);
     }
     spdlog::flush_every(std::chrono::seconds(5));
-    monkas::RuntimeOptions options{};
+    RuntimeOptions options{};
     if (FLAGS_nerdstats)
     {
         options |= monkas::RuntimeFlag::StatsForNerds;
@@ -54,8 +56,8 @@ int main(int argc, char *argv[])
     {
         options |= monkas::RuntimeFlag::PreferredFamilyV6;
     }
-    monkas::RtnlNetworkMonitor mon(options);
-    mon.addOperationalStateListener([](const monkas::network::Interface &iface, monkas::OperationalState state) {
+    RtnlNetworkMonitor mon(options);
+    mon.addOperationalStateListener([](const network::Interface &iface, OperationalState state) {
         spdlog::info("{} changed operational state to {}", iface, state);
     });
 
