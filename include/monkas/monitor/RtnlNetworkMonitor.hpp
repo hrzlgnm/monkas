@@ -2,7 +2,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <libmnl/libmnl.h>
 #include <map>
 #include <memory>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
@@ -14,6 +13,7 @@
 // to do in this case?
 // TODO: consider ENOBUFS errno from recv as resync point
 
+struct mnl_socket;
 struct nlmsghdr;
 struct ifinfomsg;
 struct ifaddrmsg;
