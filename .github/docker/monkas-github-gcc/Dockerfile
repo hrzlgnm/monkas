@@ -7,8 +7,6 @@ RUN apt-get update && \
     cmake \
     jq \
     libasan6 \
-    libc++abi-dev \
-    libc++-dev \
     libclang-rt-dev \
     libgflags-dev \
     libmnl-dev \
