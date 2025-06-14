@@ -18,6 +18,10 @@ jobs:
         run: |
           find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format --dry-run --Werror {} +
 
+      - name: Check spelling using typos-action
+        if: always()
+        uses: crate-ci/typos@0f0ccba9ed1df83948f0c15026e4f5ccfce46109 # v1.32.0
+
   build_and_test:
     needs: [lint]
     name: ${{ matrix.toolchain.name }}
