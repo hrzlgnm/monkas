@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  lint:
+  Lint:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf
@@ -22,8 +22,8 @@ jobs:
         if: always()
         uses: crate-ci/typos@0f0ccba9ed1df83948f0c15026e4f5ccfce46109 # v1.32.0
 
-  build_and_test:
-    needs: [lint]
+  Build-And-Test:
+    needs: [Lint]
     name: ${{ matrix.toolchain.name }}
     strategy:
       fail-fast: false
