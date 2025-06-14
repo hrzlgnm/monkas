@@ -10,14 +10,9 @@ jobs:
   clang_format_check:
     runs-on: ubuntu-latest
     container:
-      image: gcc@sha256:a4da41bd17f92a512d2e59f3272ae6315fd01ff4857875f8b6c7dac207410ead
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Install clang-format
-        run: |
-          apt-get update --yes
-          apt-get install --yes clang-format
 
       - name: Check clang-format
         run: |
@@ -26,15 +21,10 @@ jobs:
   build_release:
     runs-on: ubuntu-latest
     container:
-      image: gcc@sha256:a4da41bd17f92a512d2e59f3272ae6315fd01ff4857875f8b6c7dac207410ead
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Install dependencies
-        run: |
-          apt-get update --yes
-          apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev ninja-build libasan6 libubsan1
-
+      
       - name: CMake Release build
         run: |
           cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -B build -S .
@@ -43,14 +33,9 @@ jobs:
   build_test:
     runs-on: ubuntu-latest
     container:
-      image: gcc@sha256:a4da41bd17f92a512d2e59f3272ae6315fd01ff4857875f8b6c7dac207410ead
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Install dependencies
-        run: |
-          apt-get update --yes
-          apt-get install --yes cmake libmnl-dev libspdlog-dev libgflags-dev ninja-build libasan6 libubsan1
 
       - name: CMake Debug build with sanitizers
         run: |
