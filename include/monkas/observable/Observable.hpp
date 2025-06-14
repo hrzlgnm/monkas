@@ -11,6 +11,7 @@
 
 namespace monkas
 {
+/** NOT thread-safe; call from one thread only. */
 template <typename... Args> class Observable
 {
   public:
