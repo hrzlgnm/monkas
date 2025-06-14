@@ -442,14 +442,11 @@ void RtnlNetworkMonitor::broadcastChanges()
     for (auto &[index, tracker] : m_trackers)
     {
         spdlog::trace("checking {} for changes", tracker);
-        if (tracker.isDirty())
+        if (m_operationalStateBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::OperationalStateChanged))
         {
-            if (m_operationalStateBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::OperationalStateChanged))
-            {
-                m_operationalStateBroadcaster.broadcast(
-                    network::Interface{static_cast<uint32_t>(index), tracker.name()}, tracker.operationalState());
-                tracker.clearFlag(DirtyFlag::OperationalStateChanged);
-            }
+            m_operationalStateBroadcaster.broadcast(network::Interface{static_cast<uint32_t>(index), tracker.name()},
+                                                    tracker.operationalState());
+            tracker.clearFlag(DirtyFlag::OperationalStateChanged);
         }
     }
 }
