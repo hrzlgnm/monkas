@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  clang_format_check:
+  lint:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb
@@ -24,11 +24,6 @@ jobs:
       image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      
-      - name: CMake Release build
-        run: |
-          cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -B build -S .
-          cmake --build build --config Release
 
   build_test:
     runs-on: ubuntu-latest
@@ -39,12 +34,16 @@ jobs:
 
       - name: CMake Debug build with sanitizers
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Debug -D CMAKE_C_FLAGS="-fno-omit-frame-pointer -fsanitize=address,undefined" -D CMAKE_CXX_FLAGS="-fno-omit-frame-pointer -fsanitize=address,undefined" -G Ninja -B build -S .
-          cmake --build build --config Debug
+          env | grep '^ASAN_OPTIONS\|^CMAKE\' | sort
+          cmake -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" ${CMAKE_C_COMPILER+-DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"} ${CMAKE_CXX_COMPILER+-DCMAKE_CXX_COMPILER="${CMAKE_CXX_COMPILER}"} -DCMAKE_C_FLAGS="${CMAKE_C_FLAGS}" -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS}" -DCMAKE_EXE_LINKER_FLAGS="${CMAKE_EXE_LINKER_FLAGS}" -DCMAKE_SHARED_LINKER_FLAGS="${CMAKE_SHARED_LINKER_FLAGS}" ${CMAKE_EXTRA_FLAGS} -S . -B ../build
+        shell: bash
 
-      - name: Run tests
-        run: |
-          cd build && ctest --no-tests=error --verbose
+      - name: Build
+        run: cmake --build ../build --config ${{matrix.toolchain.CMAKE_BUILD_TYPE}}
+
+      - name: Test
+        working-directory: ../build
+        run: ctest --verbose --build-config ${{matrix.toolchain.CMAKE_BUILD_TYPE}}
 
       - name: CLI example help
         run: |
