@@ -1,7 +1,7 @@
 #include <network/NetworkAddress.hpp>
 
-#include <iostream>
 #include <linux/rtnetlink.h>
+#include <ostream>
 
 namespace monkas
 {

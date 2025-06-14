@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <arpa/inet.h>
-#include <iostream>
+#include <ostream>
 
 namespace monkas
 {

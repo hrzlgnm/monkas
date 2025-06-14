@@ -1,5 +1,5 @@
-#include <iostream>
 #include <network/Interface.hpp>
+#include <ostream>
 
 namespace monkas::network
 {
