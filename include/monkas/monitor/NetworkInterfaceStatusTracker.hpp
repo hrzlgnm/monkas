@@ -67,7 +67,7 @@ class NetworkInterfaceStatusTracker
     void setGatewayAddress(const ip::Address &gateway);
     void clearGatewayAddress(GatewayClearReason r);
 
-    NetworkAddresses networkAddresses() const;
+    const NetworkAddresses &networkAddresses() const;
 
     void addNetworkAddress(const network::NetworkAddress &address);
     void removeNetworkAddress(const network::NetworkAddress &address);
