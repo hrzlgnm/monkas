@@ -19,7 +19,7 @@ template <typename... Args> class Observable
     using Observers = std::list<Observer>;
     using Token = typename Observers::const_iterator;
 
-    Token addListener(const Observer &observer)
+    [[nodiscard]] Token addListener(const Observer &observer)
     {
         return m_observers.insert(m_observers.end(), observer);
     }

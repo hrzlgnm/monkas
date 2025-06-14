@@ -57,7 +57,7 @@ class RtnlNetworkMonitor
     void stop();
 
     /* not thread-safe */
-    OperationalStateListenerToken addOperationalStateListener(const OperationalStateListener &listener);
+    [[nodiscard]] OperationalStateListenerToken addOperationalStateListener(const OperationalStateListener &listener);
     /* not thread-safe */
     void removeOperationalStateListener(const OperationalStateListenerToken &token);
 

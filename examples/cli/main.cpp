@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         options |= monkas::RuntimeFlag::PreferredFamilyV6;
     }
     RtnlNetworkMonitor mon(options);
-    mon.addOperationalStateListener([](const network::Interface &iface, OperationalState state) {
+    std::ignore = mon.addOperationalStateListener([](const network::Interface &iface, OperationalState state) {
         spdlog::info("{} changed operational state to {}", iface, state);
     });
 
