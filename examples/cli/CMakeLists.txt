@@ -1,12 +1,12 @@
-add_executable(monkas)
+add_executable(monka)
 
-target_sources(monkas
+target_sources(monka
     PRIVATE
         main.cpp
 )
 
-target_compile_definitions(monkas PRIVATE DOCTEST_CONFIG_DISABLE)
-target_link_libraries(monkas
+target_compile_definitions(monka PRIVATE DOCTEST_CONFIG_DISABLE)
+target_link_libraries(monka
     PRIVATE
-        monka::lib
+        monkas::lib
 )

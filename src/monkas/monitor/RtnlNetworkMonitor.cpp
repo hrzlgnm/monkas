@@ -76,7 +76,7 @@ RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
 int RtnlNetworkMonitor::run()
 {
     m_running = true;
-    spdlog::info("Requesting RTM_GETLINK");
+    spdlog::debug("Requesting RTM_GETLINK");
     sendDumpRequest(RTM_GETLINK);
     while (m_running)
     {
@@ -89,6 +89,16 @@ void RtnlNetworkMonitor::stop()
 {
     m_mnlSocket.reset();
     m_running = false;
+}
+
+LinkStateListenerToken RtnlNetworkMonitor::addOperationalStateListener(const LinkStateListener &listener)
+{
+    return m_operationalStateBroadcaster.addListener(listener);
+}
+
+void RtnlNetworkMonitor::removeOperationalStateListener(const LinkStateListenerToken &token)
+{
+    m_operationalStateBroadcaster.removeListener(token);
 }
 
 void RtnlNetworkMonitor::receiveAndProcess()
@@ -117,20 +127,20 @@ void RtnlNetworkMonitor::receiveAndProcess()
             if (isEnumeratingLinks())
             {
                 m_cacheState = CacheState::EnumeratingAddresses;
-                spdlog::info("Requesting RTM_GETADDR");
+                spdlog::debug("Requesting RTM_GETADDR");
                 sendDumpRequest(RTM_GETADDR);
             }
             else if (isEnumeratingAddresses())
             {
                 m_cacheState = CacheState::EnumeratingRoutes;
-                spdlog::info("Requesting RTM_GETROUTE");
+                spdlog::debug("Requesting RTM_GETROUTE");
                 sendDumpRequest(RTM_GETROUTE);
             }
             else if (isEnumeratingRoutes())
             {
                 m_cacheState = CacheState::WaitingForChanges;
-                spdlog::info("Done with enumeration of initial information");
-                spdlog::info("Tracking changes for {} interfaces", m_trackers.size());
+                spdlog::debug("Done with enumeration of initial information");
+                spdlog::debug("Tracking changes for {} interfaces", m_trackers.size());
             }
             else
             {
@@ -138,6 +148,7 @@ void RtnlNetworkMonitor::receiveAndProcess()
             }
         }
         printStatsForNerdsIfEnabled();
+        broadcastChanges();
         receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
     }
 }
@@ -424,6 +435,24 @@ int RtnlNetworkMonitor::dispatchMnlAttributeCallback(const nlattr *a, void *ud)
     auto args = reinterpret_cast<MnlAttributeCallbackArgs *>(ud);
     parseAttribute(a, *args->maxType, *args->attrs, *args->counter);
     return MNL_CB_OK;
+}
+
+void RtnlNetworkMonitor::broadcastChanges()
+{
+    for (auto &[index, tracker] : m_trackers)
+    {
+        if (tracker.isDirty())
+        {
+            const auto dirtyFlags = tracker.dirtyFlags();
+            spdlog::trace("Dirty flags for {}: {}", tracker.name(), dirtyFlags);
+            if (dirtyFlags.test(DirtyFlag::OperationalStateChanged))
+            {
+                m_operationalStateBroadcaster.broadcast(
+                    network::Interface{static_cast<uint32_t>(index), tracker.name()}, tracker.operationalState());
+                tracker.clearFlag(DirtyFlag::OperationalStateChanged);
+            }
+        }
+    }
 }
 
 RuntimeOptions &operator|=(RuntimeOptions &o, RuntimeFlag f)

@@ -10,7 +10,7 @@ target_link_libraries(doctest_lib PRIVATE doctest::doctest)
 add_executable(doctest_exe main.cpp)
 
 target_link_libraries(doctest_exe PRIVATE doctest::doctest doctest::lib
-    monka::lib
+    monkas::lib
 )
 add_executable(doctest::exe ALIAS doctest_exe)
 set_property(TARGET doctest_exe PROPERTY OUTPUT_NAME doctest)

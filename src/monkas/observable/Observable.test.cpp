@@ -3,6 +3,8 @@
 #include <observable/Observable.hpp>
 #include <stdexcept>
 
+using namespace monkas;
+
 namespace
 {
 TEST_SUITE_BEGIN("[observable]");

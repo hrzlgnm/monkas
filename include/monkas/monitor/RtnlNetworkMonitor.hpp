@@ -2,16 +2,18 @@
 
 #include <chrono>
 #include <cstdint>
+#include <libmnl/libmnl.h>
 #include <map>
 #include <memory>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
+#include <network/Interface.hpp>
+#include <observable/Observable.hpp>
 #include <vector>
 
 // TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what do we want
 // to do in this case?
 // TODO: consider ENOBUFS errno from recv as resync point
 
-struct mnl_socket;
 struct nlmsghdr;
 struct ifinfomsg;
 struct ifaddrmsg;
@@ -40,6 +42,10 @@ enum RuntimeFlag : uint32_t
 };
 
 using RuntimeOptions = uint32_t;
+using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
+using LinkStateBroadcaster = Observable<network::Interface, OperationalState>;
+using LinkStateListener = LinkStateBroadcaster::Observer;
+using LinkStateListenerToken = LinkStateBroadcaster::Token;
 
 class RtnlNetworkMonitor
 {
@@ -47,6 +53,10 @@ class RtnlNetworkMonitor
     explicit RtnlNetworkMonitor(const RuntimeOptions &options);
     int run();
     void stop();
+
+    LinkStateListenerToken addOperationalStateListener(const LinkStateListener &listener);
+
+    void removeOperationalStateListener(const LinkStateListenerToken &token);
 
   private:
     void receiveAndProcess();
@@ -97,6 +107,8 @@ class RtnlNetworkMonitor
         return m_cacheState == CacheState::EnumeratingRoutes;
     }
 
+    void broadcastChanges();
+
   private:
     std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
     std::vector<uint8_t> m_buffer;
@@ -130,5 +142,6 @@ class RtnlNetworkMonitor
     } m_stats;
 
     RuntimeOptions m_runtimeOptions;
+    LinkStateBroadcaster m_operationalStateBroadcaster;
 };
 } // namespace monkas

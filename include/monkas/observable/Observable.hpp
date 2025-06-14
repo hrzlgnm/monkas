@@ -9,6 +9,8 @@
 #include <spdlog/spdlog.h>
 #include <utility>
 
+namespace monkas
+{
 template <typename... Args> class Observable
 {
   public:
@@ -71,3 +73,4 @@ template <typename... Args> class Observable
     std::forward_list<Token> m_tokensToRemove;
     bool m_broadCasting{false};
 };
+} // namespace monkas

@@ -4,7 +4,9 @@
 
 #include <algorithm>
 #include <spdlog/spdlog.h>
+#include <sstream>
 #include <string_view>
+#include <sys/types.h>
 
 namespace monkas
 {
@@ -24,9 +26,18 @@ bool NetworkInterfaceStatusTracker::hasName() const
     return !m_name.empty();
 }
 
-void NetworkInterfaceStatusTracker::touch()
+void NetworkInterfaceStatusTracker::touch(DirtyFlag flag)
 {
-    m_lastChanged = std::chrono::steady_clock::now();
+    if (!m_dirtyFlags.test(flag))
+    {
+        m_lastChanged = std::chrono::steady_clock::now();
+        m_dirtyFlags.set(flag);
+        logTrace(flag, this, "dirty flag set");
+    }
+    else
+    {
+        logTrace(flag, this, "dirty flag already set");
+    }
 }
 
 const std::string &NetworkInterfaceStatusTracker::name() const
@@ -36,10 +47,10 @@ const std::string &NetworkInterfaceStatusTracker::name() const
 
 void NetworkInterfaceStatusTracker::setName(const std::string &name)
 {
-    touch();
     if (m_name != name)
     {
         m_name = name;
+        touch(DirtyFlag::NameChanged);
         logTrace(name, this, "name changed to");
     }
 }
@@ -52,11 +63,11 @@ NetworkInterfaceStatusTracker::OperationalState NetworkInterfaceStatusTracker::o
 
 void NetworkInterfaceStatusTracker::setOperationalState(OperationalState operstate)
 {
-    touch();
     if (m_operState != operstate)
     {
         m_lastChanged = std::chrono::steady_clock::now();
         m_operState = operstate;
+        touch(DirtyFlag::OperationalStateChanged);
         logTrace(operstate, this, "operational state changed to");
     }
 }
@@ -73,20 +84,20 @@ const ethernet::Address &NetworkInterfaceStatusTracker::broadcastAddress() const
 
 void NetworkInterfaceStatusTracker::setEthernetAddress(const ethernet::Address &address)
 {
-    touch();
     if (m_ethernetAddress != address)
     {
         m_ethernetAddress = address;
+        touch(DirtyFlag::EthernetAddressChanged);
         logTrace(address, this, "ethernet address changed to");
     }
 }
 
 void NetworkInterfaceStatusTracker::setBroadcastAddress(const ethernet::Address &address)
 {
-    touch();
     if (m_broadcastAddress != address)
     {
         m_broadcastAddress = address;
+        touch(DirtyFlag::BroadcastAddressChanged);
         logTrace(address, this, "broadcast address changed to");
     }
 }
@@ -98,10 +109,10 @@ const ip::Address &NetworkInterfaceStatusTracker::gatewayAddress() const
 
 void NetworkInterfaceStatusTracker::setGatewayAddress(const ip::Address &gateway)
 {
-    touch();
     if (m_gateway != gateway)
     {
         m_gateway = gateway;
+        touch(DirtyFlag::GatewayAddressChanged);
         logTrace(gateway, this, "gateway address changed to");
     }
 }
@@ -111,6 +122,7 @@ void NetworkInterfaceStatusTracker::clearGatewayAddress(GatewayClearReason r)
     if (m_gateway)
     {
         m_gateway = ip::Address();
+        touch(DirtyFlag::GatewayAddressChanged);
         logTrace(r, this, "gateway cleared due to");
     }
 }
@@ -122,11 +134,12 @@ std::set<network::NetworkAddress> NetworkInterfaceStatusTracker::networkAddresse
 
 void NetworkInterfaceStatusTracker::addNetworkAddress(const network::NetworkAddress &address)
 {
-    touch();
     if (address.ip())
     {
+        // TODO: check if really updated
         bool isNew = m_networkAddresses.erase(address) == 0;
         m_networkAddresses.insert(address);
+        touch(DirtyFlag::NetworkAddressesChanged);
         if (isNew)
         {
             logTrace(address, this, "address added");
@@ -140,7 +153,6 @@ void NetworkInterfaceStatusTracker::addNetworkAddress(const network::NetworkAddr
 
 void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::NetworkAddress &address)
 {
-    touch();
     auto res = m_networkAddresses.erase(address);
     if (res > 0)
     {
@@ -162,6 +174,29 @@ void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::NetworkA
 Duration NetworkInterfaceStatusTracker::age() const
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_lastChanged);
+}
+
+bool NetworkInterfaceStatusTracker::isDirty() const
+{
+    return m_dirtyFlags.any();
+}
+
+DirtyFlags NetworkInterfaceStatusTracker::dirtyFlags() const
+{
+    return m_dirtyFlags;
+}
+
+void NetworkInterfaceStatusTracker::clearFlag(DirtyFlag flag)
+{
+    if (m_dirtyFlags.test(flag))
+    {
+        m_dirtyFlags.reset(flag);
+        logTrace(flag, this, "dirty flag cleared");
+    }
+    else
+    {
+        logTrace(flag, this, "dirty flag already cleared");
+    }
 }
 
 std::string to_string(NetworkInterfaceStatusTracker::OperationalState o)
@@ -209,6 +244,70 @@ std::ostream &operator<<(std::ostream &o, GatewayClearReason r)
     return o;
 }
 
+std::ostream &operator<<(std::ostream &o, DirtyFlag d)
+{
+    switch (d)
+    {
+    case NetworkInterfaceStatusTracker::DirtyFlag::NameChanged:
+        return o << "NameChanged";
+    case NetworkInterfaceStatusTracker::DirtyFlag::OperationalStateChanged:
+        return o << "OperationalStateChanged";
+    case NetworkInterfaceStatusTracker::DirtyFlag::EthernetAddressChanged:
+        return o << "EthernetAddressChanged";
+    case NetworkInterfaceStatusTracker::DirtyFlag::BroadcastAddressChanged:
+        return o << "BroadcastAddressChanged";
+    case NetworkInterfaceStatusTracker::DirtyFlag::GatewayAddressChanged:
+        return o << "GatewayAddressChanged";
+    case NetworkInterfaceStatusTracker::DirtyFlag::NetworkAddressesChanged:
+        return o << "NetworkAddressesChanged";
+    case NetworkInterfaceStatusTracker::DirtyFlag::FlagsCount:
+    default:
+        return o << "UnknownDirtyFlag: 0x" << std::hex << static_cast<uint8_t>(d);
+    }
+}
+
+class ostrm : public std::ostringstream
+{
+  public:
+    bool empty() const
+    {
+        return rdbuf()->in_avail() == 0;
+    }
+};
+
+std::string dirtyFlagsToString(const DirtyFlags &flags)
+{
+    if (flags.none())
+    {
+        return "None";
+    }
+    ostrm result;
+    for (const auto flag : {
+             DirtyFlag::NameChanged,
+             DirtyFlag::OperationalStateChanged,
+             DirtyFlag::EthernetAddressChanged,
+             DirtyFlag::BroadcastAddressChanged,
+             DirtyFlag::GatewayAddressChanged,
+             DirtyFlag::NetworkAddressesChanged,
+         })
+    {
+        if (flags.test(flag))
+        {
+            if (!result.empty())
+            {
+                result << "|";
+            }
+            result << flag;
+        }
+    }
+    return result.str();
+}
+
+std::ostream &operator<<(std::ostream &o, const DirtyFlags &d)
+{
+    return o << dirtyFlagsToString(d);
+}
+
 std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s)
 {
     o << s.name();
@@ -241,6 +340,7 @@ std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s
     }
     o << " op " << to_string(s.m_operState) << "(" << static_cast<int>(s.m_operState) << ")";
     o << " age " << s.age().count();
+    o << " dirty " << dirtyFlagsToString(s.dirtyFlags());
     return o;
 }
 } // namespace monkas

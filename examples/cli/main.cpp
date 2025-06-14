@@ -1,4 +1,5 @@
 #include <gflags/gflags.h>
+#include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <monitor/RtnlNetworkMonitor.hpp>
 #include <network/NetworkAddress.hpp>
 #include <spdlog/spdlog.h>
@@ -54,6 +55,9 @@ int main(int argc, char *argv[])
         options |= monkas::RuntimeFlag::PreferredFamilyV6;
     }
     monkas::RtnlNetworkMonitor mon(options);
+    mon.addOperationalStateListener([](const monkas::network::Interface &iface, monkas::OperationalState state) {
+        spdlog::info("{} changed operational state to {}", iface, state);
+    });
 
     return mon.run();
 }

@@ -1,0 +1,46 @@
+#pragma once
+
+#include <cstdint>
+#include <fmt/ostream.h>
+#include <iosfwd>
+#include <string>
+
+namespace monkas::network
+{
+class Interface
+{
+  public:
+    Interface(uint32_t index, const std::string &name);
+
+    inline uint32_t index() const
+    {
+        return m_index;
+    }
+
+    inline std::string name() const
+    {
+        return m_name;
+    }
+
+    bool operator==(const Interface &other) const
+    {
+        return m_index == other.m_index && m_name == other.m_name;
+    }
+
+    bool operator!=(const Interface &other) const
+    {
+        return !(*this == other);
+    }
+
+  private:
+    uint32_t m_index;
+    std::string m_name;
+};
+
+std::ostream &operator<<(std::ostream &os, const Interface &iface);
+
+} // namespace monkas::network
+
+template <> struct fmt::formatter<monkas::network::Interface> : fmt::ostream_formatter
+{
+};
