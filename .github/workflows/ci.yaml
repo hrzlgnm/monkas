@@ -23,7 +23,6 @@ jobs:
         uses: crate-ci/typos@0f0ccba9ed1df83948f0c15026e4f5ccfce46109 # v1.32.0
 
   Build-And-Test:
-    needs: [Lint]
     name: ${{ matrix.toolchain.name }}
     strategy:
       fail-fast: false
