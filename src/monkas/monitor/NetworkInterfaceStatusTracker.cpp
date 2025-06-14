@@ -167,6 +167,7 @@ void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::NetworkA
     if (res > 0)
     {
         logTrace(address, this, "address removed");
+        touch(DirtyFlag::NetworkAddressesChanged);
         if (std::count_if(std::begin(m_networkAddresses), std::end(m_networkAddresses),
                           [](const network::NetworkAddress &a) -> bool {
                               return a.addressFamily() == ip::AddressFamily::IPv4;
