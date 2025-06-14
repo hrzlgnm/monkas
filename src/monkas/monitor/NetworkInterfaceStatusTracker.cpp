@@ -136,7 +136,7 @@ void NetworkInterfaceStatusTracker::clearGatewayAddress(GatewayClearReason r)
     }
 }
 
-std::set<network::NetworkAddress> NetworkInterfaceStatusTracker::networkAddresses() const
+NetworkAddresses NetworkInterfaceStatusTracker::networkAddresses() const
 {
     return m_networkAddresses;
 }

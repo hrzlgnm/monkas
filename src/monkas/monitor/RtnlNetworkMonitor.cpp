@@ -101,6 +101,16 @@ void RtnlNetworkMonitor::removeOperationalStateListener(const OperationalStateLi
     m_operationalStateBroadcaster.removeListener(token);
 }
 
+NetworkAddressListenerToken RtnlNetworkMonitor::addNetworkAddressListener(const NetworkAddressListener &listener)
+{
+    return m_networkAddressBroadcaster.addListener(listener);
+}
+
+void RtnlNetworkMonitor::removeNetworkAddressListener(const NetworkAddressListenerToken &token)
+{
+    m_networkAddressBroadcaster.removeListener(token);
+}
+
 void RtnlNetworkMonitor::receiveAndProcess()
 {
     auto receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
@@ -447,6 +457,12 @@ void RtnlNetworkMonitor::broadcastChanges()
             m_operationalStateBroadcaster.broadcast(network::Interface{index, tracker.name()},
                                                     tracker.operationalState());
             tracker.clearFlag(DirtyFlag::OperationalStateChanged);
+        }
+        if (m_networkAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::NetworkAddressesChanged))
+        {
+            m_networkAddressBroadcaster.broadcast(network::Interface{index, tracker.name()},
+                                                  tracker.networkAddresses());
+            tracker.clearFlag(DirtyFlag::NetworkAddressesChanged);
         }
     }
 }
