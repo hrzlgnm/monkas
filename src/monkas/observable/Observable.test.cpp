@@ -48,6 +48,7 @@ TEST_CASE("Observable tests")
             if (a_count == 0)
             {
                 o.removeListener(*u);
+                o.removeListener(*u);
             }
             a_count++;
         });

@@ -29,7 +29,10 @@ template <typename... Args> class Observable
     {
         if (m_broadCasting)
         {
-            m_tokensToRemove.push_front(token);
+            if (!toBeRemoved(token))
+            {
+                m_tokensToRemove.push_front(token);
+            }
             return;
         }
         m_observers.erase(token);
@@ -45,8 +48,7 @@ template <typename... Args> class Observable
         m_broadCasting = true;
         for (auto itr{std::cbegin(m_observers)}; itr != std::cend(m_observers); ++itr)
         {
-            if (std::find(std::cbegin(m_tokensToRemove), std::cend(m_tokensToRemove), itr) ==
-                std::cend(m_tokensToRemove))
+            if (!toBeRemoved(itr))
             {
                 try
                 {
@@ -71,6 +73,12 @@ template <typename... Args> class Observable
     }
 
   private:
+    bool toBeRemoved(const Token &token) const
+    {
+        return std::find(std::cbegin(m_tokensToRemove), std::cend(m_tokensToRemove), token) !=
+               std::cend(m_tokensToRemove);
+    }
+
     Observable(const Observable &) = delete;
     Observable &operator=(const Observable &) = delete;
     Observable(Observable &&) = delete;
