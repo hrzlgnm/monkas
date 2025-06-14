@@ -3,7 +3,7 @@
 
 namespace monkas::network
 {
-Interface::Interface(uint32_t index, const std::string &name)
+Interface::Interface(int index, const std::string &name)
     : m_index(index)
     , m_name(name)
 {

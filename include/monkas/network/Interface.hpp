@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <fmt/ostream.h>
 #include <iosfwd>
 #include <string>
@@ -10,9 +9,10 @@ namespace monkas::network
 class Interface
 {
   public:
-    Interface(uint32_t index, const std::string &name);
+    Interface() = default;
+    Interface(int index, const std::string &name);
 
-    inline uint32_t index() const
+    inline int index() const
     {
         return m_index;
     }
@@ -33,7 +33,7 @@ class Interface
     }
 
   private:
-    uint32_t m_index;
+    int m_index{};
     std::string m_name;
 };
 
