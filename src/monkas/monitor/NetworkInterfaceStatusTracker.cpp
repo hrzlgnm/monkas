@@ -197,7 +197,7 @@ bool NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const
     const auto idx = fmt::underlying(flag);
     if (idx >= m_dirtyFlags.size())
     {
-        spdlog::error("Invalid dirty flag index: {}, returnig false", idx);
+        spdlog::error("Invalid dirty flag index: {}, returning false", idx);
         return false;
     }
     return m_dirtyFlags.test(idx);

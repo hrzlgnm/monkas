@@ -7,10 +7,10 @@ on:
     branches: [main]
 
 jobs:
-  clang_format_check:
+  Lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
@@ -18,38 +18,111 @@ jobs:
         run: |
           find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format --dry-run --Werror {} +
 
-  build_release:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      
-      - name: CMake Release build
-        run: |
-          cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -B build -S .
-          cmake --build build --config Release
+      - name: Check spelling using typos-action
+        if: always()
+        uses: crate-ci/typos@0f0ccba9ed1df83948f0c15026e4f5ccfce46109 # v1.32.0
 
-  build_test:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb
+  Build-And-Test:
+    name: ${{ matrix.toolchain.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - {
+              runs_on: ubuntu-latest,
+              name: Clang libstdc++,
+              image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf,
+              CC: clang,
+              CXX: clang++,
+              CFLAGS: -stdlib=libstdc++,
+              CMAKE_BUILD_TYPE: Debug,
+              CMAKE_FLAGS: -G Ninja,
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: Clang ASAN+UBSAN libstdc++,
+              image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf,
+              CC: clang,
+              CXX: clang++,
+              CFLAGS: "-fsanitize=address,undefined -fsanitize-address-use-after-scope -fno-sanitize-recover=address,undefined -stdlib=libstdc++",
+              CMAKE_BUILD_TYPE: Debug,
+              ASAN_OPTIONS: strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1,
+              CMAKE_FLAGS: -G Ninja,
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: Clang libstdc++ Release,
+              image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf,
+              CC: clang,
+              CXX: clang++,
+              CFLAGS: -stdlib=libstdc++,
+              CMAKE_BUILD_TYPE: Release,
+              CMAKE_FLAGS: -G Ninja,
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: GCC,
+              image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf,
+              CC: gcc,
+              CXX: g++,
+              CFLAGS: "",
+              CMAKE_BUILD_TYPE: Debug,
+              CMAKE_FLAGS: -G Ninja,
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: GCC ASAN+UBSAN,
+              image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf,
+              CC: gcc,
+              CXX: g++,
+              CFLAGS: "-fsanitize=address,undefined -fsanitize-address-use-after-scope -fno-sanitize-recover=address,undefined",
+              CMAKE_BUILD_TYPE: Debug,
+              CMAKE_FLAGS: -G Ninja,
+              ASAN_OPTIONS: strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1,
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: GCC Release,
+              image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf,
+              CC: gcc,
+              CXX: g++,
+              CFLAGS: "",
+              CMAKE_BUILD_TYPE: Release,
+              CMAKE_FLAGS: -G Ninja,
+            }
+    runs-on: ${{ matrix.toolchain.runs_on }}
+    container: ${{ matrix.toolchain.image }}
+    env:
+      ASAN_OPTIONS: ${{ matrix.toolchain.ASAN_OPTIONS }}
+      CMAKE_BUILD_TYPE: ${{ matrix.toolchain.CMAKE_BUILD_TYPE }}
+      CMAKE_C_COMPILER: ${{ matrix.toolchain.CC }}
+      CMAKE_C_FLAGS: ${{ matrix.toolchain.CFLAGS }}
+      CMAKE_CXX_COMPILER: ${{ matrix.toolchain.CXX }}
+      CMAKE_CXX_FLAGS: ${{ matrix.toolchain.CFLAGS }}
+      CMAKE_EXE_LINKER_FLAGS: ${{ matrix.toolchain.CFLAGS }}
+      CMAKE_EXTRA_FLAGS: ${{ matrix.toolchain.CMAKE_FLAGS }}
+      CMAKE_SHARED_LINKER_FLAGS: ${{ matrix.toolchain.CFLAGS }}
+
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: CMake Debug build with sanitizers
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Debug -D CMAKE_C_FLAGS="-fno-omit-frame-pointer -fsanitize=address,undefined" -D CMAKE_CXX_FLAGS="-fno-omit-frame-pointer -fsanitize=address,undefined" -G Ninja -B build -S .
-          cmake --build build --config Debug
+          env | grep '^ASAN_OPTIONS\|^CMAKE' | sort
+          cmake -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" ${CMAKE_C_COMPILER+-DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"} ${CMAKE_CXX_COMPILER+-DCMAKE_CXX_COMPILER="${CMAKE_CXX_COMPILER}"} -DCMAKE_C_FLAGS="${CMAKE_C_FLAGS}" -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS}" -DCMAKE_EXE_LINKER_FLAGS="${CMAKE_EXE_LINKER_FLAGS}" -DCMAKE_SHARED_LINKER_FLAGS="${CMAKE_SHARED_LINKER_FLAGS}" ${CMAKE_EXTRA_FLAGS} -S . -B ../build
+        shell: bash
 
-      - name: Run tests
-        run: |
-          cd build && ctest --no-tests=error --verbose
+      - name: Build
+        run: cmake --build ../build --config ${{matrix.toolchain.CMAKE_BUILD_TYPE}}
+
+      - name: Test
+        working-directory: ../build
+        run: ctest --verbose --build-config ${{matrix.toolchain.CMAKE_BUILD_TYPE}}
 
       - name: CLI example help
         run: |
-          ./build/examples/cli/monka --help || true
+          ../build/examples/cli/monka --help || true
 
       - name: CLI example nerdstats/dumppackets
         run: |
-          timeout --preserve-status 1 ./build/examples/cli/monka -nerdstats -dumppackets || true
+          timeout --preserve-status 1 ../build/examples/cli/monka -nerdstats -dumppackets || true

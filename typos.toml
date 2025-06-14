@@ -1,0 +1,5 @@
+[files]
+extend-exclude = ["external/doctest/doctest/doctest.h"]
+
+[default.extend-words]
+OIF = "OIF"
