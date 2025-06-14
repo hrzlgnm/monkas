@@ -60,6 +60,10 @@ int main(int argc, char *argv[])
     std::ignore = mon.addOperationalStateListener([](const network::Interface &iface, OperationalState state) {
         spdlog::info("{} changed operational state to {}", iface, state);
     });
+    std::ignore = mon.addNetworkAddressListener(
+        [](const network::Interface &iface, const std::set<network::NetworkAddress> &addresses) {
+            spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", "));
+        });
 
     return mon.run();
 }

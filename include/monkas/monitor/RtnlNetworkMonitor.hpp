@@ -49,6 +49,10 @@ using OperationalStateBroadcaster = Observable<network::Interface, OperationalSt
 using OperationalStateListener = OperationalStateBroadcaster::Observer;
 using OperationalStateListenerToken = OperationalStateBroadcaster::Token;
 
+using NetworkAddressBroadcaster = Observable<network::Interface, NetworkAddresses>;
+using NetworkAddressListener = NetworkAddressBroadcaster::Observer;
+using NetworkAddressListenerToken = NetworkAddressBroadcaster::Token;
+
 class RtnlNetworkMonitor
 {
   public:
@@ -58,6 +62,9 @@ class RtnlNetworkMonitor
 
     [[nodiscard]] OperationalStateListenerToken addOperationalStateListener(const OperationalStateListener &listener);
     void removeOperationalStateListener(const OperationalStateListenerToken &token);
+
+    [[nodiscard]] NetworkAddressListenerToken addNetworkAddressListener(const NetworkAddressListener &listener);
+    void removeNetworkAddressListener(const NetworkAddressListenerToken &token);
 
   private:
     void receiveAndProcess();
@@ -144,5 +151,6 @@ class RtnlNetworkMonitor
 
     RuntimeOptions m_runtimeOptions;
     OperationalStateBroadcaster m_operationalStateBroadcaster;
+    NetworkAddressBroadcaster m_networkAddressBroadcaster;
 };
 } // namespace monkas

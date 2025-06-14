@@ -12,6 +12,7 @@
 namespace monkas
 {
 using Duration = std::chrono::duration<int64_t, std::milli>;
+using NetworkAddresses = std::set<network::NetworkAddress>;
 
 // TODO: stats for nerds per interface descriptor
 class NetworkInterfaceStatusTracker
@@ -66,7 +67,7 @@ class NetworkInterfaceStatusTracker
     void setGatewayAddress(const ip::Address &gateway);
     void clearGatewayAddress(GatewayClearReason r);
 
-    std::set<network::NetworkAddress> networkAddresses() const;
+    const NetworkAddresses &networkAddresses() const;
 
     void addNetworkAddress(const network::NetworkAddress &address);
     void removeNetworkAddress(const network::NetworkAddress &address);
@@ -89,7 +90,7 @@ class NetworkInterfaceStatusTracker
     ethernet::Address m_ethernetAddress;
     ethernet::Address m_broadcastAddress;
     OperationalState m_operState{OperationalState::Unknown};
-    std::set<network::NetworkAddress> m_networkAddresses;
+    NetworkAddresses m_networkAddresses;
     ip::Address m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
     DirtyFlags m_dirtyFlags;
