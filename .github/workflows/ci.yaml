@@ -27,16 +27,6 @@ jobs:
         toolchain:
           - {
               runs_on: ubuntu-latest,
-              name: "Clang libc++",
-              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf",
-              CC: clang,
-              CXX: clang++,
-              CFLAGS: "-stdlib=libc++",
-              CMAKE_BUILD_TYPE: "Debug",
-              CMAKE_FLAGS: "-G Ninja",
-            }
-          - {
-              runs_on: ubuntu-latest,
               name: "Clang libstdc++",
               image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf",
               CC: clang,
