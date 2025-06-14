@@ -17,7 +17,7 @@ class Interface
         return m_index;
     }
 
-    inline std::string name() const
+    inline const std::string &name() const
     {
         return m_name;
     }
