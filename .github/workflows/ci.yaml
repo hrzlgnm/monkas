@@ -47,8 +47,8 @@ jobs:
 
       - name: CLI example help
         run: |
-          ./build/examples/cli/monka --help || true
+          ../build/examples/cli/monka --help || true
 
       - name: CLI example nerdstats/dumppackets
         run: |
-          timeout --preserve-status 1 ./build/examples/cli/monka -nerdstats -dumppackets || true
+          timeout --preserve-status 1 ../build/examples/cli/monka -nerdstats -dumppackets || true
