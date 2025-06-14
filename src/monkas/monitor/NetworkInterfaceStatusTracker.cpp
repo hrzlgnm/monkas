@@ -31,10 +31,16 @@ bool NetworkInterfaceStatusTracker::hasName() const
 void NetworkInterfaceStatusTracker::touch(DirtyFlag flag)
 {
     // TODO: use std::to_underlying with c++23
-    if (!m_dirtyFlags.test(fmt::underlying(flag)))
+    const auto idx = fmt::underlying(flag);
+    if (idx >= static_cast<uint8_t>(DirtyFlag::FlagsCount))
+    {
+        spdlog::error("Invalid dirty flag index: {}", idx);
+        return;
+    }
+    if (!m_dirtyFlags.test(idx))
     {
         m_lastChanged = std::chrono::steady_clock::now();
-        m_dirtyFlags.set(fmt::underlying(flag));
+        m_dirtyFlags.set(idx);
         logTrace(flag, this, "dirty flag set");
     }
     else
@@ -186,7 +192,13 @@ bool NetworkInterfaceStatusTracker::isDirty() const
 
 bool NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const
 {
-    return m_dirtyFlags.test(fmt::underlying(flag));
+    const auto idx = fmt::underlying(flag);
+    if (idx >= static_cast<uint8_t>(DirtyFlag::FlagsCount))
+    {
+        spdlog::error("Invalid dirty flag index: {}, returnig false", idx);
+        return false;
+    }
+    return m_dirtyFlags.test(idx);
 }
 
 DirtyFlags NetworkInterfaceStatusTracker::dirtyFlags() const
@@ -197,9 +209,15 @@ DirtyFlags NetworkInterfaceStatusTracker::dirtyFlags() const
 void NetworkInterfaceStatusTracker::clearFlag(DirtyFlag flag)
 {
     // TODO: use std::to_underlying with c++23
-    if (m_dirtyFlags.test(fmt::underlying(flag)))
+    const auto idx = fmt::underlying(flag);
+    if (idx >= static_cast<uint8_t>(DirtyFlag::FlagsCount))
     {
-        m_dirtyFlags.reset(fmt::underlying(flag));
+        spdlog::error("Invalid dirty flag index: {}", idx);
+        return;
+    }
+    if (m_dirtyFlags.test(idx))
+    {
+        m_dirtyFlags.reset(idx);
         logTrace(flag, this, "dirty flag cleared");
     }
     else
