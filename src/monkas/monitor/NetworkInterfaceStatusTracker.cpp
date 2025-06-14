@@ -1,3 +1,4 @@
+#include <fmt/format.h>
 #include <ip/Address.hpp>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <network/NetworkAddress.hpp>
@@ -28,10 +29,11 @@ bool NetworkInterfaceStatusTracker::hasName() const
 
 void NetworkInterfaceStatusTracker::touch(DirtyFlag flag)
 {
-    if (!m_dirtyFlags.test(flag))
+    // TODO: use std::to_underlying with c++23
+    if (!m_dirtyFlags.test(fmt::underlying(flag)))
     {
         m_lastChanged = std::chrono::steady_clock::now();
-        m_dirtyFlags.set(flag);
+        m_dirtyFlags.set(fmt::underlying(flag));
         logTrace(flag, this, "dirty flag set");
     }
     else
@@ -181,6 +183,11 @@ bool NetworkInterfaceStatusTracker::isDirty() const
     return m_dirtyFlags.any();
 }
 
+bool NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const
+{
+    return m_dirtyFlags.test(fmt::underlying(flag));
+}
+
 DirtyFlags NetworkInterfaceStatusTracker::dirtyFlags() const
 {
     return m_dirtyFlags;
@@ -188,9 +195,10 @@ DirtyFlags NetworkInterfaceStatusTracker::dirtyFlags() const
 
 void NetworkInterfaceStatusTracker::clearFlag(DirtyFlag flag)
 {
-    if (m_dirtyFlags.test(flag))
+    // TODO: use std::to_underlying with c++23
+    if (m_dirtyFlags.test(fmt::underlying(flag)))
     {
-        m_dirtyFlags.reset(flag);
+        m_dirtyFlags.reset(fmt::underlying(flag));
         logTrace(flag, this, "dirty flag cleared");
     }
     else
@@ -291,7 +299,8 @@ std::string dirtyFlagsToString(const DirtyFlags &flags)
              DirtyFlag::NetworkAddressesChanged,
          })
     {
-        if (flags.test(flag))
+        // TODO: use std::to_underlying with c++23
+        if (flags.test(fmt::underlying(flag)))
         {
             if (!result.empty())
             {

@@ -33,7 +33,7 @@ class NetworkInterfaceStatusTracker
         AllIPv4AddressesRemoved,
     };
 
-    enum DirtyFlag : uint8_t
+    enum class DirtyFlag : uint8_t
     {
         NameChanged,
         OperationalStateChanged,
@@ -44,7 +44,7 @@ class NetworkInterfaceStatusTracker
         FlagsCount,
     };
 
-    using DirtyFlags = std::bitset<FlagsCount>;
+    using DirtyFlags = std::bitset<static_cast<uint8_t>(DirtyFlag::FlagsCount)>;
 
     NetworkInterfaceStatusTracker();
 
@@ -74,6 +74,7 @@ class NetworkInterfaceStatusTracker
     bool hasName() const;
 
     bool isDirty() const;
+    bool isDirty(DirtyFlag flag) const;
     DirtyFlags dirtyFlags() const;
     void clearFlag(DirtyFlag flag);
 

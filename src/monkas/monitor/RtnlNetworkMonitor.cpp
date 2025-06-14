@@ -443,9 +443,7 @@ void RtnlNetworkMonitor::broadcastChanges()
     {
         if (tracker.isDirty())
         {
-            const auto dirtyFlags = tracker.dirtyFlags();
-            spdlog::trace("Dirty flags for {}: {}", tracker.name(), dirtyFlags);
-            if (dirtyFlags.test(DirtyFlag::OperationalStateChanged))
+            if (tracker.isDirty(DirtyFlag::OperationalStateChanged))
             {
                 m_operationalStateBroadcaster.broadcast(
                     network::Interface{static_cast<uint32_t>(index), tracker.name()}, tracker.operationalState());
