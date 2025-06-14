@@ -6,8 +6,10 @@ RUN apt-get update && \
     clang-format \
     cmake \
     jq \
-    libc++-dev \
     libasan6 \
+    libc++-abi-dev \
+    libc++-dev \
+    libclang-rt-dev \
     libgflags-dev \
     libmnl-dev \
     libspdlog-dev \
