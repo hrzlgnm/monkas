@@ -75,7 +75,6 @@ void NetworkInterfaceStatusTracker::setOperationalState(OperationalState opersta
 {
     if (m_operState != operstate)
     {
-        m_lastChanged = std::chrono::steady_clock::now();
         m_operState = operstate;
         touch(DirtyFlag::OperationalStateChanged);
         logTrace(operstate, this, "operational state changed to");
