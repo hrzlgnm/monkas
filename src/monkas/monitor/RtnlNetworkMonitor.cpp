@@ -91,12 +91,12 @@ void RtnlNetworkMonitor::stop()
     m_running = false;
 }
 
-LinkStateListenerToken RtnlNetworkMonitor::addOperationalStateListener(const LinkStateListener &listener)
+OperationalStateListenerToken RtnlNetworkMonitor::addOperationalStateListener(const OperationalStateListener &listener)
 {
     return m_operationalStateBroadcaster.addListener(listener);
 }
 
-void RtnlNetworkMonitor::removeOperationalStateListener(const LinkStateListenerToken &token)
+void RtnlNetworkMonitor::removeOperationalStateListener(const OperationalStateListenerToken &token)
 {
     m_operationalStateBroadcaster.removeListener(token);
 }
