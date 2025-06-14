@@ -2,4 +2,4 @@
 extend-exclude = ["external/doctest/doctest/doctest.h"]
 
 [default.extend-words]
-RTA_OIF = "RTA_OIF"
+OIF = "OIF"
