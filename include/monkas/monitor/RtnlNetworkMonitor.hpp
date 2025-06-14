@@ -49,7 +49,7 @@ using OperationalStateBroadcaster = Observable<network::Interface, OperationalSt
 using OperationalStateListener = OperationalStateBroadcaster::Observer;
 using OperationalStateListenerToken = OperationalStateBroadcaster::Token;
 
-using NetworkAddressBroadcaster = Observable<network::Interface, std::set<network::NetworkAddress>>;
+using NetworkAddressBroadcaster = Observable<network::Interface, NetworkAddresses>;
 using NetworkAddressListener = NetworkAddressBroadcaster::Observer;
 using NetworkAddressListenerToken = NetworkAddressBroadcaster::Token;
 
