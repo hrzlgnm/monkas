@@ -5,6 +5,8 @@
 #include <map>
 #include <memory>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
+#include <network/Interface.hpp>
+#include <observable/Observable.hpp>
 #include <vector>
 
 // TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what do we want
@@ -39,7 +41,13 @@ enum RuntimeFlag : uint32_t
     NonBlocking = 16,
 };
 
+// TODO make this a std::bitset, too
 using RuntimeOptions = uint32_t;
+
+using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
+using OperationalStateBroadcaster = Observable<network::Interface, OperationalState>;
+using OperationalStateListener = OperationalStateBroadcaster::Observer;
+using OperationalStateListenerToken = OperationalStateBroadcaster::Token;
 
 class RtnlNetworkMonitor
 {
@@ -47,6 +55,9 @@ class RtnlNetworkMonitor
     explicit RtnlNetworkMonitor(const RuntimeOptions &options);
     int run();
     void stop();
+
+    [[nodiscard]] OperationalStateListenerToken addOperationalStateListener(const OperationalStateListener &listener);
+    void removeOperationalStateListener(const OperationalStateListenerToken &token);
 
   private:
     void receiveAndProcess();
@@ -97,6 +108,8 @@ class RtnlNetworkMonitor
         return m_cacheState == CacheState::EnumeratingRoutes;
     }
 
+    void broadcastChanges();
+
   private:
     std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
     std::vector<uint8_t> m_buffer;
@@ -130,5 +143,6 @@ class RtnlNetworkMonitor
     } m_stats;
 
     RuntimeOptions m_runtimeOptions;
+    OperationalStateBroadcaster m_operationalStateBroadcaster;
 };
 } // namespace monkas

@@ -1,1 +1,1 @@
-add_subdirectory(monka)
+add_subdirectory(monkas)

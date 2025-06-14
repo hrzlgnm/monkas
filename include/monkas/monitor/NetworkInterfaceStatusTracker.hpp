@@ -1,11 +1,13 @@
 #pragma once
 
+#include <bitset>
 #include <chrono>
 #include <ethernet/Address.hpp>
 #include <fmt/ostream.h>
 #include <network/NetworkAddress.hpp>
 #include <set>
 #include <string>
+#include <type_traits>
 
 namespace monkas
 {
@@ -31,6 +33,20 @@ class NetworkInterfaceStatusTracker
         RouteDeleted,
         AllIPv4AddressesRemoved,
     };
+
+    enum class DirtyFlag : uint8_t
+    {
+        NameChanged,
+        OperationalStateChanged,
+        EthernetAddressChanged,
+        BroadcastAddressChanged,
+        GatewayAddressChanged,
+        NetworkAddressesChanged,
+        // NOTE: keep last
+        FlagsCount,
+    };
+
+    using DirtyFlags = std::bitset<std::underlying_type_t<DirtyFlag>(DirtyFlag::FlagsCount)>;
 
     NetworkInterfaceStatusTracker();
 
@@ -59,8 +75,13 @@ class NetworkInterfaceStatusTracker
 
     bool hasName() const;
 
+    bool isDirty() const;
+    bool isDirty(DirtyFlag flag) const;
+    DirtyFlags dirtyFlags() const;
+    void clearFlag(DirtyFlag flag);
+
   private:
-    void touch();
+    void touch(DirtyFlag flag);
 
     // TODO: only use public api
     friend std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s);
@@ -71,12 +92,17 @@ class NetworkInterfaceStatusTracker
     std::set<network::NetworkAddress> m_networkAddresses;
     ip::Address m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
+    DirtyFlags m_dirtyFlags;
 };
 
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
 std::ostream &operator<<(std::ostream &o, OperationalState op);
 using GatewayClearReason = NetworkInterfaceStatusTracker::GatewayClearReason;
 std::ostream &operator<<(std::ostream &o, GatewayClearReason r);
+using DirtyFlag = NetworkInterfaceStatusTracker::DirtyFlag;
+using DirtyFlags = NetworkInterfaceStatusTracker::DirtyFlags;
+std::ostream &operator<<(std::ostream &o, DirtyFlag d);
+std::ostream &operator<<(std::ostream &o, DirtyFlags d);
 
 } // namespace monkas
 
@@ -89,5 +115,13 @@ template <> struct fmt::formatter<monkas::OperationalState> : fmt::ostream_forma
 };
 
 template <> struct fmt::formatter<monkas::GatewayClearReason> : fmt::ostream_formatter
+{
+};
+
+template <> struct fmt::formatter<monkas::DirtyFlag> : fmt::ostream_formatter
+{
+};
+
+template <> struct fmt::formatter<monkas::DirtyFlags> : fmt::ostream_formatter
 {
 };

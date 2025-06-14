@@ -2,6 +2,9 @@
 #include <memory>
 #include <observable/Observable.hpp>
 #include <stdexcept>
+#include <utility>
+
+using namespace monkas;
 
 namespace
 {
@@ -13,7 +16,7 @@ TEST_CASE("Observable tests")
     int last_a = 0;
     SUBCASE("registering listener and calling broadcast calls listener")
     {
-        o.addListener([&last_a](int a) { last_a = a; });
+        std::ignore = o.addListener([&last_a](int a) { last_a = a; });
         o.broadcast(5);
         REQUIRE(last_a == 5);
     }
@@ -21,8 +24,8 @@ TEST_CASE("Observable tests")
     SUBCASE("registering two listener and calling broadcast calls listener")
     {
         int last_b = 0;
-        o.addListener([&last_a](int a) { last_a = a; });
-        o.addListener([&last_b](int b) { last_b = b; });
+        std::ignore = o.addListener([&last_a](int a) { last_a = a; });
+        std::ignore = o.addListener([&last_b](int b) { last_b = b; });
         o.broadcast(5);
         REQUIRE(last_a == 5);
         REQUIRE(last_b == 5);
@@ -41,9 +44,10 @@ TEST_CASE("Observable tests")
         int a_count = 0;
         int b_count = 0;
         auto u = std::make_shared<Observable<int>::Token>();
-        o.addListener([&o, &a_count, u](int) {
+        std::ignore = o.addListener([&o, &a_count, u](int) {
             if (a_count == 0)
             {
+                o.removeListener(*u);
                 o.removeListener(*u);
             }
             a_count++;
@@ -58,9 +62,9 @@ TEST_CASE("Observable tests")
 
     SUBCASE("if two of three listeners throws the last one is still called")
     {
-        o.addListener([](int) { throw std::runtime_error("banana"); });
-        o.addListener([](int) { throw 1; });
-        o.addListener([&last_a](int a) { last_a = a; });
+        std::ignore = o.addListener([](int) { throw std::runtime_error("banana"); });
+        std::ignore = o.addListener([](int) { throw 1; });
+        std::ignore = o.addListener([&last_a](int a) { last_a = a; });
         REQUIRE_NOTHROW(o.broadcast(5));
         REQUIRE_NOTHROW(o.broadcast(6));
         REQUIRE(last_a == 6);

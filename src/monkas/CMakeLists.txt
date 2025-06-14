@@ -1,4 +1,4 @@
-set(TARGET_NAME monka)
+set(TARGET_NAME monkas)
 
 add_library(${TARGET_NAME} OBJECT)
 add_library(${TARGET_NAME}::lib ALIAS ${TARGET_NAME})
@@ -11,6 +11,7 @@ set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/network/NetworkAddress.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/NetworkInterfaceStatusTracker.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/RtnlNetworkMonitor.hpp
+    ${PUBLIC_INCLUDE_DIR}/observable/Observable.hpp
 )
 
 target_compile_definitions(${TARGET_NAME}
@@ -19,8 +20,6 @@ target_compile_definitions(${TARGET_NAME}
 target_include_directories(${TARGET_NAME}
     PUBLIC
         ${PUBLIC_INCLUDE_DIR}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_sources(${TARGET_NAME}
@@ -30,8 +29,8 @@ target_sources(${TARGET_NAME}
         ip/Address.cpp
         monitor/NetworkInterfaceStatusTracker.cpp
         monitor/RtnlNetworkMonitor.cpp
+        network/Interface.cpp
         network/NetworkAddress.cpp
-        observable/Observable.hpp
 )
 
 target_link_libraries(${TARGET_NAME}
@@ -51,8 +50,8 @@ if (BUILD_TESTS)
   )
   target_link_libraries(${TARGET_NAME}
     PRIVATE
-       doctest::lib
        doctest::doctest
+       doctest::lib
   )
 endif()
 
