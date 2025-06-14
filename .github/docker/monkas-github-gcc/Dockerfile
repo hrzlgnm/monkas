@@ -1,7 +1,7 @@
 FROM gcc@sha256:a4da41bd17f92a512d2e59f3272ae6315fd01ff4857875f8b6c7dac207410ead
 
-RUN apt-get update --yes && \
-    apt-get install -yes --no-install-recommends \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     clang-format \
     cmake \
     libasan6 \
