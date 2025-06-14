@@ -24,6 +24,90 @@ jobs:
       image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+  build_and_test:
+    needs: [lint]
+    name: ${{ matrix.toolchain.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - {
+              runs_on: ubuntu-latest,
+              name: "Clang libc++",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:15913dcd08e9ddc4d5364df8108dbbd9cc8ac22a7a4cf1e8da389faec5b43ec1",
+              CC: clang,
+              CXX: clang++,
+              CFLAGS: "-stdlib=libc++",
+              CMAKE_BUILD_TYPE: "Debug",
+              CMAKE_FLAGS: "-G Ninja",
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: "Clang libstdc++",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:15913dcd08e9ddc4d5364df8108dbbd9cc8ac22a7a4cf1e8da389faec5b43ec1",
+              CC: clang,
+              CXX: clang++,
+              CFLAGS: "-stdlib=libstdc++",
+              CMAKE_BUILD_TYPE: "Debug",
+              CMAKE_FLAGS: "-G Ninja",
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: "Clang ASAN+UBSAN libstdc++",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:15913dcd08e9ddc4d5364df8108dbbd9cc8ac22a7a4cf1e8da389faec5b43ec1",
+              CC: clang,
+              CXX: clang++,
+              CFLAGS: "-fsanitize=address,undefined -fsanitize-address-use-after-scope -fno-sanitize-recover=address,undefined -stdlib=libstdc++",
+              CMAKE_BUILD_TYPE: "Debug",
+              ASAN_OPTIONS: "strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1",
+              CMAKE_FLAGS: "-G Ninja",
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: "GCC",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:15913dcd08e9ddc4d5364df8108dbbd9cc8ac22a7a4cf1e8da389faec5b43ec1",
+              CC: gcc,
+              CXX: g++,
+              CFLAGS: "",
+              CMAKE_BUILD_TYPE: "Debug",
+              CMAKE_FLAGS: "-G Ninja",
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: "GCC ASAN+UBSAN",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:15913dcd08e9ddc4d5364df8108dbbd9cc8ac22a7a4cf1e8da389faec5b43ec1",
+              CC: gcc,
+              CXX: g++,
+              CFLAGS: "-fsanitize=address,undefined -fsanitize-address-use-after-scope -fno-sanitize-recover=address,undefined",
+              CMAKE_BUILD_TYPE: "Debug",
+              CMAKE_FLAGS: "-G Ninja",
+              ASAN_OPTIONS: "strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1",
+            }
+          - {
+              runs_on: ubuntu-latest,
+              name: "GCC Release",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:15913dcd08e9ddc4d5364df8108dbbd9cc8ac22a7a4cf1e8da389faec5b43ec1",
+              CC: gcc,
+              CXX: g++,
+              CFLAGS: "",
+              CMAKE_BUILD_TYPE: "Release",
+              CMAKE_FLAGS: "-G Ninja",
+            }
+    runs-on: ${{ matrix.toolchain.runs_on }}
+    container: ${{ matrix.toolchain.image }}
+    env:
+      ASAN_OPTIONS: ${{ matrix.toolchain.ASAN_OPTIONS }}
+      CMAKE_BUILD_TYPE: ${{ matrix.toolchain.CMAKE_BUILD_TYPE }}
+      CMAKE_C_COMPILER: ${{ matrix.toolchain.CC }}
+      CMAKE_C_FLAGS: ${{ matrix.toolchain.CFLAGS }}
+      CMAKE_CXX_COMPILER: ${{ matrix.toolchain.CXX }}
+      CMAKE_CXX_FLAGS: ${{ matrix.toolchain.CFLAGS }}
+      CMAKE_EXE_LINKER_FLAGS: ${{ matrix.toolchain.CFLAGS }}
+      CMAKE_EXTRA_FLAGS: ${{ matrix.toolchain.CMAKE_FLAGS }}
+      CMAKE_SHARED_LINKER_FLAGS: ${{ matrix.toolchain.CFLAGS }}
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
   build_test:
     runs-on: ubuntu-latest
