@@ -34,7 +34,7 @@ jobs:
           - {
               runs_on: ubuntu-latest,
               name: "Clang libc++",
-              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:7eb5b818a96cf57220d5f4c0213473a068886e632995cdb357b5cf216b4a9281",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb",
               CC: clang,
               CXX: clang++,
               CFLAGS: "-stdlib=libc++",
@@ -44,7 +44,7 @@ jobs:
           - {
               runs_on: ubuntu-latest,
               name: "Clang libstdc++",
-              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:7eb5b818a96cf57220d5f4c0213473a068886e632995cdb357b5cf216b4a9281",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb",
               CC: clang,
               CXX: clang++,
               CFLAGS: "-stdlib=libstdc++",
@@ -54,7 +54,7 @@ jobs:
           - {
               runs_on: ubuntu-latest,
               name: "Clang ASAN+UBSAN libstdc++",
-              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:7eb5b818a96cf57220d5f4c0213473a068886e632995cdb357b5cf216b4a9281",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb",
               CC: clang,
               CXX: clang++,
               CFLAGS: "-fsanitize=address,undefined -fsanitize-address-use-after-scope -fno-sanitize-recover=address,undefined -stdlib=libstdc++",
@@ -65,7 +65,7 @@ jobs:
           - {
               runs_on: ubuntu-latest,
               name: "GCC",
-              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:7eb5b818a96cf57220d5f4c0213473a068886e632995cdb357b5cf216b4a9281",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb",
               CC: gcc,
               CXX: g++,
               CFLAGS: "",
@@ -75,7 +75,7 @@ jobs:
           - {
               runs_on: ubuntu-latest,
               name: "GCC ASAN+UBSAN",
-              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:7eb5b818a96cf57220d5f4c0213473a068886e632995cdb357b5cf216b4a9281",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb",
               CC: gcc,
               CXX: g++,
               CFLAGS: "-fsanitize=address,undefined -fsanitize-address-use-after-scope -fno-sanitize-recover=address,undefined",
@@ -86,7 +86,7 @@ jobs:
           - {
               runs_on: ubuntu-latest,
               name: "GCC Release",
-              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:7eb5b818a96cf57220d5f4c0213473a068886e632995cdb357b5cf216b4a9281",
+              image: "ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb",
               CC: gcc,
               CXX: g++,
               CFLAGS: "",
