@@ -10,7 +10,7 @@ jobs:
   clang_format_check:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:1e99b968a0a11f117d903054c1bf9486f43aa92101c81652cc0794fbfaae29da
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
@@ -21,7 +21,7 @@ jobs:
   build_release:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:1e99b968a0a11f117d903054c1bf9486f43aa92101c81652cc0794fbfaae29da
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       
@@ -33,7 +33,7 @@ jobs:
   build_test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:1e99b968a0a11f117d903054c1bf9486f43aa92101c81652cc0794fbfaae29da
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2ec74a0e76a11fb384c86fe60e06f2ff789d6e7442ba8d9a4307a0e3750a43bb
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
