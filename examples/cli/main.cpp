@@ -67,7 +67,9 @@ int main(int argc, char *argv[])
     std::ignore = mon.addNetworkAddressListener([](const network::Interface &iface, const NetworkAddresses &addresses) {
         spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", "));
     });
-
+    std::ignore = mon.addGatewayAddressListener([](const network::Interface &iface, const ip::Address &gateway) {
+        spdlog::info("{} changed gateway address to {}", iface, gateway);
+    });
     std::ignore = mon.addEnumerationDoneListener([&mon]() {
         spdlog::info("Enumeration done");
         if (FLAGS_exit_after_enumeration)

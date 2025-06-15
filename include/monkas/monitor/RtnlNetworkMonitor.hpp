@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ip/Address.hpp"
 #include <chrono>
 #include <cstdint>
 #include <functional>
@@ -50,6 +51,7 @@ using Interfaces = std::set<network::Interface>;
 using InterfacesBroadcaster = Observable<std::reference_wrapper<const Interfaces>>;
 using InterfacesListener = InterfacesBroadcaster::Observer;
 using InterfacesListenerToken = InterfacesBroadcaster::Token;
+
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
 using OperationalStateBroadcaster = Observable<network::Interface, OperationalState>;
 using OperationalStateListener = OperationalStateBroadcaster::Observer;
@@ -58,6 +60,10 @@ using OperationalStateListenerToken = OperationalStateBroadcaster::Token;
 using NetworkAddressBroadcaster = Observable<network::Interface, std::reference_wrapper<const NetworkAddresses>>;
 using NetworkAddressListener = NetworkAddressBroadcaster::Observer;
 using NetworkAddressListenerToken = NetworkAddressBroadcaster::Token;
+
+using GatewayAddressBroadcaster = Observable<network::Interface, std::reference_wrapper<const ip::Address>>;
+using GatewayAddressListener = GatewayAddressBroadcaster::Observer;
+using GatewayAddressListenerToken = GatewayAddressBroadcaster::Token;
 
 using EnumerationDoneBroadcaster = Observable<>;
 using EnumerationDoneListener = EnumerationDoneBroadcaster::Observer;
@@ -78,6 +84,12 @@ class RtnlNetworkMonitor
 
     [[nodiscard]] NetworkAddressListenerToken addNetworkAddressListener(const NetworkAddressListener &listener);
     void removeNetworkAddressListener(const NetworkAddressListenerToken &token);
+
+    [[nodiscard]] GatewayAddressListenerToken addGatewayAddressListener(const GatewayAddressListener &listener);
+    void removeGatewayAddressListener(const GatewayAddressListenerToken &token);
+
+    [[nodiscard]] NetworkInterfaceStatusTracker &ensureTrackerForInterface(int ifIndex);
+    [[nodiscard]] NetworkInterfaceStatusTracker &ensureTrackerForInterface(const network::Interface &iface);
 
     [[nodiscard]] EnumerationDoneListenerToken addEnumerationDoneListener(const EnumerationDoneListener &listener);
     void removeEnumerationDoneListener(const EnumerationDoneListenerToken &token);
@@ -170,6 +182,7 @@ class RtnlNetworkMonitor
     InterfacesBroadcaster m_interfacesBroadcaster;
     OperationalStateBroadcaster m_operationalStateBroadcaster;
     NetworkAddressBroadcaster m_networkAddressBroadcaster;
+    GatewayAddressBroadcaster m_gatewayAddressBroadcaster;
     EnumerationDoneBroadcaster m_enumerationDoneBroadcaster;
 };
 } // namespace monkas

@@ -507,6 +507,11 @@ void RtnlNetworkMonitor::broadcastChanges()
                                                   tracker.networkAddresses());
             tracker.clearFlag(DirtyFlag::NetworkAddressesChanged);
         }
+        if (m_gatewayAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::GatewayAddressChanged))
+        {
+            m_gatewayAddressBroadcaster.broadcast(network::Interface{index, tracker.name()}, tracker.gatewayAddress());
+            tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
+        }
     }
 }
 
