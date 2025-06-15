@@ -1,3 +1,4 @@
+#include <cstring>
 #include <ip/Address.hpp>
 
 #include <algorithm>
@@ -130,8 +131,18 @@ auto operator<(const Address &lhs, const Address &rhs) -> bool
     if (lhs.addressFamily() == rhs.addressFamily())
     {
         const auto addressLength = lhs.addressLength();
-        return std::lexicographical_compare(lhs.begin(), lhs.begin() + addressLength, rhs.begin(),
-                                            rhs.begin() + addressLength);
+        return std::memcmp(lhs.data(), rhs.data(), lhs.addressLength()) < 0;
+    }
+    auto v4Cmp = [](const Address &v6, const Address &v4) {
+        return std::memcmp(v6.data() + v4MappedPrefix.size(), v4.data(), v4.addressLength()) < 0;
+    };
+    if (lhs.isMappedV4() && rhs.addressFamily() == AddressFamily::IPv4)
+    {
+        return v4Cmp(lhs, rhs);
+    }
+    if (rhs.isMappedV4() && lhs.addressFamily() == AddressFamily::IPv4)
+    {
+        return v4Cmp(rhs, lhs);
     }
     return lhs.addressLength() < rhs.addressLength();
 }
@@ -141,10 +152,10 @@ auto operator==(const Address &lhs, const Address &rhs) -> bool
     if (lhs.addressFamily() == rhs.addressFamily())
     {
         const auto addressLength = lhs.addressLength();
-        return std::equal(lhs.begin(), lhs.begin() + addressLength, rhs.begin(), rhs.begin() + addressLength);
+        return std::memcmp(lhs.data(), rhs.data(), addressLength) == 0;
     }
     auto v4Eq = [](const Address &v6, const Address &v4) {
-        return std::equal(v6.begin() + v4MappedPrefix.size(), v6.end(), v4.begin(), v4.begin() + v4.addressLength());
+        return std::memcmp(v6.data() + v4MappedPrefix.size(), v4.data(), v4.addressLength()) == 0;
     };
     if (lhs.isMappedV4() && rhs.addressFamily() == AddressFamily::IPv4)
     {

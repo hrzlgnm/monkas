@@ -54,8 +54,9 @@ TEST_SUITE("[ip::Address]")
 
         std::array<uint8_t, 4> localhost4_other{127, 0, 1, 1};
         CHECK(Address::fromBytes(localhost4) < Address::fromBytes(localhost4_other));
-
         CHECK(Address::fromBytes(localhost4) < Address::fromBytes(localhost6));
+        CHECK_FALSE(Address::fromBytes(localhostV4mapped) < Address::fromBytes(localhost4));
+        CHECK_FALSE(Address::fromBytes(localhost4) < Address::fromBytes(localhostV4mapped));
     }
 }
 
