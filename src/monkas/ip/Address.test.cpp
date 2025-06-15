@@ -3,6 +3,7 @@
 
 namespace
 {
+// NOLINTBEGIN(*)
 
 using namespace monkas::ip;
 
@@ -51,4 +52,6 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromBytes(localhost4) < Address::fromBytes(localhost6));
     }
 }
+
+// NOLINTEND(*)
 } // namespace

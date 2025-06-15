@@ -4,11 +4,9 @@
 #include <arpa/inet.h>
 #include <ostream>
 
-namespace monkas
+namespace monkas::ip
 {
-namespace ip
-{
-int asLinuxAf(AddressFamily f)
+auto asLinuxAf(AddressFamily f) -> int
 {
     switch (f)
     {
@@ -22,7 +20,7 @@ int asLinuxAf(AddressFamily f)
     }
 }
 
-std::ostream &operator<<(std::ostream &o, AddressFamily a)
+auto operator<<(std::ostream &o, AddressFamily a) -> std::ostream &
 {
     switch (a)
     {
@@ -44,72 +42,76 @@ Address::operator bool() const
     return m_addressFamily != AddressFamily::Unspecified;
 }
 
-AddressFamily Address::addressFamily() const
+auto Address::addressFamily() const -> AddressFamily
 {
     return m_addressFamily;
 }
 
-Address::size_type Address::addressLength() const
+auto Address::addressLength() const -> Address::size_type
 {
     if (m_addressFamily == AddressFamily::IPv4)
-        return IPV4_ADDR_LEN;
+    {
+        return ipV4AddrLen;
+    }
     if (m_addressFamily == AddressFamily::IPv6)
-        return IPV6_ADDR_LEN;
+    {
+        return ipV6AddrLen;
+    }
     return 0;
 }
 
-Address Address::fromString(std::string_view address)
+auto Address::fromString(const std::string &address) -> Address
 {
-    std::array<uint8_t, IPV6_ADDR_LEN> addr;
+    std::array<uint8_t, ipV6AddrLen> addr{};
     if (inet_pton(AF_INET, address.data(), addr.data()) == 1)
     {
-        return Address::fromBytes(addr.data(), IPV4_ADDR_LEN);
+        return Address::fromBytes(addr.data(), ipV4AddrLen);
     }
     if (inet_pton(AF_INET6, address.data(), addr.data()) == 1)
     {
-        return Address::fromBytes(addr.data(), IPV6_ADDR_LEN);
+        return Address::fromBytes(addr.data(), ipV6AddrLen);
     }
-    return Address();
+    return {};
 }
 
-Address Address::fromBytes(const uint8_t *bytes, size_type len)
+auto Address::fromBytes(const uint8_t *bytes, size_type len) -> Address
 {
-    if (len == IPV6_ADDR_LEN || len == IPV4_ADDR_LEN)
+    if (len == ipV6AddrLen || len == ipV4AddrLen)
     {
         Address a;
         std::copy_n(bytes, len, a.begin());
-        a.m_addressFamily = (len == IPV6_ADDR_LEN ? AddressFamily::IPv6 : AddressFamily::IPv4);
+        a.m_addressFamily = (len == ipV6AddrLen ? AddressFamily::IPv6 : AddressFamily::IPv4);
         return a;
     }
-    return Address();
+    return {};
 }
 
-Address Address::fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes)
+auto Address::fromBytes(const std::array<uint8_t, ipV4AddrLen> &bytes) -> Address
 {
     return fromBytes(bytes.data(), bytes.size());
 }
 
-Address Address::fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes)
+auto Address::fromBytes(const std::array<uint8_t, ipV6AddrLen> &bytes) -> Address
 {
     return fromBytes(bytes.data(), bytes.size());
 }
 
-std::string Address::toString() const
+auto Address::toString() const -> std::string
 {
-    std::array<char, INET6_ADDRSTRLEN> out;
+    std::array<char, INET6_ADDRSTRLEN> out{};
     if (inet_ntop(asLinuxAf(m_addressFamily), data(), out.data(), out.size()) != nullptr)
     {
-        return std::string(out.data());
+        return {out.data()};
     }
-    return std::string("Unspecified");
+    return {"Unspecified"};
 }
 
-std::ostream &operator<<(std::ostream &o, const Address &a)
+auto operator<<(std::ostream &o, const Address &a) -> std::ostream &
 {
     return o << a.toString();
 }
 
-bool operator<(const Address &lhs, const Address &rhs)
+auto operator<(const Address &lhs, const Address &rhs) -> bool
 {
     if (lhs.addressFamily() == rhs.addressFamily())
     {
@@ -120,7 +122,7 @@ bool operator<(const Address &lhs, const Address &rhs)
     return lhs.addressLength() < rhs.addressLength();
 }
 
-bool operator==(const Address &lhs, const Address &rhs)
+auto operator==(const Address &lhs, const Address &rhs) -> bool
 {
     if (lhs.addressFamily() == rhs.addressFamily())
     {
@@ -130,10 +132,9 @@ bool operator==(const Address &lhs, const Address &rhs)
     return false;
 }
 
-bool operator!=(const Address &lhs, const Address &rhs)
+auto operator!=(const Address &lhs, const Address &rhs) -> bool
 {
     return !(lhs == rhs);
 }
 
-} // namespace ip
-} // namespace monkas
+} // namespace monkas::ip

@@ -4,10 +4,10 @@
 #include <utility>
 #include <watchable/Watchable.hpp>
 
-using namespace monkas;
-
 namespace
 {
+// NOLINTBEGIN(*)
+using namespace monkas;
 TEST_SUITE_BEGIN("[watchable]");
 
 TEST_CASE("Watchable tests")
@@ -77,4 +77,5 @@ TEST_CASE("Watchable tests")
 }
 
 TEST_SUITE_END();
+// NOLINTEND(*)
 } // namespace

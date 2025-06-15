@@ -5,30 +5,27 @@
 #include <fmt/ostream.h>
 #include <iosfwd>
 
-namespace monkas
+namespace monkas::ethernet
 {
-namespace ethernet
-{
-constexpr auto ADDR_LEN = 6;
+constexpr auto addrLen = 6;
 
-class Address : public std::array<uint8_t, ADDR_LEN>
+class Address : public std::array<uint8_t, addrLen>
 {
   public:
     Address() = default;
-    std::string toString() const;
+    [[nodiscard]] auto toString() const -> std::string;
     /**
      * @return true if any of the octets of the address is not zero
      */
     explicit operator bool() const;
 
-    static Address fromBytes(const uint8_t *bytes, size_type len);
-    static Address fromBytes(const std::array<uint8_t, ADDR_LEN> &bytes);
+    static auto fromBytes(const uint8_t *bytes, size_type len) -> Address;
+    static auto fromBytes(const std::array<uint8_t, addrLen> &bytes) -> Address;
 };
 
-std::ostream &operator<<(std::ostream &o, const Address &a);
+auto operator<<(std::ostream &o, const Address &a) -> std::ostream &;
 
-} // namespace ethernet
-} // namespace monkas
+} // namespace monkas::ethernet
 
 template <> struct fmt::formatter<monkas::ethernet::Address> : fmt::ostream_formatter
 {

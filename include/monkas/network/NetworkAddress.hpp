@@ -3,9 +3,7 @@
 #include <fmt/ostream.h>
 #include <ip/Address.hpp>
 
-namespace monkas
-{
-namespace network
+namespace monkas::network
 {
 using AddressFamily = ip::AddressFamily;
 
@@ -17,9 +15,9 @@ enum class AddressScope : uint8_t
     Host,
     Nowhere,
 };
-std::ostream &operator<<(std::ostream &o, AddressScope a);
+auto operator<<(std::ostream &o, AddressScope a) -> std::ostream &;
 
-AddressScope fromRtnlScope(uint8_t rtnlScope);
+auto fromRtnlScope(uint8_t rtnlScope) -> AddressScope;
 
 class NetworkAddress
 {
@@ -32,12 +30,12 @@ class NetworkAddress
      */
     explicit operator bool() const;
 
-    AddressFamily addressFamily() const;
-    const ip::Address &ip() const;
-    const ip::Address &broadcast() const;
-    uint8_t prefixLength() const;
-    AddressScope scope() const;
-    uint32_t flags() const;
+    [[nodiscard]] auto addressFamily() const -> AddressFamily;
+    [[nodiscard]] auto ip() const -> const ip::Address &;
+    [[nodiscard]] auto broadcast() const -> const ip::Address &;
+    [[nodiscard]] auto prefixLength() const -> uint8_t;
+    [[nodiscard]] auto scope() const -> AddressScope;
+    [[nodiscard]] auto flags() const -> uint32_t;
 
   private:
     AddressFamily m_af{AddressFamily::Unspecified};
@@ -48,15 +46,14 @@ class NetworkAddress
     uint32_t m_flags{};
 };
 
-bool operator==(const NetworkAddress &lhs, const NetworkAddress &rhs);
-bool operator!=(const NetworkAddress &lhs, const NetworkAddress &rhs);
-bool operator<(const NetworkAddress &lhs, const NetworkAddress &rhs);
-bool operator>=(const NetworkAddress &lhs, const NetworkAddress &rhs);
+auto operator==(const NetworkAddress &lhs, const NetworkAddress &rhs) -> bool;
+auto operator!=(const NetworkAddress &lhs, const NetworkAddress &rhs) -> bool;
+auto operator<(const NetworkAddress &lhs, const NetworkAddress &rhs) -> bool;
+auto operator>=(const NetworkAddress &lhs, const NetworkAddress &rhs) -> bool;
 
-std::ostream &operator<<(std::ostream &o, const NetworkAddress &a);
+auto operator<<(std::ostream &o, const NetworkAddress &a) -> std::ostream &;
 
-} // namespace network
-} // namespace monkas
+} // namespace monkas::network
 
 template <> struct fmt::formatter<monkas::network::NetworkAddress> : fmt::ostream_formatter
 {

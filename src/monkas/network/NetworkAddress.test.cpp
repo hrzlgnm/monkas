@@ -4,6 +4,7 @@
 
 namespace
 {
+// NOLINTBEGIN(*)
 
 using namespace monkas::network;
 using namespace monkas::ip;
@@ -47,4 +48,6 @@ TEST_SUITE("[network::NetworkAddress]")
         CHECK(addr >= NetworkAddress{});
     }
 }
+
+// NOLINTEND(*)
 } // namespace

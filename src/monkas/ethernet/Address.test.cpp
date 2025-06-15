@@ -3,13 +3,14 @@
 
 namespace
 {
+// NOLINTBEGIN(*)
 using namespace monkas::ethernet;
 
 TEST_SUITE("[ethernet::Address]")
 {
 
-    std::array<uint8_t, 6> null{0, 0, 0, 0, 0, 0};
-    std::array<uint8_t, 6> some{1, 2, 3, 4, 5, 0x1A};
+    std::array<uint8_t, addrLen> null{0, 0, 0, 0, 0, 0};
+    std::array<uint8_t, addrLen> some{1, 2, 3, 4, 5, 0x1A};
     TEST_CASE("toString")
     {
         CHECK(Address::fromBytes(null).toString() == "00:00:00:00:00:00");
@@ -43,4 +44,6 @@ TEST_SUITE("[ethernet::Address]")
         CHECK(Address::fromBytes(some));
     }
 }
+
+// NOLINTEND(*)
 } // namespace

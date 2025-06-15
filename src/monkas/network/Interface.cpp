@@ -3,13 +3,14 @@
 
 namespace monkas::network
 {
-Interface::Interface(int index, const std::string &name)
-    : m_index(index)
-    , m_name(name)
+
+Interface::Interface(uint32_t index, std::string name)
+    : m_index{index}
+    , m_name{std::move(name)}
 {
 }
 
-std::ostream &operator<<(std::ostream &os, const Interface &iface)
+auto operator<<(std::ostream &os, const Interface &iface) -> std::ostream &
 {
     return os << iface.index() << ": " << iface.name();
 }
