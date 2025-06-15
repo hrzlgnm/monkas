@@ -34,7 +34,7 @@ auto toRtnlGroupFlag(rtnetlink_groups group) -> unsigned
     return (1U << (group - 1U));
 }
 
-inline constexpr size_t SOCKET_BUFFER_SIZE = static_cast<const size_t>(32U * 1024U);
+inline constexpr size_t socketBufferSize = static_cast<const size_t>(32U * 1024U);
 
 auto ensureMnlSocket(bool nonBlocking) -> mnl_socket *
 {
@@ -65,20 +65,20 @@ auto operator&(RuntimeOptions o, RuntimeFlag f) -> RuntimeOptions
 } // namespace
 
 RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
-    : m_mnlSocket{ensureMnlSocket((options & NonBlocking) != 0U), mnl_socket_close}
+    : m_mnlSocket{ensureMnlSocket(options.test(NonBlocking)), mnl_socket_close}
     , m_portid{mnl_socket_get_portid(m_mnlSocket.get())}
-    , m_buffer(SOCKET_BUFFER_SIZE)
+    , m_buffer(socketBufferSize)
     , m_runtimeOptions(options)
 {
     m_stats.startTime = std::chrono::steady_clock::now();
     unsigned groups = toRtnlGroupFlag(RTNLGRP_LINK);
     groups |= toRtnlGroupFlag(RTNLGRP_NOTIFY);
-    if ((m_runtimeOptions & RuntimeFlag::PreferredFamilyV6) == 0U)
+    if (!m_runtimeOptions.test(RuntimeFlag::PreferredFamilyV6))
     {
         groups |= toRtnlGroupFlag(RTNLGRP_IPV4_IFADDR);
         groups |= toRtnlGroupFlag(RTNLGRP_IPV4_ROUTE);
     }
-    if ((m_runtimeOptions & RuntimeFlag::PreferredFamilyV4) == 0U)
+    if (!m_runtimeOptions.test(RuntimeFlag::PreferredFamilyV4))
     {
         groups |= toRtnlGroupFlag(RTNLGRP_IPV6_IFADDR);
         groups |= toRtnlGroupFlag(RTNLGRP_IPV6_ROUTE);
@@ -105,7 +105,7 @@ void RtnlNetworkMonitor::enumerateInterfaces()
     }
 }
 
-int RtnlNetworkMonitor::run()
+auto RtnlNetworkMonitor::run() -> int
 {
     // someone may call enumerateInterfaces() and stop() during enumerateInterfaces
     if (!m_mnlSocket)
@@ -273,7 +273,7 @@ void RtnlNetworkMonitor::receiveAndProcess()
     {
         m_stats.packetsReceived++;
         m_stats.bytesReceived += receiveResult;
-        if ((m_runtimeOptions & DumpPackets) != 0U)
+        if (m_runtimeOptions.test(RuntimeFlag::DumpPackets))
         {
             std::ignore = fflush(stderr);
             std::ignore = fflush(stdout);
@@ -310,6 +310,7 @@ void RtnlNetworkMonitor::receiveAndProcess()
                 {
                     m_enumerationDoneNotifier.notify();
                 }
+                printStatsForNerdsIfEnabled();
                 // run() will restart this loop
                 break;
             }
@@ -471,13 +472,13 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
         m_stats.msgsDiscarded++;
         return;
     }
-    if (((m_runtimeOptions & RuntimeFlag::PreferredFamilyV4) != 0U) && ifa->ifa_family != AF_INET)
+    if (m_runtimeOptions.test(RuntimeFlag::PreferredFamilyV4) && ifa->ifa_family != AF_INET)
     {
         m_stats.msgsDiscarded++;
         return;
     }
 
-    if (((m_runtimeOptions & RuntimeFlag::PreferredFamilyV6) != 0U) && ifa->ifa_family != AF_INET6)
+    if (m_runtimeOptions.test(RuntimeFlag::PreferredFamilyV6) && ifa->ifa_family != AF_INET6)
     {
         m_stats.msgsDiscarded++;
         return;
@@ -542,7 +543,7 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
         m_stats.msgsDiscarded++;
         return;
     }
-    if (((m_runtimeOptions & RuntimeFlag::PreferredFamilyV6) != 0U) && rtm->rtm_family != AF_INET6)
+    if (m_runtimeOptions.test(RuntimeFlag::PreferredFamilyV6) && rtm->rtm_family != AF_INET6)
     {
         m_stats.msgsDiscarded++;
         return;
@@ -596,7 +597,7 @@ auto RtnlNetworkMonitor::parseAttributes(const nlmsghdr *n, size_t offset, uint1
 
 void RtnlNetworkMonitor::printStatsForNerdsIfEnabled()
 {
-    if (isEnumerating() || ((m_runtimeOptions & RuntimeFlag::StatsForNerds) == 0U))
+    if (isEnumerating() || !m_runtimeOptions.test(RuntimeFlag::StatsForNerds))
     {
         return;
     }

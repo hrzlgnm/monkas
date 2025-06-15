@@ -34,23 +34,24 @@ inline auto operator<<(std::ostream &os, uint8_t c) -> std::ostream &
 // TODO: wrap this into a own class with validating getters
 using RtnlAttributes = std::vector<const nlattr *>;
 
-enum RuntimeFlag : uint8_t
-{
-    StatsForNerds = 1,
-    PreferredFamilyV4 = 2,
-    PreferredFamilyV6 = 4,
-    DumpPackets = 8,
-    NonBlocking = 16,
-};
-
 enum class InitialSnapshotMode : uint8_t
 {
     NoInitialSnapshot = 0,
     InitialSnapshot = 1,
 };
 
-// TODO make this a std::bitset, too
-using RuntimeOptions = uint32_t;
+enum RuntimeFlag : uint8_t
+{
+    StatsForNerds,
+    PreferredFamilyV4,
+    PreferredFamilyV6,
+    DumpPackets,
+    NonBlocking,
+    // NOTE: keep FlagsCount last
+    FlagsCount,
+};
+
+using RuntimeOptions = std::bitset<static_cast<size_t>(RuntimeFlag::FlagsCount)>;
 
 using Interfaces = std::set<network::Interface>;
 

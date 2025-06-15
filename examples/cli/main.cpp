@@ -46,23 +46,23 @@ auto main(int argc, char *argv[]) -> int
     }
     constexpr auto flushEvery = std::chrono::seconds(5);
     spdlog::flush_every(flushEvery);
-    RuntimeOptions options{};
+    RuntimeOptions options;
     if (FLAGS_nerdstats)
     {
-        options |= monkas::RuntimeFlag::StatsForNerds;
+        options.set(monkas::RuntimeFlag::StatsForNerds);
     }
     if (FLAGS_dumppackets)
     {
-        options |= monkas::RuntimeFlag::DumpPackets;
+        options.set(monkas::RuntimeFlag::DumpPackets);
     }
     if (FLAGS_family == 4)
     {
-        options |= monkas::RuntimeFlag::PreferredFamilyV4;
+        options.set(monkas::RuntimeFlag::PreferredFamilyV4);
     }
     constexpr auto v6 = 6U;
     if (FLAGS_family == v6)
     {
-        options |= monkas::RuntimeFlag::PreferredFamilyV6;
+        options.set(monkas::RuntimeFlag::PreferredFamilyV6);
     }
     RtnlNetworkMonitor mon(options);
     mon.enumerateInterfaces();
