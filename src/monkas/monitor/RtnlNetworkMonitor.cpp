@@ -246,9 +246,10 @@ NetworkInterfaceStatusTracker &RtnlNetworkMonitor::ensureNameCurrent(int ifIndex
     {
         cacheEntry.setName(mnl_attr_get_str(nameAttribute));
     }
-    if (before != m_trackers.size())
+    if (before != m_trackers.size() || cacheEntry.isDirty(DirtyFlag::NameChanged))
     {
         broadcastInterfaces();
+        cacheEntry.clearFlag(DirtyFlag::NameChanged);
     }
     return cacheEntry;
 }
