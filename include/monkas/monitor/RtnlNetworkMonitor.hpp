@@ -65,6 +65,10 @@ using GatewayAddressBroadcaster = Observable<network::Interface, std::reference_
 using GatewayAddressListener = GatewayAddressBroadcaster::Observer;
 using GatewayAddressListenerToken = GatewayAddressBroadcaster::Token;
 
+using EthernetAddressBroadcaster = Observable<network::Interface, std::reference_wrapper<const ethernet::Address>>;
+using EthernetAddressListener = EthernetAddressBroadcaster::Observer;
+using EthernetAddressListenerToken = EthernetAddressBroadcaster::Token;
+
 using EnumerationDoneBroadcaster = Observable<>;
 using EnumerationDoneListener = EnumerationDoneBroadcaster::Observer;
 using EnumerationDoneListenerToken = EnumerationDoneBroadcaster::Token;
@@ -87,6 +91,9 @@ class RtnlNetworkMonitor
 
     [[nodiscard]] GatewayAddressListenerToken addGatewayAddressListener(const GatewayAddressListener &listener);
     void removeGatewayAddressListener(const GatewayAddressListenerToken &token);
+
+    [[nodiscard]] EthernetAddressListenerToken addEthernetAddressListener(const EthernetAddressListener &listener);
+    void removeEthernetAddressListener(const EthernetAddressListenerToken &token);
 
     [[nodiscard]] EnumerationDoneListenerToken addEnumerationDoneListener(const EnumerationDoneListener &listener);
     void removeEnumerationDoneListener(const EnumerationDoneListenerToken &token);
@@ -180,6 +187,7 @@ class RtnlNetworkMonitor
     OperationalStateBroadcaster m_operationalStateBroadcaster;
     NetworkAddressBroadcaster m_networkAddressBroadcaster;
     GatewayAddressBroadcaster m_gatewayAddressBroadcaster;
+    EthernetAddressBroadcaster m_ethernetAddressBroadcaster;
     EnumerationDoneBroadcaster m_enumerationDoneBroadcaster;
 };
 } // namespace monkas
