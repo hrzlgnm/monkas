@@ -207,7 +207,7 @@ class RtnlNetworkMonitor
     NetworkAddressNotifier m_networkAddressNotifier;
     GatewayAddressNotifier m_gatewayAddressNotifier;
     MacAddressNotifier m_macAddressNotifier;
-    MacAddressNotifier m_broadcastAddressNotifier;
+    BroadcastAddressNotifier m_broadcastAddressNotifier;
     EnumerationDoneNotifier m_enumerationDoneNotifier;
 };
 } // namespace monkas
