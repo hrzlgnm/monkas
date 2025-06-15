@@ -314,17 +314,15 @@ auto dirtyFlagsToString(const DirtyFlags &flags) -> std::string
 
     std::ostringstream result;
     bool empty = true;
-
-    for (std::underlying_type_t<DirtyFlag> i = 0;
-         i < static_cast<std::underlying_type_t<DirtyFlag>>(DirtyFlag::FlagsCount); ++i)
+    for (size_t pos = flags._Find_first(); pos < flags.size(); pos = flags._Find_next(pos))
     {
-        if (flags.test(i))
+        if (flags.test(pos))
         {
             if (!empty)
             {
                 result << "|";
             }
-            result << DirtyFlag(i);
+            result << static_cast<DirtyFlag>(pos);
             empty = false;
         }
     }
