@@ -143,16 +143,18 @@ auto operator==(const Address &lhs, const Address &rhs) -> bool
         const auto addressLength = lhs.addressLength();
         return std::equal(lhs.begin(), lhs.begin() + addressLength, rhs.begin(), rhs.begin() + addressLength);
     }
+    auto v4Eq = [](const Address &v6, const Address &v4) {
+        return std::equal(v6.begin() + v4MappedPrefix.size(), v6.end(), v4.begin(), v4.begin() + v4.addressLength());
+    };
     if (lhs.isMappedV4() && rhs.addressFamily() == AddressFamily::IPv4)
     {
-        return std::equal(lhs.begin() + v4MappedPrefix.size(), lhs.end(), rhs.begin(),
-                          rhs.begin() + rhs.addressLength());
+        return v4Eq(lhs, rhs);
     }
-    if (lhs.addressFamily() == AddressFamily::IPv4 && rhs.isMappedV4())
+    if (rhs.isMappedV4() && lhs.addressFamily() == AddressFamily::IPv4)
     {
-        return std::equal(rhs.begin() + v4MappedPrefix.size(), rhs.end(), lhs.begin(),
-                          lhs.begin() + lhs.addressLength());
+        return v4Eq(rhs, lhs);
     }
+
     return false;
 }
 
