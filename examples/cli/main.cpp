@@ -10,7 +10,14 @@ DEFINE_bool(dumppackets, false, "Enable dumping of rtnl packets");
 
 DEFINE_bool(exit_after_enumeration, false, "Exit after enumeration is done");
 
-DEFINE_uint32(family, 0, "Preferred address family <4|6>");
+DEFINE_uint32(family, 0, "Preferred address family <0|4|6>");
+DEFINE_validator(family, [](const char *flagname, uint32_t value) {
+    if (value != 0 && value != 4 && value != 6)
+    {
+        return false;
+    }
+    return true;
+});
 
 DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, critical, off");
 
