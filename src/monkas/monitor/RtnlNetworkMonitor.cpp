@@ -514,12 +514,13 @@ void RtnlNetworkMonitor::broadcastChanges()
         if (m_networkAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::NetworkAddressesChanged))
         {
             m_networkAddressBroadcaster.broadcast(network::Interface{index, tracker.name()},
-                                                  tracker.networkAddresses());
+                                                  std::cref(tracker.networkAddresses()));
             tracker.clearFlag(DirtyFlag::NetworkAddressesChanged);
         }
         if (m_gatewayAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::GatewayAddressChanged))
         {
-            m_gatewayAddressBroadcaster.broadcast(network::Interface{index, tracker.name()}, tracker.gatewayAddress());
+            m_gatewayAddressBroadcaster.broadcast(network::Interface{index, tracker.name()},
+                                                  std::cref(tracker.gatewayAddress()));
             tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
         }
     }
