@@ -185,8 +185,8 @@ void RtnlNetworkMonitor::removeGatewayAddressWatcher(const GatewayAddressWatcher
     m_gatewayAddressNotifier.removeWatcher(token);
 }
 
-EthernetAddressWatcherToken RtnlNetworkMonitor::addEthernetAddressWatcher(const EthernetAddressWatcher &watcher,
-                                                                          bool initialSnapshot)
+EthernetAddressWatcherToken RtnlNetworkMonitor::addMacAddressWatcher(const EthernetAddressWatcher &watcher,
+                                                                     bool initialSnapshot)
 {
     if (initialSnapshot)
     {
@@ -196,12 +196,31 @@ EthernetAddressWatcherToken RtnlNetworkMonitor::addEthernetAddressWatcher(const 
             tracker.clearFlag(DirtyFlag::EthernetAddressChanged);
         }
     }
-    return m_ethernetAddressNotifier.addWatcher(watcher);
+    return m_macAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeEthernetAddressWatcher(const EthernetAddressWatcherToken &token)
+void RtnlNetworkMonitor::removeMacAddressWatcher(const EthernetAddressWatcherToken &token)
 {
-    m_ethernetAddressNotifier.removeWatcher(token);
+    m_macAddressNotifier.removeWatcher(token);
+}
+
+EthernetAddressWatcherToken RtnlNetworkMonitor::addBroadcastAddressWatcher(const EthernetAddressWatcher &watcher,
+                                                                           bool initialSnapshot)
+{
+    if (initialSnapshot)
+    {
+        for (auto &[index, tracker] : m_trackers)
+        {
+            watcher(network::Interface{index, tracker.name()}, tracker.broadcastAddress());
+            tracker.clearFlag(DirtyFlag::BroadcastAddressChanged);
+        }
+    }
+    return m_broadcastAddressNotifier.addWatcher(watcher);
+}
+
+void RtnlNetworkMonitor::removeBroadcastAddressWatcher(const EthernetAddressWatcherToken &token)
+{
+    m_broadcastAddressNotifier.removeWatcher(token);
 }
 
 std::optional<EnumerationDoneWatcherToken> RtnlNetworkMonitor::addEnumerationDoneWatcher(
@@ -612,10 +631,15 @@ void RtnlNetworkMonitor::notifyChanges()
             m_gatewayAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.gatewayAddress());
             tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
         }
-        if (m_ethernetAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::EthernetAddressChanged))
+        if (m_macAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::EthernetAddressChanged))
         {
-            m_ethernetAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.ethernetAddress());
+            m_macAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.ethernetAddress());
             tracker.clearFlag(DirtyFlag::EthernetAddressChanged);
+        }
+        if (m_broadcastAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::BroadcastAddressChanged))
+        {
+            m_broadcastAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.broadcastAddress());
+            tracker.clearFlag(DirtyFlag::BroadcastAddressChanged);
         }
     }
 }

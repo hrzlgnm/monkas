@@ -97,9 +97,14 @@ class RtnlNetworkMonitor
                                                                       bool initialSnapshot = false);
     void removeGatewayAddressWatcher(const GatewayAddressWatcherToken &token);
 
-    [[nodiscard]] EthernetAddressWatcherToken addEthernetAddressWatcher(const EthernetAddressWatcher &watcher,
-                                                                        bool initialSnapshot = false);
-    void removeEthernetAddressWatcher(const EthernetAddressWatcherToken &token);
+    [[nodiscard]] EthernetAddressWatcherToken addMacAddressWatcher(const EthernetAddressWatcher &watcher,
+                                                                   bool initialSnapshot = true);
+    void removeMacAddressWatcher(const EthernetAddressWatcherToken &token);
+
+    [[nodiscard]] EthernetAddressWatcherToken addBroadcastAddressWatcher(const EthernetAddressWatcher &watcher,
+                                                                         bool initialSnapshot = false);
+
+    void removeBroadcastAddressWatcher(const EthernetAddressWatcherToken &token);
 
     // enumeration done watcher is called when enumeration is done, or immediately if enumeration is already done
     // the optional return value is used to indicate that enumeration is already done
@@ -197,7 +202,8 @@ class RtnlNetworkMonitor
     OperationalStateNotifier m_operationalStateNotifier;
     NetworkAddressNotifier m_networkAddressNotifier;
     GatewayAddressNotifier m_gatewayAddressNotifier;
-    EthernetAddressNotifier m_ethernetAddressNotifier;
+    EthernetAddressNotifier m_macAddressNotifier;
+    EthernetAddressNotifier m_broadcastAddressNotifier;
     EnumerationDoneNotifier m_enumerationDoneNotifier;
 };
 } // namespace monkas
