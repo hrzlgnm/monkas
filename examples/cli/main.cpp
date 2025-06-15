@@ -86,7 +86,7 @@ auto main(int argc, char *argv[]) -> int
         InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addMacAddressWatcher(
         [](const network::Interface &iface, const ethernet::Address &mac) {
-            spdlog::info("{} changed mac address to {}", iface, mac);
+            spdlog::info("{} changed MAC address to {}", iface, mac);
         },
         InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addBroadcastAddressWatcher(

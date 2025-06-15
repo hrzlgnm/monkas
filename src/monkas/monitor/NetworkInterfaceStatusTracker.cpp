@@ -340,7 +340,7 @@ auto operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s) -> std:
     o << s.name();
     if (s.m_macAddress)
     {
-        o << " ether " << s.m_macAddress;
+        o << " mac " << s.m_macAddress;
     }
     if (s.m_broadcastAddress)
     {

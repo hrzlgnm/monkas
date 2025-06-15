@@ -452,15 +452,15 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
     {
         const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFLA_ADDRESS]));
         const auto len = mnl_attr_get_payload_len(attributes[IFLA_ADDRESS]);
-        auto ethernetAddress = ethernet::Address::fromBytes(addr, len);
-        cacheEntry.setMacAddress(ethernetAddress);
+        auto macAddress = ethernet::Address::fromBytes(addr, len);
+        cacheEntry.setMacAddress(macAddress);
     }
     if (attributes[IFLA_BROADCAST] != nullptr)
     {
         const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFLA_BROADCAST]));
         const auto len = mnl_attr_get_payload_len(attributes[IFLA_BROADCAST]);
-        auto ethernetAddress = ethernet::Address::fromBytes(addr, len);
-        cacheEntry.setBroadcastAddress(ethernetAddress);
+        auto broadcastAddress = ethernet::Address::fromBytes(addr, len);
+        cacheEntry.setBroadcastAddress(broadcastAddress);
     }
 }
 
