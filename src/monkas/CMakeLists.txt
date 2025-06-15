@@ -11,7 +11,7 @@ set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/network/NetworkAddress.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/NetworkInterfaceStatusTracker.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/RtnlNetworkMonitor.hpp
-    ${PUBLIC_INCLUDE_DIR}/observable/Observable.hpp
+    ${PUBLIC_INCLUDE_DIR}/watchable/Watchable.hpp
 )
 
 target_compile_definitions(${TARGET_NAME}
@@ -46,7 +46,7 @@ if (BUILD_TESTS)
       ethernet/Address.test.cpp
       ip/Address.test.cpp
       network/NetworkAddress.test.cpp
-      observable/Observable.test.cpp
+      watchable/Watchable.test.cpp
   )
   target_link_libraries(${TARGET_NAME}
     PRIVATE
