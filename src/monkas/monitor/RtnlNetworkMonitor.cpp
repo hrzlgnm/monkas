@@ -238,7 +238,7 @@ void RtnlNetworkMonitor::parseAttribute(const nlattr *a, uint16_t maxType, RtnlA
 
 NetworkInterfaceStatusTracker &RtnlNetworkMonitor::ensureNameCurrent(int ifIndex, const nlattr *nameAttribute)
 {
-    auto before = m_trackers.size();
+    const auto before = m_trackers.size();
     auto &cacheEntry = m_trackers[ifIndex];
 
     // Sometimes interfaces are renamed, account for that
