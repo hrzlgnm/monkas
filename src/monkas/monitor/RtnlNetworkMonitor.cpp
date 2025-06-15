@@ -248,7 +248,7 @@ NetworkInterfaceStatusTracker &RtnlNetworkMonitor::ensureNameCurrent(int ifIndex
     }
     if (before != m_trackers.size() || cacheEntry.isDirty(DirtyFlag::NameChanged))
     {
-        broadcastInterfaces();
+        broadcastInterfacesSnapshot();
         cacheEntry.clearFlag(DirtyFlag::NameChanged);
     }
     return cacheEntry;
@@ -267,7 +267,7 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
     {
         spdlog::trace("removing interface with index {}", ifi->ifi_index);
         m_trackers.erase(ifi->ifi_index);
-        broadcastInterfaces();
+        broadcastInterfacesSnapshot();
         return;
     }
     auto attributes = parseAttributes(nlhdr, sizeof(*ifi), IFLA_MAX);
@@ -485,7 +485,7 @@ void RtnlNetworkMonitor::broadcastChanges()
     }
 }
 
-void RtnlNetworkMonitor::broadcastInterfaces()
+void RtnlNetworkMonitor::broadcastInterfacesSnapshot()
 {
     if (m_interfacesBroadcaster.hasListeners())
     {

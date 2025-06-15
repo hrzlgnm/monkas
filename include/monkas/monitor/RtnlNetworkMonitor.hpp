@@ -125,7 +125,7 @@ class RtnlNetworkMonitor
     }
 
     void broadcastChanges();
-    void broadcastInterfaces();
+    void broadcastInterfacesSnapshot();
 
   private:
     std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
