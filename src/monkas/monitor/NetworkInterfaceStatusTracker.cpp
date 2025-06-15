@@ -23,7 +23,7 @@ void logTrace(const T &t, NetworkInterfaceStatusTracker *that, const std::string
 
 NetworkInterfaceStatusTracker::NetworkInterfaceStatusTracker()
     : m_lastChanged(std::chrono::steady_clock::now())
-    , m_ethernetAddress{}
+    , m_macAddress{}
     , m_broadcastAddress{}
 {
 }
@@ -85,9 +85,9 @@ void NetworkInterfaceStatusTracker::setOperationalState(OperationalState opersta
     }
 }
 
-auto NetworkInterfaceStatusTracker::ethernetAddress() const -> const ethernet::Address &
+auto NetworkInterfaceStatusTracker::macAddress() const -> const ethernet::Address &
 {
-    return m_ethernetAddress;
+    return m_macAddress;
 }
 
 auto NetworkInterfaceStatusTracker::broadcastAddress() const -> const ethernet::Address &
@@ -95,13 +95,13 @@ auto NetworkInterfaceStatusTracker::broadcastAddress() const -> const ethernet::
     return m_broadcastAddress;
 }
 
-void NetworkInterfaceStatusTracker::setEthernetAddress(const ethernet::Address &address)
+void NetworkInterfaceStatusTracker::setMacAddress(const ethernet::Address &address)
 {
-    if (m_ethernetAddress != address)
+    if (m_macAddress != address)
     {
-        m_ethernetAddress = address;
-        touch(DirtyFlag::EthernetAddressChanged);
-        logTrace(address, this, "ethernet address changed to");
+        m_macAddress = address;
+        touch(DirtyFlag::MacAddressChanged);
+        logTrace(address, this, "mac address changed to");
     }
 }
 
@@ -288,7 +288,7 @@ auto operator<<(std::ostream &o, DirtyFlag d) -> std::ostream &
         return o << "NameChanged";
     case NetworkInterfaceStatusTracker::DirtyFlag::OperationalStateChanged:
         return o << "OperationalStateChanged";
-    case NetworkInterfaceStatusTracker::DirtyFlag::EthernetAddressChanged:
+    case NetworkInterfaceStatusTracker::DirtyFlag::MacAddressChanged:
         return o << "EthernetAddressChanged";
     case NetworkInterfaceStatusTracker::DirtyFlag::BroadcastAddressChanged:
         return o << "BroadcastAddressChanged";
@@ -338,9 +338,9 @@ auto operator<<(std::ostream &o, const DirtyFlags &d) -> std::ostream &
 auto operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s) -> std::ostream &
 {
     o << s.name();
-    if (s.m_ethernetAddress)
+    if (s.m_macAddress)
     {
-        o << " ether " << s.m_ethernetAddress;
+        o << " ether " << s.m_macAddress;
     }
     if (s.m_broadcastAddress)
     {

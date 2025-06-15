@@ -39,7 +39,7 @@ class NetworkInterfaceStatusTracker
     {
         NameChanged,
         OperationalStateChanged,
-        EthernetAddressChanged,
+        MacAddressChanged,
         BroadcastAddressChanged,
         GatewayAddressChanged,
         NetworkAddressesChanged,
@@ -57,8 +57,8 @@ class NetworkInterfaceStatusTracker
     [[nodiscard]] auto operationalState() const -> OperationalState;
     void setOperationalState(OperationalState operstate);
 
-    [[nodiscard]] auto ethernetAddress() const -> const ethernet::Address &;
-    void setEthernetAddress(const ethernet::Address &address);
+    [[nodiscard]] auto macAddress() const -> const ethernet::Address &;
+    void setMacAddress(const ethernet::Address &address);
 
     [[nodiscard]] auto broadcastAddress() const -> const ethernet::Address &;
     void setBroadcastAddress(const ethernet::Address &address);
@@ -87,7 +87,7 @@ class NetworkInterfaceStatusTracker
     // TODO: only use public api
     friend auto operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s) -> std::ostream &;
     std::string m_name;
-    ethernet::Address m_ethernetAddress;
+    ethernet::Address m_macAddress;
     ethernet::Address m_broadcastAddress;
     OperationalState m_operState{OperationalState::Unknown};
     NetworkAddresses m_networkAddresses;
