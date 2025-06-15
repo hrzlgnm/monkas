@@ -117,8 +117,8 @@ class RtnlNetworkMonitor
     void removeMacAddressWatcher(const MacAddressWatcherToken &token);
 
     [[nodiscard]] auto addBroadcastAddressWatcher(
-        const MacAddressWatcher &watcher, InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
-        -> BroadcastAddressWatcherToken;
+        const BroadcastAddressWatcher &watcher,
+        InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot) -> BroadcastAddressWatcherToken;
 
     void removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken &token);
 
