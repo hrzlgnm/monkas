@@ -85,9 +85,14 @@ int main(int argc, char *argv[])
             spdlog::info("{} changed gateway address to {}", iface, gateway);
         },
         true);
-    std::ignore = mon.addEthernetAddressWatcher(
+    std::ignore = mon.addMacAddressWatcher(
         [](const network::Interface &iface, const ethernet::Address &mac) {
             spdlog::info("{} changed ethernet address to {}", iface, mac);
+        },
+        true);
+    std::ignore = mon.addBroadcastAddressWatcher(
+        [](const network::Interface &iface, const ethernet::Address &broadcast) {
+            spdlog::info("{} changed broadcast address to {}", iface, broadcast);
         },
         true);
     std::ignore = mon.addEnumerationDoneWatcher([&mon]() {
