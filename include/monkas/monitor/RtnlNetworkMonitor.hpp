@@ -3,13 +3,13 @@
 #include "ip/Address.hpp"
 #include <chrono>
 #include <cstdint>
-#include <functional>
 #include <map>
 #include <memory>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <network/Interface.hpp>
-#include <observable/Observable.hpp>
+#include <optional>
 #include <vector>
+#include <watchable/Watchable.hpp>
 
 // TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what do we want
 // to do in this case?
@@ -48,55 +48,64 @@ using RuntimeOptions = uint32_t;
 
 using Interfaces = std::set<network::Interface>;
 
-using InterfacesBroadcaster = Observable<std::reference_wrapper<const Interfaces>>;
-using InterfacesListener = InterfacesBroadcaster::Observer;
-using InterfacesListenerToken = InterfacesBroadcaster::Token;
+using InterfacesNotifier = Watchable<const Interfaces>;
+using InterfacesWatcher = InterfacesNotifier::Watcher;
+using InterfacesWatcherToken = InterfacesNotifier::Token;
 
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
-using OperationalStateBroadcaster = Observable<network::Interface, OperationalState>;
-using OperationalStateListener = OperationalStateBroadcaster::Observer;
-using OperationalStateListenerToken = OperationalStateBroadcaster::Token;
+using OperationalStateNotifier = Watchable<const network::Interface, OperationalState>;
+using OperationalStateWatcher = OperationalStateNotifier::Watcher;
+using OperationalStateWatcherToken = OperationalStateNotifier::Token;
 
-using NetworkAddressBroadcaster = Observable<network::Interface, std::reference_wrapper<const NetworkAddresses>>;
-using NetworkAddressListener = NetworkAddressBroadcaster::Observer;
-using NetworkAddressListenerToken = NetworkAddressBroadcaster::Token;
+using NetworkAddressNotifier = Watchable<const network::Interface, const NetworkAddresses>;
+using NetworkAddressWatcher = NetworkAddressNotifier::Watcher;
+using NetworkAddressWatcherToken = NetworkAddressNotifier::Token;
 
-using GatewayAddressBroadcaster = Observable<network::Interface, std::reference_wrapper<const ip::Address>>;
-using GatewayAddressListener = GatewayAddressBroadcaster::Observer;
-using GatewayAddressListenerToken = GatewayAddressBroadcaster::Token;
+using GatewayAddressNotifier = Watchable<const network::Interface, const ip::Address>;
+using GatewayAddressWatcher = GatewayAddressNotifier::Watcher;
+using GatewayAddressWatcherToken = GatewayAddressNotifier::Token;
 
-using EthernetAddressBroadcaster = Observable<network::Interface, std::reference_wrapper<const ethernet::Address>>;
-using EthernetAddressListener = EthernetAddressBroadcaster::Observer;
-using EthernetAddressListenerToken = EthernetAddressBroadcaster::Token;
+using EthernetAddressNotifier = Watchable<network::Interface, const ethernet::Address>;
+using EthernetAddressWatcher = EthernetAddressNotifier::Watcher;
+using EthernetAddressWatcherToken = EthernetAddressNotifier::Token;
 
-using EnumerationDoneBroadcaster = Observable<>;
-using EnumerationDoneListener = EnumerationDoneBroadcaster::Observer;
-using EnumerationDoneListenerToken = EnumerationDoneBroadcaster::Token;
+using EnumerationDoneNotifier = Watchable<>;
+using EnumerationDoneWatcher = EnumerationDoneNotifier::Watcher;
+using EnumerationDoneWatcherToken = EnumerationDoneNotifier::Token;
 
 class RtnlNetworkMonitor
 {
   public:
     explicit RtnlNetworkMonitor(const RuntimeOptions &options);
+    void enumerateInterfaces();
     int run();
     void stop();
 
-    [[nodiscard]] InterfacesListenerToken addInterfacesListener(const InterfacesListener &listener);
-    void removeInterfacesListener(const InterfacesListenerToken &token);
+    [[nodiscard]] InterfacesWatcherToken addInterfacesWatcher(const InterfacesWatcher &watcher,
+                                                              bool initialSnapshot = false);
+    void removeInterfacesWatcher(const InterfacesWatcherToken &token);
 
-    [[nodiscard]] OperationalStateListenerToken addOperationalStateListener(const OperationalStateListener &listener);
-    void removeOperationalStateListener(const OperationalStateListenerToken &token);
+    [[nodiscard]] OperationalStateWatcherToken addOperationalStateWatcher(const OperationalStateWatcher &watcher,
+                                                                          bool initialSnapshot = false);
+    void removeOperationalStateWatcher(const OperationalStateWatcherToken &token);
 
-    [[nodiscard]] NetworkAddressListenerToken addNetworkAddressListener(const NetworkAddressListener &listener);
-    void removeNetworkAddressListener(const NetworkAddressListenerToken &token);
+    [[nodiscard]] NetworkAddressWatcherToken addNetworkAddressWatcher(const NetworkAddressWatcher &watcher,
+                                                                      bool initialSnapshot = false);
+    void removeNetworkAddressWatcher(const NetworkAddressWatcherToken &token);
 
-    [[nodiscard]] GatewayAddressListenerToken addGatewayAddressListener(const GatewayAddressListener &listener);
-    void removeGatewayAddressListener(const GatewayAddressListenerToken &token);
+    [[nodiscard]] GatewayAddressWatcherToken addGatewayAddressWatcher(const GatewayAddressWatcher &watcher,
+                                                                      bool initialSnapshot = false);
+    void removeGatewayAddressWatcher(const GatewayAddressWatcherToken &token);
 
-    [[nodiscard]] EthernetAddressListenerToken addEthernetAddressListener(const EthernetAddressListener &listener);
-    void removeEthernetAddressListener(const EthernetAddressListenerToken &token);
+    [[nodiscard]] EthernetAddressWatcherToken addEthernetAddressWatcher(const EthernetAddressWatcher &watcher,
+                                                                        bool initialSnapshot = false);
+    void removeEthernetAddressWatcher(const EthernetAddressWatcherToken &token);
 
-    [[nodiscard]] EnumerationDoneListenerToken addEnumerationDoneListener(const EnumerationDoneListener &listener);
-    void removeEnumerationDoneListener(const EnumerationDoneListenerToken &token);
+    // enumeration done watcher is called when enumeration is done, or immediately if enumeration is already done
+    // the optional return value is used to indicate that enumeration is already done
+    [[nodiscard]] std::optional<EnumerationDoneWatcherToken> addEnumerationDoneWatcher(
+        const EnumerationDoneWatcher &watcher);
+    void removeEnumerationDoneWatcher(const EnumerationDoneWatcherToken &token);
 
   private:
     void receiveAndProcess();
@@ -147,8 +156,9 @@ class RtnlNetworkMonitor
         return m_cacheState == CacheState::EnumeratingRoutes;
     }
 
-    void broadcastChanges();
-    void broadcastInterfacesSnapshot();
+    void notifyChanges();
+    void notifyInterfacesSnapshot();
+    Interfaces getInterfacesSnapshot() const;
 
   private:
     std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
@@ -183,11 +193,11 @@ class RtnlNetworkMonitor
     } m_stats;
 
     RuntimeOptions m_runtimeOptions;
-    InterfacesBroadcaster m_interfacesBroadcaster;
-    OperationalStateBroadcaster m_operationalStateBroadcaster;
-    NetworkAddressBroadcaster m_networkAddressBroadcaster;
-    GatewayAddressBroadcaster m_gatewayAddressBroadcaster;
-    EthernetAddressBroadcaster m_ethernetAddressBroadcaster;
-    EnumerationDoneBroadcaster m_enumerationDoneBroadcaster;
+    InterfacesNotifier m_interfacesNotifier;
+    OperationalStateNotifier m_operationalStateNotifier;
+    NetworkAddressNotifier m_networkAddressNotifier;
+    GatewayAddressNotifier m_gatewayAddressNotifier;
+    EthernetAddressNotifier m_ethernetAddressNotifier;
+    EnumerationDoneNotifier m_enumerationDoneNotifier;
 };
 } // namespace monkas

@@ -73,11 +73,33 @@ RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
     }
 }
 
-int RtnlNetworkMonitor::run()
+void RtnlNetworkMonitor::enumerateInterfaces()
 {
-    m_running = true;
+    if (m_cacheState == CacheState::WaitingForChanges)
+    {
+        spdlog::trace("Already enumerated interfaces, skipping");
+        return;
+    }
     spdlog::debug("Requesting RTM_GETLINK");
     sendDumpRequest(RTM_GETLINK);
+    while (m_cacheState != CacheState::WaitingForChanges)
+    {
+        receiveAndProcess();
+    }
+}
+
+int RtnlNetworkMonitor::run()
+{
+    // someone may call enumerateInterfaces() and stop() during enumerateInterfaces
+    if (!m_mnlSocket)
+    {
+        return 0;
+    }
+    m_running = true;
+    spdlog::trace("Starting RtnlNetworkMonitor");
+    enumerateInterfaces();
+    spdlog::trace("Starting to receive and process messages from mnl socket {} m_running={}",
+                  static_cast<void *>(m_mnlSocket.get()), m_running);
     while (m_running)
     {
         receiveAndProcess();
@@ -87,73 +109,127 @@ int RtnlNetworkMonitor::run()
 
 void RtnlNetworkMonitor::stop()
 {
+    spdlog::debug("Stopping RtnlNetworkMonitor");
     m_mnlSocket.reset();
     m_running = false;
 }
 
-InterfacesListenerToken RtnlNetworkMonitor::addInterfacesListener(const InterfacesListener &listener)
+InterfacesWatcherToken RtnlNetworkMonitor::addInterfacesWatcher(const InterfacesWatcher &watcher, bool initialSnapshot)
 {
-    return m_interfacesBroadcaster.addListener(listener);
+    if (initialSnapshot)
+    {
+        watcher(getInterfacesSnapshot());
+    }
+    return m_interfacesNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeInterfacesListener(const InterfacesListenerToken &token)
+void RtnlNetworkMonitor::removeInterfacesWatcher(const InterfacesWatcherToken &token)
 {
-    m_interfacesBroadcaster.removeListener(token);
+    m_interfacesNotifier.removeWatcher(token);
 }
 
-OperationalStateListenerToken RtnlNetworkMonitor::addOperationalStateListener(const OperationalStateListener &listener)
+OperationalStateWatcherToken RtnlNetworkMonitor::addOperationalStateWatcher(const OperationalStateWatcher &watcher,
+                                                                            bool initialSnapshot)
 {
-    return m_operationalStateBroadcaster.addListener(listener);
+    if (initialSnapshot)
+    {
+        for (auto &[index, tracker] : m_trackers)
+        {
+            watcher(network::Interface{index, tracker.name()}, tracker.operationalState());
+            tracker.clearFlag(DirtyFlag::OperationalStateChanged);
+        }
+    }
+    return m_operationalStateNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeOperationalStateListener(const OperationalStateListenerToken &token)
+void RtnlNetworkMonitor::removeOperationalStateWatcher(const OperationalStateWatcherToken &token)
 {
-    m_operationalStateBroadcaster.removeListener(token);
+    m_operationalStateNotifier.removeWatcher(token);
 }
 
-NetworkAddressListenerToken RtnlNetworkMonitor::addNetworkAddressListener(const NetworkAddressListener &listener)
+NetworkAddressWatcherToken RtnlNetworkMonitor::addNetworkAddressWatcher(const NetworkAddressWatcher &watcher,
+                                                                        bool initialSnapshot)
 {
-    return m_networkAddressBroadcaster.addListener(listener);
+    if (initialSnapshot)
+    {
+        for (auto &[index, tracker] : m_trackers)
+        {
+            watcher(network::Interface{index, tracker.name()}, tracker.networkAddresses());
+            tracker.clearFlag(DirtyFlag::NetworkAddressesChanged);
+        }
+    }
+    return m_networkAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeNetworkAddressListener(const NetworkAddressListenerToken &token)
+void RtnlNetworkMonitor::removeNetworkAddressWatcher(const NetworkAddressWatcherToken &token)
 {
-    m_networkAddressBroadcaster.removeListener(token);
+    m_networkAddressNotifier.removeWatcher(token);
 }
 
-GatewayAddressListenerToken RtnlNetworkMonitor::addGatewayAddressListener(const GatewayAddressListener &listener)
+GatewayAddressWatcherToken RtnlNetworkMonitor::addGatewayAddressWatcher(const GatewayAddressWatcher &watcher,
+                                                                        bool initialSnapshot)
 {
-    return m_gatewayAddressBroadcaster.addListener(listener);
+    if (initialSnapshot)
+    {
+        for (auto &[index, tracker] : m_trackers)
+        {
+            watcher(network::Interface{index, tracker.name()}, tracker.gatewayAddress());
+            tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
+        }
+    }
+    return m_gatewayAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeGatewayAddressListener(const GatewayAddressListenerToken &token)
+void RtnlNetworkMonitor::removeGatewayAddressWatcher(const GatewayAddressWatcherToken &token)
 {
-    m_gatewayAddressBroadcaster.removeListener(token);
+    m_gatewayAddressNotifier.removeWatcher(token);
 }
 
-EthernetAddressListenerToken RtnlNetworkMonitor::addEthernetAddressListener(const EthernetAddressListener &listener)
+EthernetAddressWatcherToken RtnlNetworkMonitor::addEthernetAddressWatcher(const EthernetAddressWatcher &watcher,
+                                                                          bool initialSnapshot)
 {
-    return m_ethernetAddressBroadcaster.addListener(listener);
+    if (initialSnapshot)
+    {
+        for (auto &[index, tracker] : m_trackers)
+        {
+            watcher(network::Interface{index, tracker.name()}, tracker.ethernetAddress());
+            tracker.clearFlag(DirtyFlag::EthernetAddressChanged);
+        }
+    }
+    return m_ethernetAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeEthernetAddressListener(const EthernetAddressListenerToken &token)
+void RtnlNetworkMonitor::removeEthernetAddressWatcher(const EthernetAddressWatcherToken &token)
 {
-    m_ethernetAddressBroadcaster.removeListener(token);
+    m_ethernetAddressNotifier.removeWatcher(token);
 }
 
-EnumerationDoneListenerToken RtnlNetworkMonitor::addEnumerationDoneListener(const EnumerationDoneListener &listener)
+std::optional<EnumerationDoneWatcherToken> RtnlNetworkMonitor::addEnumerationDoneWatcher(
+    const EnumerationDoneWatcher &watcher)
 {
-    return m_enumerationDoneBroadcaster.addListener(listener);
+    if (m_cacheState == CacheState::WaitingForChanges)
+    {
+        watcher();
+        return std::nullopt; // already done with enumeration, no need to notify later
+    }
+    return m_enumerationDoneNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeEnumerationDoneListener(const EnumerationDoneListenerToken &token)
+void RtnlNetworkMonitor::removeEnumerationDoneWatcher(const EnumerationDoneWatcherToken &token)
 {
-    m_enumerationDoneBroadcaster.removeListener(token);
+    m_enumerationDoneNotifier.removeWatcher(token);
 }
 
 void RtnlNetworkMonitor::receiveAndProcess()
 {
+    // someone may call stop() while we are notifying watchers
+    if (!m_mnlSocket)
+    {
+        return;
+    }
+    spdlog::trace("Receiving messages from mnl socket");
     auto receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
+    spdlog::trace("Received {} bytes", receiveResult);
     while (receiveResult > 0)
     {
         m_stats.packetsReceived++;
@@ -191,10 +267,12 @@ void RtnlNetworkMonitor::receiveAndProcess()
                 m_cacheState = CacheState::WaitingForChanges;
                 spdlog::debug("Done with enumeration of initial information");
                 spdlog::debug("Tracking changes for {} interfaces", m_trackers.size());
-                if (m_enumerationDoneBroadcaster.hasListeners())
+                if (m_enumerationDoneNotifier.hasWatchers())
                 {
-                    m_enumerationDoneBroadcaster.broadcast();
+                    m_enumerationDoneNotifier.notify();
                 }
+                // run() will restart this loop
+                break;
             }
             else
             {
@@ -204,13 +282,13 @@ void RtnlNetworkMonitor::receiveAndProcess()
                 }
                 else
                 {
-                    break; // someone may call stop() while we are processing messages
+                    break; // someone may call stop() while we are notifying watchers
                 }
             }
         }
         printStatsForNerdsIfEnabled();
-        broadcastChanges();
-        // someone may call stop() while we are processing messages
+        notifyChanges();
+        // someone may call stop() while we are notifying watchers
         if (m_mnlSocket)
         {
             receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
@@ -238,6 +316,10 @@ void RtnlNetworkMonitor::sendDumpRequest(uint16_t msgType)
 
 int RtnlNetworkMonitor::mnlMessageCallback(const nlmsghdr *n)
 {
+    if (!m_mnlSocket)
+    {
+        return MNL_CB_STOP; // someone may call stop() while we are processing messages
+    }
     m_stats.msgsReceived++;
     const auto t = n->nlmsg_type;
     switch (t)
@@ -293,7 +375,7 @@ NetworkInterfaceStatusTracker &RtnlNetworkMonitor::ensureNameCurrent(int ifIndex
     }
     if (before != m_trackers.size() || cacheEntry.isDirty(DirtyFlag::NameChanged))
     {
-        broadcastInterfacesSnapshot();
+        notifyInterfacesSnapshot();
         cacheEntry.clearFlag(DirtyFlag::NameChanged);
     }
     return cacheEntry;
@@ -312,7 +394,7 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
     {
         spdlog::trace("removing interface with index {}", ifi->ifi_index);
         m_trackers.erase(ifi->ifi_index);
-        broadcastInterfacesSnapshot();
+        notifyInterfacesSnapshot();
         return;
     }
     auto attributes = parseAttributes(nlhdr, sizeof(*ifi), IFLA_MAX);
@@ -510,52 +592,53 @@ int RtnlNetworkMonitor::dispatchMnlAttributeCallback(const nlattr *a, void *ud)
     return MNL_CB_OK;
 }
 
-void RtnlNetworkMonitor::broadcastChanges()
+void RtnlNetworkMonitor::notifyChanges()
 {
     for (auto &[index, tracker] : m_trackers)
     {
         spdlog::trace("checking {} for changes", tracker);
-        if (m_operationalStateBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::OperationalStateChanged))
+        if (m_operationalStateNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::OperationalStateChanged))
         {
-            m_operationalStateBroadcaster.broadcast(network::Interface{index, tracker.name()},
-                                                    tracker.operationalState());
+            m_operationalStateNotifier.notify(network::Interface{index, tracker.name()}, tracker.operationalState());
             tracker.clearFlag(DirtyFlag::OperationalStateChanged);
         }
-        if (m_networkAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::NetworkAddressesChanged))
+        if (m_networkAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::NetworkAddressesChanged))
         {
-            m_networkAddressBroadcaster.broadcast(network::Interface{index, tracker.name()},
-                                                  std::cref(tracker.networkAddresses()));
+            m_networkAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.networkAddresses());
             tracker.clearFlag(DirtyFlag::NetworkAddressesChanged);
         }
-        if (m_gatewayAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::GatewayAddressChanged))
+        if (m_gatewayAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::GatewayAddressChanged))
         {
-            m_gatewayAddressBroadcaster.broadcast(network::Interface{index, tracker.name()},
-                                                  std::cref(tracker.gatewayAddress()));
+            m_gatewayAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.gatewayAddress());
             tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
         }
-        if (m_ethernetAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::EthernetAddressChanged))
+        if (m_ethernetAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::EthernetAddressChanged))
         {
-            m_ethernetAddressBroadcaster.broadcast(network::Interface{index, tracker.name()},
-                                                   std::cref(tracker.ethernetAddress()));
+            m_ethernetAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.ethernetAddress());
             tracker.clearFlag(DirtyFlag::EthernetAddressChanged);
         }
     }
 }
 
-void RtnlNetworkMonitor::broadcastInterfacesSnapshot()
+void RtnlNetworkMonitor::notifyInterfacesSnapshot()
 {
-    if (m_interfacesBroadcaster.hasListeners())
+    if (m_interfacesNotifier.hasWatchers())
     {
-        Interfaces intfs;
-        for (const auto &[idx, tracker] : m_trackers)
-        {
-            if (tracker.hasName())
-            {
-                intfs.emplace(idx, tracker.name());
-            }
-        }
-        m_interfacesBroadcaster.broadcast(std::cref(intfs));
+        m_interfacesNotifier.notify(getInterfacesSnapshot());
     }
+}
+
+Interfaces RtnlNetworkMonitor::getInterfacesSnapshot() const
+{
+    Interfaces intfs;
+    for (const auto &[idx, tracker] : m_trackers)
+    {
+        if (tracker.hasName())
+        {
+            intfs.emplace(idx, tracker.name());
+        }
+    }
+    return intfs;
 }
 
 RuntimeOptions &operator|=(RuntimeOptions &o, RuntimeFlag f)

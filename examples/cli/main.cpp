@@ -66,21 +66,31 @@ int main(int argc, char *argv[])
         options |= monkas::RuntimeFlag::PreferredFamilyV6;
     }
     RtnlNetworkMonitor mon(options);
-    std::ignore = mon.addInterfacesListener(
-        [](const Interfaces &interfaces) { spdlog::info("Interfaces changed to: {}", fmt::join(interfaces, ", ")); });
-    std::ignore = mon.addOperationalStateListener([](const network::Interface &iface, OperationalState state) {
-        spdlog::info("{} changed operational state to {}", iface, state);
-    });
-    std::ignore = mon.addNetworkAddressListener([](const network::Interface &iface, const NetworkAddresses &addresses) {
-        spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", "));
-    });
-    std::ignore = mon.addGatewayAddressListener([](const network::Interface &iface, const ip::Address &gateway) {
-        spdlog::info("{} changed gateway address to {}", iface, gateway);
-    });
-    std::ignore = mon.addEthernetAddressListener([](const network::Interface &iface, const ethernet::Address &mac) {
-        spdlog::info("{} changed ethernet address to {}", iface, mac);
-    });
-    std::ignore = mon.addEnumerationDoneListener([&mon]() {
+    mon.enumerateInterfaces();
+    std::ignore = mon.addInterfacesWatcher(
+        [](const Interfaces &interfaces) { spdlog::info("Interfaces changed to: {}", fmt::join(interfaces, ", ")); },
+        true);
+    std::ignore = mon.addOperationalStateWatcher(
+        [](const network::Interface &iface, OperationalState state) {
+            spdlog::info("{} changed operational state to {}", iface, state);
+        },
+        true);
+    std::ignore = mon.addNetworkAddressWatcher(
+        [](const network::Interface &iface, const NetworkAddresses &addresses) {
+            spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", "));
+        },
+        true);
+    std::ignore = mon.addGatewayAddressWatcher(
+        [](const network::Interface &iface, const ip::Address &gateway) {
+            spdlog::info("{} changed gateway address to {}", iface, gateway);
+        },
+        true);
+    std::ignore = mon.addEthernetAddressWatcher(
+        [](const network::Interface &iface, const ethernet::Address &mac) {
+            spdlog::info("{} changed ethernet address to {}", iface, mac);
+        },
+        true);
+    std::ignore = mon.addEnumerationDoneWatcher([&mon]() {
         spdlog::info("Enumeration done");
         if (FLAGS_exit_after_enumeration)
         {
