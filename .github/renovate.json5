@@ -17,4 +17,20 @@
         ":semanticCommits",
         ":separateMajorReleases",
     ],
+    customManagers: [
+        {
+            matchStringsStrategy: "any",
+            customType: "regex",
+            fileMatch: [
+                "^\\.github/workflows/.*\\.yml$"
+            ],
+            depTypeTemplate: "container",
+            datasourceTemplate: "docker",
+            versioningTemplate: "docker",
+            matchStrings: [
+                'image: "(?<depName>.*?):(?<currentValue>.*?)(?:@(?<currentDigest>sha256:[a-f0-9]+))?",'
+            ],
+            autoReplaceStringTemplate: 'image: "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",',
+        }
+    ],
 }
