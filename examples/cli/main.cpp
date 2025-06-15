@@ -8,6 +8,8 @@ DEFINE_bool(nerdstats, false, "Enable stats for nerds");
 
 DEFINE_bool(dumppackets, false, "Enable dumping of rtnl packets");
 
+DEFINE_bool(exit_after_enumeration, false, "Exit after enumeration is done");
+
 DEFINE_uint32(family, 0, "Preferred address family <4|6>");
 
 DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, critical, off");
@@ -64,6 +66,15 @@ int main(int argc, char *argv[])
     });
     std::ignore = mon.addNetworkAddressListener([](const network::Interface &iface, const NetworkAddresses &addresses) {
         spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", "));
+    });
+
+    std::ignore = mon.addEnumerationDoneListener([&mon]() {
+        spdlog::info("Enumeration done");
+        if (FLAGS_exit_after_enumeration)
+        {
+            spdlog::info("Exiting after enumeration is done");
+            mon.stop();
+        }
     });
 
     return mon.run();
