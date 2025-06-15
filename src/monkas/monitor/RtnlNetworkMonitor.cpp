@@ -61,6 +61,7 @@ auto operator&(RuntimeOptions o, RuntimeFlag f) -> RuntimeOptions
 {
     return o & static_cast<RuntimeOptions>(f);
 }
+
 } // namespace
 
 RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)

@@ -9,16 +9,16 @@ namespace monkas::ethernet
 
 auto Address::fromBytes(const uint8_t *bytes, size_type len) -> Address
 {
-    if (len == ADDR_LEN)
+    if (bytes == nullptr || len != addrLen)
     {
-        Address r;
-        std::copy_n(bytes, len, r.begin());
-        return r;
+        return {};
     }
-    return {};
+    Address r;
+    std::copy_n(bytes, len, r.begin());
+    return r;
 }
 
-auto Address::fromBytes(const std::array<uint8_t, ADDR_LEN> &bytes) -> Address
+auto Address::fromBytes(const std::array<uint8_t, addrLen> &bytes) -> Address
 {
     return fromBytes(bytes.data(), bytes.size());
 }

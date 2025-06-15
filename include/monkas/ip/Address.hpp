@@ -20,14 +20,14 @@ enum class AddressFamily : uint8_t
 auto asLinuxAf(AddressFamily f) -> int;
 auto operator<<(std::ostream &o, AddressFamily a) -> std::ostream &;
 
-constexpr auto IPV6_ADDR_LEN = 16;
-constexpr auto IPV4_ADDR_LEN = 4;
+constexpr auto ipV6AddrLen = 16;
+constexpr auto ipV4AddrLen = 4;
 
-class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
+class Address : public std::array<uint8_t, ipV6AddrLen>
 {
   public:
     Address()
-        : std::array<uint8_t, IPV6_ADDR_LEN>{}
+        : std::array<uint8_t, ipV6AddrLen>{}
     {
     }
 
@@ -42,8 +42,8 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
 
     static auto fromString(const std::string &address) -> Address;
     static auto fromBytes(const uint8_t *bytes, size_type len) -> Address;
-    static auto fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes) -> Address;
-    static auto fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes) -> Address;
+    static auto fromBytes(const std::array<uint8_t, ipV4AddrLen> &bytes) -> Address;
+    static auto fromBytes(const std::array<uint8_t, ipV6AddrLen> &bytes) -> Address;
 
   private:
     AddressFamily m_addressFamily{AddressFamily::Unspecified};
