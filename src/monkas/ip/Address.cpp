@@ -51,47 +51,47 @@ auto Address::addressLength() const -> Address::size_type
 {
     if (m_addressFamily == AddressFamily::IPv4)
     {
-        return IPV4_ADDR_LEN;
+        return ipV4AddrLen;
     }
     if (m_addressFamily == AddressFamily::IPv6)
     {
-        return IPV6_ADDR_LEN;
+        return ipV6AddrLen;
     }
     return 0;
 }
 
 auto Address::fromString(const std::string &address) -> Address
 {
-    std::array<uint8_t, IPV6_ADDR_LEN> addr{};
+    std::array<uint8_t, ipV6AddrLen> addr{};
     if (inet_pton(AF_INET, address.data(), addr.data()) == 1)
     {
-        return Address::fromBytes(addr.data(), IPV4_ADDR_LEN);
+        return Address::fromBytes(addr.data(), ipV4AddrLen);
     }
     if (inet_pton(AF_INET6, address.data(), addr.data()) == 1)
     {
-        return Address::fromBytes(addr.data(), IPV6_ADDR_LEN);
+        return Address::fromBytes(addr.data(), ipV6AddrLen);
     }
     return {};
 }
 
 auto Address::fromBytes(const uint8_t *bytes, size_type len) -> Address
 {
-    if (len == IPV6_ADDR_LEN || len == IPV4_ADDR_LEN)
+    if (len == ipV6AddrLen || len == ipV4AddrLen)
     {
         Address a;
         std::copy_n(bytes, len, a.begin());
-        a.m_addressFamily = (len == IPV6_ADDR_LEN ? AddressFamily::IPv6 : AddressFamily::IPv4);
+        a.m_addressFamily = (len == ipV6AddrLen ? AddressFamily::IPv6 : AddressFamily::IPv4);
         return a;
     }
     return {};
 }
 
-auto Address::fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes) -> Address
+auto Address::fromBytes(const std::array<uint8_t, ipV4AddrLen> &bytes) -> Address
 {
     return fromBytes(bytes.data(), bytes.size());
 }
 
-auto Address::fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes) -> Address
+auto Address::fromBytes(const std::array<uint8_t, ipV6AddrLen> &bytes) -> Address
 {
     return fromBytes(bytes.data(), bytes.size());
 }

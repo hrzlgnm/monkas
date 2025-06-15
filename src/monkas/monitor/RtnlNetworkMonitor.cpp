@@ -498,7 +498,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     if (attributes[IFA_BROADCAST] != nullptr)
     {
         auto addrLen = mnl_attr_get_payload_len(attributes[IFA_BROADCAST]);
-        if (addrLen == ip::IPV4_ADDR_LEN)
+        if (addrLen == ip::ipV4AddrLen)
         {
             const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFA_BROADCAST]));
             broadcast = ip::Address::fromBytes(addr, addrLen);
@@ -507,7 +507,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     if (attributes[IFA_LOCAL] != nullptr)
     {
         auto addrLen = mnl_attr_get_payload_len(attributes[IFA_LOCAL]);
-        if (addrLen == ip::IPV4_ADDR_LEN)
+        if (addrLen == ip::ipV4AddrLen)
         {
             const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFA_LOCAL]));
             address = ip::Address::fromBytes(addr, addrLen);
@@ -517,7 +517,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     {
         const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFA_ADDRESS]));
         auto addrLen = mnl_attr_get_payload_len(attributes[IFA_ADDRESS]);
-        if (addrLen == ip::IPV6_ADDR_LEN)
+        if (addrLen == ip::ipV6AddrLen)
         {
             address = ip::Address::fromBytes(addr, addrLen);
         }
