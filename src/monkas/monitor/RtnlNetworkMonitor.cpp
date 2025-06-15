@@ -210,8 +210,8 @@ auto RtnlNetworkMonitor::addMacAddressWatcher(const MacAddressWatcher &watcher, 
     {
         for (auto &[index, tracker] : m_trackers)
         {
-            watcher(network::Interface{index, tracker.name()}, tracker.ethernetAddress());
-            tracker.clearFlag(DirtyFlag::EthernetAddressChanged);
+            watcher(network::Interface{index, tracker.name()}, tracker.macAddress());
+            tracker.clearFlag(DirtyFlag::MacAddressChanged);
         }
     }
     return m_macAddressNotifier.addWatcher(watcher);
@@ -452,15 +452,15 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
     {
         const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFLA_ADDRESS]));
         const auto len = mnl_attr_get_payload_len(attributes[IFLA_ADDRESS]);
-        auto ethernetAddress = ethernet::Address::fromBytes(addr, len);
-        cacheEntry.setEthernetAddress(ethernetAddress);
+        auto macAddress = ethernet::Address::fromBytes(addr, len);
+        cacheEntry.setMacAddress(macAddress);
     }
     if (attributes[IFLA_BROADCAST] != nullptr)
     {
         const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFLA_BROADCAST]));
         const auto len = mnl_attr_get_payload_len(attributes[IFLA_BROADCAST]);
-        auto ethernetAddress = ethernet::Address::fromBytes(addr, len);
-        cacheEntry.setBroadcastAddress(ethernetAddress);
+        auto broadcastAddress = ethernet::Address::fromBytes(addr, len);
+        cacheEntry.setBroadcastAddress(broadcastAddress);
     }
 }
 
@@ -655,10 +655,10 @@ void RtnlNetworkMonitor::notifyChanges()
             m_gatewayAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.gatewayAddress());
             tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
         }
-        if (m_macAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::EthernetAddressChanged))
+        if (m_macAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::MacAddressChanged))
         {
-            m_macAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.ethernetAddress());
-            tracker.clearFlag(DirtyFlag::EthernetAddressChanged);
+            m_macAddressNotifier.notify(network::Interface{index, tracker.name()}, tracker.macAddress());
+            tracker.clearFlag(DirtyFlag::MacAddressChanged);
         }
         if (m_broadcastAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::BroadcastAddressChanged))
         {
