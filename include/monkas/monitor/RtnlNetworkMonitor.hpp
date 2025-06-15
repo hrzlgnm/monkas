@@ -65,9 +65,13 @@ using GatewayAddressNotifier = Watchable<const network::Interface, const ip::Add
 using GatewayAddressWatcher = GatewayAddressNotifier::Watcher;
 using GatewayAddressWatcherToken = GatewayAddressNotifier::Token;
 
-using EthernetAddressNotifier = Watchable<network::Interface, const ethernet::Address>;
-using EthernetAddressWatcher = EthernetAddressNotifier::Watcher;
-using EthernetAddressWatcherToken = EthernetAddressNotifier::Token;
+using MacAddressNotifier = Watchable<network::Interface, const ethernet::Address>;
+using MacAddressWatcher = MacAddressNotifier::Watcher;
+using MacAddressWatcherToken = MacAddressNotifier::Token;
+
+using BroadcastAddressNotifier = Watchable<network::Interface, const ethernet::Address>;
+using BroadcastAddressWatcher = BroadcastAddressNotifier::Watcher;
+using BroadcastAddressWatcherToken = BroadcastAddressNotifier::Token;
 
 using EnumerationDoneNotifier = Watchable<>;
 using EnumerationDoneWatcher = EnumerationDoneNotifier::Watcher;
@@ -97,14 +101,14 @@ class RtnlNetworkMonitor
                                                                       bool initialSnapshot = false);
     void removeGatewayAddressWatcher(const GatewayAddressWatcherToken &token);
 
-    [[nodiscard]] EthernetAddressWatcherToken addMacAddressWatcher(const EthernetAddressWatcher &watcher,
-                                                                   bool initialSnapshot = true);
-    void removeMacAddressWatcher(const EthernetAddressWatcherToken &token);
+    [[nodiscard]] MacAddressWatcherToken addMacAddressWatcher(const MacAddressWatcher &watcher,
+                                                              bool initialSnapshot = true);
+    void removeMacAddressWatcher(const MacAddressWatcherToken &token);
 
-    [[nodiscard]] EthernetAddressWatcherToken addBroadcastAddressWatcher(const EthernetAddressWatcher &watcher,
-                                                                         bool initialSnapshot = false);
+    [[nodiscard]] BroadcastAddressWatcherToken addBroadcastAddressWatcher(const MacAddressWatcher &watcher,
+                                                                          bool initialSnapshot = false);
 
-    void removeBroadcastAddressWatcher(const EthernetAddressWatcherToken &token);
+    void removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken &token);
 
     // enumeration done watcher is called when enumeration is done, or immediately if enumeration is already done
     // the optional return value is used to indicate that enumeration is already done
@@ -202,8 +206,8 @@ class RtnlNetworkMonitor
     OperationalStateNotifier m_operationalStateNotifier;
     NetworkAddressNotifier m_networkAddressNotifier;
     GatewayAddressNotifier m_gatewayAddressNotifier;
-    EthernetAddressNotifier m_macAddressNotifier;
-    EthernetAddressNotifier m_broadcastAddressNotifier;
+    MacAddressNotifier m_macAddressNotifier;
+    MacAddressNotifier m_broadcastAddressNotifier;
     EnumerationDoneNotifier m_enumerationDoneNotifier;
 };
 } // namespace monkas

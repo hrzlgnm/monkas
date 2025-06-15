@@ -185,8 +185,7 @@ void RtnlNetworkMonitor::removeGatewayAddressWatcher(const GatewayAddressWatcher
     m_gatewayAddressNotifier.removeWatcher(token);
 }
 
-EthernetAddressWatcherToken RtnlNetworkMonitor::addMacAddressWatcher(const EthernetAddressWatcher &watcher,
-                                                                     bool initialSnapshot)
+MacAddressWatcherToken RtnlNetworkMonitor::addMacAddressWatcher(const MacAddressWatcher &watcher, bool initialSnapshot)
 {
     if (initialSnapshot)
     {
@@ -199,13 +198,13 @@ EthernetAddressWatcherToken RtnlNetworkMonitor::addMacAddressWatcher(const Ether
     return m_macAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeMacAddressWatcher(const EthernetAddressWatcherToken &token)
+void RtnlNetworkMonitor::removeMacAddressWatcher(const MacAddressWatcherToken &token)
 {
     m_macAddressNotifier.removeWatcher(token);
 }
 
-EthernetAddressWatcherToken RtnlNetworkMonitor::addBroadcastAddressWatcher(const EthernetAddressWatcher &watcher,
-                                                                           bool initialSnapshot)
+BroadcastAddressWatcherToken RtnlNetworkMonitor::addBroadcastAddressWatcher(const BroadcastAddressWatcher &watcher,
+                                                                            bool initialSnapshot)
 {
     if (initialSnapshot)
     {
@@ -218,7 +217,7 @@ EthernetAddressWatcherToken RtnlNetworkMonitor::addBroadcastAddressWatcher(const
     return m_broadcastAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeBroadcastAddressWatcher(const EthernetAddressWatcherToken &token)
+void RtnlNetworkMonitor::removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken &token)
 {
     m_broadcastAddressNotifier.removeWatcher(token);
 }
