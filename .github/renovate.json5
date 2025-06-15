@@ -1,36 +1,36 @@
 {
-    $schema: "https://docs.renovatebot.com/renovate-schema.json",
+    $schema: 'https://docs.renovatebot.com/renovate-schema.json',
     extends: [
-        "config:best-practices",
-        "security:openssf-scorecard",
-        ":automergeDigest",
-        ":automergeMinor",
-        ":automergePr",
-        ":automergeRequireAllStatusChecks",
-        ":combinePatchMinorReleases",
-        ":docker",
-        ":enableVulnerabilityAlerts",
-        ":maintainLockFilesMonthly",
-        ":prConcurrentLimitNone",
-        ":prImmediately",
-        ":rebaseStalePrs",
-        ":semanticCommits",
-        ":separateMajorReleases",
+        'config:best-practices',
+        'security:openssf-scorecard',
+        ':automergeDigest',
+        ':automergeMinor',
+        ':automergePr',
+        ':automergeRequireAllStatusChecks',
+        ':combinePatchMinorReleases',
+        ':docker',
+        ':enableVulnerabilityAlerts',
+        ':maintainLockFilesMonthly',
+        ':prConcurrentLimitNone',
+        ':prImmediately',
+        ':rebaseStalePrs',
+        ':semanticCommits',
+        ':separateMajorReleases',
     ],
     customManagers: [
         {
-            matchStringsStrategy: "any",
-            customType: "regex",
-            fileMatch: [
-                "^\\.github/workflows/.*\\.yml$"
+            matchStringsStrategy: 'any',
+            customType: 'regex',
+            managerFilePatterns: [
+                '/^\\.github/workflows/.*\\.yml$/',
             ],
-            depTypeTemplate: "container",
-            datasourceTemplate: "docker",
-            versioningTemplate: "docker",
+            depTypeTemplate: 'container',
+            datasourceTemplate: 'docker',
+            versioningTemplate: 'docker',
             matchStrings: [
-                'image: (?<depName>.*?):(?<currentValue>.*?)(?:@(?<currentDigest>sha256:[a-f0-9]+))?,'
+                'image: (?<depName>.*?):(?<currentValue>.*?)(?:@(?<currentDigest>sha256:[a-f0-9]+))?,',
             ],
             autoReplaceStringTemplate: 'image: {{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}},',
-        }
+        },
     ],
 }
