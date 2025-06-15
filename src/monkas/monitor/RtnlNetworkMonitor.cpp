@@ -265,7 +265,7 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK)
     {
-        spdlog::trace("removing interface with index", ifi->ifi_index);
+        spdlog::trace("removing interface with index {}", ifi->ifi_index);
         m_trackers.erase(ifi->ifi_index);
         broadcastInterfaces();
         return;
