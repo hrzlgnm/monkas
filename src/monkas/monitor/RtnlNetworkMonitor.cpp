@@ -497,7 +497,7 @@ void RtnlNetworkMonitor::broadcastInterfaces()
                 intfs.emplace(idx, tracker.name());
             }
         }
-        m_interfacesBroadcaster.broadcast(intfs);
+        m_interfacesBroadcaster.broadcast(std::cref(intfs)); // <functional> needed
     }
 }
 
