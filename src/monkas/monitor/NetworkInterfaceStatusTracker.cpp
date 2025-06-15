@@ -13,18 +13,23 @@
 
 namespace monkas
 {
+namespace
+{
 template <typename T>
 void logTrace(const T &t, NetworkInterfaceStatusTracker *that, const std::string_view &description)
 {
     spdlog::trace("[{}][{}] {}: {}", static_cast<void *>(that), that->name(), description, t);
 }
+} // namespace
 
 NetworkInterfaceStatusTracker::NetworkInterfaceStatusTracker()
     : m_lastChanged(std::chrono::steady_clock::now())
+    , m_ethernetAddress{}
+    , m_broadcastAddress{}
 {
 }
 
-bool NetworkInterfaceStatusTracker::hasName() const
+auto NetworkInterfaceStatusTracker::hasName() const -> bool
 {
     return !m_name.empty();
 }
@@ -50,7 +55,7 @@ void NetworkInterfaceStatusTracker::touch(DirtyFlag flag)
     }
 }
 
-const std::string &NetworkInterfaceStatusTracker::name() const
+auto NetworkInterfaceStatusTracker::name() const -> const std::string &
 {
     return m_name;
 }
@@ -66,7 +71,7 @@ void NetworkInterfaceStatusTracker::setName(const std::string &name)
 }
 
 // TODO: fallback to flags
-NetworkInterfaceStatusTracker::OperationalState NetworkInterfaceStatusTracker::operationalState() const
+auto NetworkInterfaceStatusTracker::operationalState() const -> OperationalState
 {
     return m_operState;
 }
@@ -81,12 +86,12 @@ void NetworkInterfaceStatusTracker::setOperationalState(OperationalState opersta
     }
 }
 
-const ethernet::Address &NetworkInterfaceStatusTracker::ethernetAddress() const
+auto NetworkInterfaceStatusTracker::ethernetAddress() const -> const ethernet::Address &
 {
     return m_ethernetAddress;
 }
 
-const ethernet::Address &NetworkInterfaceStatusTracker::broadcastAddress() const
+auto NetworkInterfaceStatusTracker::broadcastAddress() const -> const ethernet::Address &
 {
     return m_broadcastAddress;
 }
@@ -111,7 +116,7 @@ void NetworkInterfaceStatusTracker::setBroadcastAddress(const ethernet::Address 
     }
 }
 
-const ip::Address &NetworkInterfaceStatusTracker::gatewayAddress() const
+auto NetworkInterfaceStatusTracker::gatewayAddress() const -> const ip::Address &
 {
     return m_gateway;
 }
@@ -136,7 +141,7 @@ void NetworkInterfaceStatusTracker::clearGatewayAddress(GatewayClearReason r)
     }
 }
 
-const NetworkAddresses &NetworkInterfaceStatusTracker::networkAddresses() const
+auto NetworkInterfaceStatusTracker::networkAddresses() const -> const NetworkAddresses &
 {
     return m_networkAddresses;
 }
@@ -182,17 +187,17 @@ void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::NetworkA
     }
 }
 
-Duration NetworkInterfaceStatusTracker::age() const
+auto NetworkInterfaceStatusTracker::age() const -> Duration
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_lastChanged);
 }
 
-bool NetworkInterfaceStatusTracker::isDirty() const
+auto NetworkInterfaceStatusTracker::isDirty() const -> bool
 {
     return m_dirtyFlags.any();
 }
 
-bool NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const
+auto NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const -> bool
 {
     const auto idx = fmt::underlying(flag);
     if (idx >= m_dirtyFlags.size())
@@ -203,7 +208,7 @@ bool NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const
     return m_dirtyFlags.test(idx);
 }
 
-DirtyFlags NetworkInterfaceStatusTracker::dirtyFlags() const
+auto NetworkInterfaceStatusTracker::dirtyFlags() const -> DirtyFlags
 {
     return m_dirtyFlags;
 }
@@ -228,7 +233,9 @@ void NetworkInterfaceStatusTracker::clearFlag(DirtyFlag flag)
     }
 }
 
-std::string to_string(NetworkInterfaceStatusTracker::OperationalState o)
+namespace
+{
+auto toString(NetworkInterfaceStatusTracker::OperationalState o) -> std::string
 {
     using OperState = NetworkInterfaceStatusTracker::OperationalState;
     switch (o)
@@ -250,13 +257,14 @@ std::string to_string(NetworkInterfaceStatusTracker::OperationalState o)
         return "Unknown";
     }
 }
+} // namespace
 
-std::ostream &operator<<(std::ostream &o, OperationalState op)
+auto operator<<(std::ostream &o, OperationalState op) -> std::ostream &
 {
-    return o << to_string(op);
+    return o << toString(op);
 }
 
-std::ostream &operator<<(std::ostream &o, GatewayClearReason r)
+auto operator<<(std::ostream &o, GatewayClearReason r) -> std::ostream &
 {
     switch (r)
     {
@@ -273,7 +281,7 @@ std::ostream &operator<<(std::ostream &o, GatewayClearReason r)
     return o;
 }
 
-std::ostream &operator<<(std::ostream &o, DirtyFlag d)
+auto operator<<(std::ostream &o, DirtyFlag d) -> std::ostream &
 {
     switch (d)
     {
@@ -295,7 +303,9 @@ std::ostream &operator<<(std::ostream &o, DirtyFlag d)
     }
 }
 
-std::string dirtyFlagsToString(const DirtyFlags &flags)
+namespace
+{
+auto dirtyFlagsToString(const DirtyFlags &flags) -> std::string
 {
     if (flags.none())
     {
@@ -305,7 +315,8 @@ std::string dirtyFlagsToString(const DirtyFlags &flags)
     std::ostringstream result;
     bool empty = true;
 
-    for (std::underlying_type_t<DirtyFlag> i = 0; i < std::underlying_type_t<DirtyFlag>(DirtyFlag::FlagsCount); ++i)
+    for (std::underlying_type_t<DirtyFlag> i = 0;
+         i < static_cast<std::underlying_type_t<DirtyFlag>>(DirtyFlag::FlagsCount); ++i)
     {
         if (flags.test(i))
         {
@@ -320,13 +331,14 @@ std::string dirtyFlagsToString(const DirtyFlags &flags)
 
     return result.str();
 }
+} // namespace
 
-std::ostream &operator<<(std::ostream &o, const DirtyFlags &d)
+auto operator<<(std::ostream &o, const DirtyFlags &d) -> std::ostream &
 {
     return o << dirtyFlagsToString(d);
 }
 
-std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s)
+auto operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s) -> std::ostream &
 {
     o << s.name();
     if (s.m_ethernetAddress)
@@ -356,7 +368,7 @@ std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s
     {
         o << " default via " << s.m_gateway;
     }
-    o << " op " << to_string(s.m_operState) << "(" << static_cast<int>(s.m_operState) << ")";
+    o << " op " << toString(s.m_operState) << "(" << static_cast<int>(s.m_operState) << ")";
     o << " age " << s.age().count();
     o << " dirty " << dirtyFlagsToString(s.dirtyFlags());
     return o;

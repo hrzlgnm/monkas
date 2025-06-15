@@ -4,12 +4,10 @@
 #include <cstdio>
 #include <ostream>
 
-namespace monkas
-{
-namespace ethernet
+namespace monkas::ethernet
 {
 
-Address Address::fromBytes(const uint8_t *bytes, size_type len)
+auto Address::fromBytes(const uint8_t *bytes, size_type len) -> Address
 {
     if (len == ADDR_LEN)
     {
@@ -17,20 +15,33 @@ Address Address::fromBytes(const uint8_t *bytes, size_type len)
         std::copy_n(bytes, len, r.begin());
         return r;
     }
-    return Address();
+    return {};
 }
 
-Address Address::fromBytes(const std::array<uint8_t, ADDR_LEN> &bytes)
+auto Address::fromBytes(const std::array<uint8_t, ADDR_LEN> &bytes) -> Address
 {
     return fromBytes(bytes.data(), bytes.size());
 }
 
-std::string Address::toString() const
+auto Address::toString() const -> std::string
 {
-    char buf[18]; // 6*2 chars + 5 sep + nul
-    std::snprintf(buf, sizeof(buf), "%02hx%c%02hx%c%02hx%c%02hx%c%02hx%c%02hx", operator[](0), ':', operator[](1),
-                  ':', operator[](2), ':', operator[](3), ':', operator[](4), ':', operator[](5));
-    return std::string(buf);
+    constexpr auto len = 17; // 6*2 hex digits + 5 colons
+    std::array<char, len> buf{};
+    int idx = 0;
+    int i = 0;
+    constexpr auto lowerNibbleShift = 0x4U;
+    constexpr auto upperNibbleMask = 0xFU;
+    for (const auto byte : *this)
+    {
+        buf[idx++] = "0123456789abcdef"[byte >> lowerNibbleShift];
+        buf[idx++] = "0123456789abcdef"[byte & upperNibbleMask];
+        if (i < size() - 1)
+        {
+            buf[idx++] = ':';
+        }
+        i++;
+    }
+    return {buf.data(), buf.size()};
 }
 
 Address::operator bool() const
@@ -38,10 +49,9 @@ Address::operator bool() const
     return std::any_of(cbegin(), cend(), [](auto c) { return c != 0; });
 }
 
-std::ostream &operator<<(std::ostream &o, const Address &a)
+auto operator<<(std::ostream &o, const Address &a) -> std::ostream &
 {
     return o << a.toString();
 }
 
-} // namespace ethernet
-} // namespace monkas
+} // namespace monkas::ethernet

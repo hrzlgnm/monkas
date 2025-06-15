@@ -47,45 +47,45 @@ class NetworkInterfaceStatusTracker
         FlagsCount,
     };
 
-    using DirtyFlags = std::bitset<std::underlying_type_t<DirtyFlag>(DirtyFlag::FlagsCount)>;
+    using DirtyFlags = std::bitset<static_cast<std::underlying_type_t<DirtyFlag>>(DirtyFlag::FlagsCount)>;
 
     NetworkInterfaceStatusTracker();
 
-    const std::string &name() const;
+    [[nodiscard]] auto name() const -> const std::string &;
     void setName(const std::string &name);
 
-    OperationalState operationalState() const;
+    [[nodiscard]] auto operationalState() const -> OperationalState;
     void setOperationalState(OperationalState operstate);
 
-    const ethernet::Address &ethernetAddress() const;
+    [[nodiscard]] auto ethernetAddress() const -> const ethernet::Address &;
     void setEthernetAddress(const ethernet::Address &address);
 
-    const ethernet::Address &broadcastAddress() const;
+    [[nodiscard]] auto broadcastAddress() const -> const ethernet::Address &;
     void setBroadcastAddress(const ethernet::Address &address);
 
-    const ip::Address &gatewayAddress() const;
+    [[nodiscard]] auto gatewayAddress() const -> const ip::Address &;
     void setGatewayAddress(const ip::Address &gateway);
     void clearGatewayAddress(GatewayClearReason r);
 
-    const NetworkAddresses &networkAddresses() const;
+    [[nodiscard]] auto networkAddresses() const -> const NetworkAddresses &;
 
     void addNetworkAddress(const network::NetworkAddress &address);
     void removeNetworkAddress(const network::NetworkAddress &address);
 
-    Duration age() const;
+    [[nodiscard]] auto age() const -> Duration;
 
-    bool hasName() const;
+    [[nodiscard]] auto hasName() const -> bool;
 
-    bool isDirty() const;
-    bool isDirty(DirtyFlag flag) const;
-    DirtyFlags dirtyFlags() const;
+    [[nodiscard]] auto isDirty() const -> bool;
+    [[nodiscard]] auto isDirty(DirtyFlag flag) const -> bool;
+    [[nodiscard]] auto dirtyFlags() const -> DirtyFlags;
     void clearFlag(DirtyFlag flag);
 
   private:
     void touch(DirtyFlag flag);
 
     // TODO: only use public api
-    friend std::ostream &operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s);
+    friend auto operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s) -> std::ostream &;
     std::string m_name;
     ethernet::Address m_ethernetAddress;
     ethernet::Address m_broadcastAddress;
@@ -97,13 +97,13 @@ class NetworkInterfaceStatusTracker
 };
 
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
-std::ostream &operator<<(std::ostream &o, OperationalState op);
+auto operator<<(std::ostream &o, OperationalState op) -> std::ostream &;
 using GatewayClearReason = NetworkInterfaceStatusTracker::GatewayClearReason;
-std::ostream &operator<<(std::ostream &o, GatewayClearReason r);
+auto operator<<(std::ostream &o, GatewayClearReason r) -> std::ostream &;
 using DirtyFlag = NetworkInterfaceStatusTracker::DirtyFlag;
 using DirtyFlags = NetworkInterfaceStatusTracker::DirtyFlags;
-std::ostream &operator<<(std::ostream &o, DirtyFlag d);
-std::ostream &operator<<(std::ostream &o, DirtyFlags d);
+auto operator<<(std::ostream &o, DirtyFlag d) -> std::ostream &;
+auto operator<<(std::ostream &o, const DirtyFlags &d) -> std::ostream &;
 
 } // namespace monkas
 

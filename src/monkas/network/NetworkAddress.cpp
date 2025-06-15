@@ -3,9 +3,7 @@
 #include <linux/rtnetlink.h>
 #include <ostream>
 
-namespace monkas
-{
-namespace network
+namespace monkas::network
 {
 
 NetworkAddress::NetworkAddress(AddressFamily addressFamily, const ip::Address &address, const ip::Address &broadcast,
@@ -24,37 +22,37 @@ NetworkAddress::operator bool() const
     return m_af != AddressFamily::Unspecified;
 }
 
-AddressFamily NetworkAddress::addressFamily() const
+auto NetworkAddress::addressFamily() const -> AddressFamily
 {
     return m_af;
 }
 
-const ip::Address &NetworkAddress::ip() const
+auto NetworkAddress::ip() const -> const ip::Address &
 {
     return m_ip;
 }
 
-const ip::Address &NetworkAddress::broadcast() const
+auto NetworkAddress::broadcast() const -> const ip::Address &
 {
     return m_brd;
 }
 
-uint8_t NetworkAddress::prefixLength() const
+auto NetworkAddress::prefixLength() const -> uint8_t
 {
     return m_prefixlen;
 }
 
-AddressScope NetworkAddress::scope() const
+auto NetworkAddress::scope() const -> AddressScope
 {
     return m_scope;
 }
 
-uint32_t NetworkAddress::flags() const
+auto NetworkAddress::flags() const -> uint32_t
 {
     return m_flags;
 }
 
-AddressScope fromRtnlScope(uint8_t rtnlScope)
+auto fromRtnlScope(uint8_t rtnlScope) -> AddressScope
 {
     switch (rtnlScope)
     {
@@ -72,7 +70,7 @@ AddressScope fromRtnlScope(uint8_t rtnlScope)
     }
 }
 
-std::ostream &operator<<(std::ostream &o, AddressScope a)
+auto operator<<(std::ostream &o, AddressScope a) -> std::ostream &
 {
     switch (a)
     {
@@ -96,7 +94,7 @@ std::ostream &operator<<(std::ostream &o, AddressScope a)
     return o;
 }
 
-std::ostream &operator<<(std::ostream &o, const NetworkAddress &a)
+auto operator<<(std::ostream &o, const NetworkAddress &a) -> std::ostream &
 {
     o << a.addressFamily() << " " << a.ip() << "/" << static_cast<int>(a.prefixLength());
     o << " scope " << a.scope();
@@ -105,33 +103,32 @@ std::ostream &operator<<(std::ostream &o, const NetworkAddress &a)
         o << " brd " << a.broadcast();
     }
     // TODO: to readable
-    if (a.flags())
+    if (a.flags() != 0U)
     {
         o << " f " << std::hex << a.flags() << std::dec;
     }
     return o;
 }
 
-bool operator==(const NetworkAddress &lhs, const NetworkAddress &rhs)
+auto operator==(const NetworkAddress &lhs, const NetworkAddress &rhs) -> bool
 {
     return lhs.addressFamily() == rhs.addressFamily() && lhs.ip() == rhs.ip() && lhs.broadcast() == rhs.broadcast() &&
            lhs.prefixLength() == rhs.prefixLength() && lhs.scope() == rhs.scope() && lhs.flags() == rhs.flags();
 }
 
-bool operator!=(const NetworkAddress &lhs, const NetworkAddress &rhs)
+auto operator!=(const NetworkAddress &lhs, const NetworkAddress &rhs) -> bool
 {
     return !(lhs == rhs);
 }
 
-bool operator<(const NetworkAddress &lhs, const NetworkAddress &rhs)
+auto operator<(const NetworkAddress &lhs, const NetworkAddress &rhs) -> bool
 {
     return lhs.ip() < rhs.ip();
 }
 
-bool operator>=(const NetworkAddress &lhs, const NetworkAddress &rhs)
+auto operator>=(const NetworkAddress &lhs, const NetworkAddress &rhs) -> bool
 {
     return !(lhs.ip() < rhs.ip());
 }
 
-} // namespace network
-} // namespace monkas
+} // namespace monkas::network

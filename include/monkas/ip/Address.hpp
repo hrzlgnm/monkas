@@ -6,22 +6,19 @@
 #include <fmt/ostream.h>
 #include <iosfwd>
 #include <string>
-#include <string_view>
 
-namespace monkas
-{
-namespace ip
+namespace monkas::ip
 {
 
-enum class AddressFamily
+enum class AddressFamily : uint8_t
 {
     Unspecified,
     IPv4,
     IPv6,
 };
 
-int asLinuxAf(AddressFamily f);
-std::ostream &operator<<(std::ostream &o, AddressFamily a);
+auto asLinuxAf(AddressFamily f) -> int;
+auto operator<<(std::ostream &o, AddressFamily a) -> std::ostream &;
 
 constexpr auto IPV6_ADDR_LEN = 16;
 constexpr auto IPV4_ADDR_LEN = 4;
@@ -29,33 +26,35 @@ constexpr auto IPV4_ADDR_LEN = 4;
 class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
 {
   public:
-    Address() = default;
+    Address()
+        : std::array<uint8_t, IPV6_ADDR_LEN>{}
+    {
+    }
 
     /**
      * @returns true if address is not unspecified
      */
     explicit operator bool() const;
 
-    AddressFamily addressFamily() const;
-    size_type addressLength() const;
-    std::string toString() const;
+    [[nodiscard]] auto addressFamily() const -> AddressFamily;
+    [[nodiscard]] auto addressLength() const -> size_type;
+    [[nodiscard]] auto toString() const -> std::string;
 
-    static Address fromString(std::string_view address);
-    static Address fromBytes(const uint8_t *bytes, size_type len);
-    static Address fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes);
-    static Address fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes);
+    static auto fromString(const std::string &address) -> Address;
+    static auto fromBytes(const uint8_t *bytes, size_type len) -> Address;
+    static auto fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes) -> Address;
+    static auto fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes) -> Address;
 
   private:
     AddressFamily m_addressFamily{AddressFamily::Unspecified};
 };
 
-std::ostream &operator<<(std::ostream &o, const Address &a);
-bool operator<(const Address &lhs, const Address &rhs);
-bool operator==(const Address &lhs, const Address &rhs);
-bool operator!=(const Address &lhs, const Address &rhs);
+auto operator<<(std::ostream &o, const Address &a) -> std::ostream &;
+auto operator<(const Address &lhs, const Address &rhs) -> bool;
+auto operator==(const Address &lhs, const Address &rhs) -> bool;
+auto operator!=(const Address &lhs, const Address &rhs) -> bool;
 
-} // namespace ip
-} // namespace monkas
+} // namespace monkas::ip
 
 template <> struct fmt::formatter<monkas::ip::Address> : fmt::ostream_formatter
 {

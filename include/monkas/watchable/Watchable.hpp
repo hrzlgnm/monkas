@@ -16,11 +16,17 @@ template <typename... Args> class Watchable
 {
   public:
     Watchable() = default;
+    ~Watchable() = default;
+    Watchable(const Watchable &) = delete;
+    auto operator=(const Watchable &) -> Watchable & = delete;
+    auto operator=(Watchable &&) -> Watchable & = delete;
+    Watchable(Watchable &&) = delete;
+
     using Watcher = std::function<void(Args...)>;
     using Watchers = std::list<Watcher>;
     using Token = typename Watchers::const_iterator;
 
-    [[nodiscard]] Token addWatcher(const Watcher &watcher)
+    [[nodiscard]] auto addWatcher(const Watcher &watcher) -> Token
     {
         return m_watchers.insert(m_watchers.end(), watcher);
     }
@@ -49,7 +55,7 @@ template <typename... Args> class Watchable
         m_watchers.erase(token);
     }
 
-    bool hasWatchers() const
+    [[nodiscard]] auto hasWatchers() const -> bool
     {
         return !m_watchers.empty();
     }
@@ -61,7 +67,12 @@ template <typename... Args> class Watchable
             {
                 bool &flag;
 
-                Guard(bool &f)
+                Guard(const Guard &) = delete;
+                Guard(Guard &&) = delete;
+                auto operator=(const Guard &) -> Guard & = delete;
+                auto operator=(Guard &&) -> Guard & = delete;
+
+                explicit Guard(bool &f)
                     : flag(f)
                 {
                     flag = true;
@@ -107,21 +118,17 @@ template <typename... Args> class Watchable
     }
 
   private:
-    bool toBeRemoved(const Token &token) const
+    auto toBeRemoved(const Token &token) const -> bool
     {
         return std::find(std::cbegin(m_tokensToRemove), std::cend(m_tokensToRemove), token) !=
                std::cend(m_tokensToRemove);
     }
 
-    bool tokenIsValid(const Token &token) const
+    auto tokenIsValid(const Token &token) const -> bool
     {
         return token != m_watchers.end() &&
                std::any_of(m_watchers.cbegin(), m_watchers.cend(), [&](const auto &w) { return &w == &(*token); });
     }
-
-    Watchable(const Watchable &) = delete;
-    Watchable &operator=(const Watchable &) = delete;
-    Watchable(Watchable &&) = delete;
 
     Watchers m_watchers;
     std::forward_list<Token> m_tokensToRemove;
