@@ -59,6 +59,10 @@ using NetworkAddressBroadcaster = Observable<network::Interface, std::reference_
 using NetworkAddressListener = NetworkAddressBroadcaster::Observer;
 using NetworkAddressListenerToken = NetworkAddressBroadcaster::Token;
 
+using EnumerationDoneBroadcaster = Observable<>;
+using EnumerationDoneListener = EnumerationDoneBroadcaster::Observer;
+using EnumerationDoneListenerToken = EnumerationDoneBroadcaster::Token;
+
 class RtnlNetworkMonitor
 {
   public:
@@ -74,6 +78,9 @@ class RtnlNetworkMonitor
 
     [[nodiscard]] NetworkAddressListenerToken addNetworkAddressListener(const NetworkAddressListener &listener);
     void removeNetworkAddressListener(const NetworkAddressListenerToken &token);
+
+    [[nodiscard]] EnumerationDoneListenerToken addEnumerationDoneListener(const EnumerationDoneListener &listener);
+    void removeEnumerationDoneListener(const EnumerationDoneListenerToken &token);
 
   private:
     void receiveAndProcess();
@@ -163,5 +170,6 @@ class RtnlNetworkMonitor
     InterfacesBroadcaster m_interfacesBroadcaster;
     OperationalStateBroadcaster m_operationalStateBroadcaster;
     NetworkAddressBroadcaster m_networkAddressBroadcaster;
+    EnumerationDoneBroadcaster m_enumerationDoneBroadcaster;
 };
 } // namespace monkas

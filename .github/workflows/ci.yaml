@@ -142,5 +142,4 @@ jobs:
 
       - name: CLI example nerdstats/dumppackets
         run: |
-          # todo add automatic exit to cli
-          timeout --preserve-status 1 ../build/examples/cli/monka -nerdstats -dumppackets || true
+          ../build/examples/cli/monka --log-level=trace --nerdstats --dumppackets --exit-after-enumeration

@@ -121,6 +121,16 @@ void RtnlNetworkMonitor::removeNetworkAddressListener(const NetworkAddressListen
     m_networkAddressBroadcaster.removeListener(token);
 }
 
+EnumerationDoneListenerToken RtnlNetworkMonitor::addEnumerationDoneListener(const EnumerationDoneListener &listener)
+{
+    return m_enumerationDoneBroadcaster.addListener(listener);
+}
+
+void RtnlNetworkMonitor::removeEnumerationDoneListener(const EnumerationDoneListenerToken &token)
+{
+    m_enumerationDoneBroadcaster.removeListener(token);
+}
+
 void RtnlNetworkMonitor::receiveAndProcess()
 {
     auto receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
@@ -161,15 +171,30 @@ void RtnlNetworkMonitor::receiveAndProcess()
                 m_cacheState = CacheState::WaitingForChanges;
                 spdlog::debug("Done with enumeration of initial information");
                 spdlog::debug("Tracking changes for {} interfaces", m_trackers.size());
+                if (m_enumerationDoneBroadcaster.hasListeners())
+                {
+                    m_enumerationDoneBroadcaster.broadcast();
+                }
             }
             else
             {
-                spdlog::pwarn("Unexpected MNL_CB_STOP");
+                if (m_mnlSocket)
+                {
+                    spdlog::pwarn("Unexpected MNL_CB_STOP");
+                }
+                else
+                {
+                    break; // someone may call stop() while we are processing messages
+                }
             }
         }
         printStatsForNerdsIfEnabled();
         broadcastChanges();
-        receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
+        // someone may call stop() while we are processing messages
+        if (m_mnlSocket)
+        {
+            receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), &m_buffer[0], m_buffer.size());
+        }
     }
 }
 
