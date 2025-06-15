@@ -38,6 +38,7 @@ class Address : public std::array<uint8_t, ipV6AddrLen>
 
     [[nodiscard]] auto addressFamily() const -> AddressFamily;
     [[nodiscard]] auto addressLength() const -> size_type;
+    [[nodiscard]] auto isMappedV4() const -> bool;
     [[nodiscard]] auto toString() const -> std::string;
 
     static auto fromString(const std::string &address) -> Address;
