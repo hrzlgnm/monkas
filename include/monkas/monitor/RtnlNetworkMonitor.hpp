@@ -88,9 +88,6 @@ class RtnlNetworkMonitor
     [[nodiscard]] GatewayAddressListenerToken addGatewayAddressListener(const GatewayAddressListener &listener);
     void removeGatewayAddressListener(const GatewayAddressListenerToken &token);
 
-    [[nodiscard]] NetworkInterfaceStatusTracker &ensureTrackerForInterface(int ifIndex);
-    [[nodiscard]] NetworkInterfaceStatusTracker &ensureTrackerForInterface(const network::Interface &iface);
-
     [[nodiscard]] EnumerationDoneListenerToken addEnumerationDoneListener(const EnumerationDoneListener &listener);
     void removeEnumerationDoneListener(const EnumerationDoneListenerToken &token);
 
