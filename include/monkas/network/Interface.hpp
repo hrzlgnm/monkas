@@ -3,6 +3,7 @@
 #include <fmt/ostream.h>
 #include <iosfwd>
 #include <string>
+#include <tuple>
 
 namespace monkas::network
 {
@@ -22,17 +23,17 @@ class Interface
         return m_name;
     }
 
-    inline bool operator<(const Interface &other) const
+    constexpr bool operator<(const Interface &other) const noexcept
     {
-        return m_index < other.m_index || (m_index == other.m_index && m_name < other.m_name);
+        return std::tie(m_index, m_name) < std::tie(other.m_index, other.m_name);
     }
 
-    inline bool operator==(const Interface &other) const
+    constexpr bool operator==(const Interface &other) const
     {
         return m_index == other.m_index && m_name == other.m_name;
     }
 
-    inline bool operator!=(const Interface &other) const
+    constexpr bool operator!=(const Interface &other) const
     {
         return !(*this == other);
     }
