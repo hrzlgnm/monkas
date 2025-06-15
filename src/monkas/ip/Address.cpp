@@ -69,7 +69,7 @@ auto Address::isMappedV4() const -> bool
 {
     if (m_addressFamily == AddressFamily::IPv6)
     {
-        return std::equal(begin(), begin() + v4MappedPrefix.size(), v4MappedPrefix.begin(), v4MappedPrefix.end());
+        return std::memcmp(data(), v4MappedPrefix.data(), v4MappedPrefix.size()) == 0;
     }
     return false;
 }
