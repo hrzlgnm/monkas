@@ -45,6 +45,12 @@ enum RuntimeFlag : uint32_t
 // TODO make this a std::bitset, too
 using RuntimeOptions = uint32_t;
 
+using Interfaces = std::set<network::Interface>;
+
+using InterfacesBroadcaster = Observable<std::reference_wrapper<Interfaces>>;
+using InterfacesListener = InterfacesBroadcaster::Observer;
+using InterfacesListenerToken = InterfacesBroadcaster::Token;
+
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
 using OperationalStateBroadcaster = Observable<network::Interface, OperationalState>;
 using OperationalStateListener = OperationalStateBroadcaster::Observer;
@@ -60,6 +66,9 @@ class RtnlNetworkMonitor
     explicit RtnlNetworkMonitor(const RuntimeOptions &options);
     int run();
     void stop();
+
+    [[nodiscard]] InterfacesListenerToken addInterfacesListener(const InterfacesListener &listener);
+    void removeInterfacesListener(const InterfacesListenerToken &token);
 
     [[nodiscard]] OperationalStateListenerToken addOperationalStateListener(const OperationalStateListener &listener);
     void removeOperationalStateListener(const OperationalStateListenerToken &token);
@@ -117,6 +126,7 @@ class RtnlNetworkMonitor
     }
 
     void broadcastChanges();
+    void broadcastInterfaces();
 
   private:
     std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
@@ -151,6 +161,7 @@ class RtnlNetworkMonitor
     } m_stats;
 
     RuntimeOptions m_runtimeOptions;
+    InterfacesBroadcaster m_interfacesBroadcaster;
     OperationalStateBroadcaster m_operationalStateBroadcaster;
     NetworkAddressBroadcaster m_networkAddressBroadcaster;
 };

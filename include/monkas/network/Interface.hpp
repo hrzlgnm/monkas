@@ -22,12 +22,17 @@ class Interface
         return m_name;
     }
 
-    bool operator==(const Interface &other) const
+    inline bool operator<(const Interface &other) const
+    {
+        return m_index < other.m_index || (m_index == other.m_index && m_name < other.m_name);
+    }
+
+    inline bool operator==(const Interface &other) const
     {
         return m_index == other.m_index && m_name == other.m_name;
     }
 
-    bool operator!=(const Interface &other) const
+    inline bool operator!=(const Interface &other) const
     {
         return !(*this == other);
     }
