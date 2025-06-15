@@ -15,6 +15,8 @@ TEST_SUITE("[ip::Address]")
     std::array<uint8_t, 4> localhost4{127, 0, 0, 1};
     std::array<uint8_t, 16> localhost6{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
 
+    std::array<uint8_t, 16> localhostV4mapped{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 127, 0, 0, 1};
+
     TEST_CASE("toString")
     {
         CHECK(Address::fromBytes(localhost4).toString() == "127.0.0.1");
@@ -30,6 +32,9 @@ TEST_SUITE("[ip::Address]")
     TEST_CASE("operator ==")
     {
         CHECK(Address::fromBytes(localhost4) == Address::fromBytes(localhost4));
+        CHECK(Address::fromBytes(localhost4) == Address::fromBytes(localhostV4mapped));
+        CHECK(Address::fromBytes(localhostV4mapped) == Address::fromBytes(localhost4));
+        CHECK(Address::fromBytes(localhostV4mapped) == Address::fromBytes(localhostV4mapped));
     }
 
     TEST_CASE("operator !=")
@@ -40,6 +45,7 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromBytes(localhost4) != Address::fromBytes(localhost6));
         CHECK(Address{} != Address::fromBytes(localhost4));
         CHECK(Address{} != Address::fromBytes(localhost6));
+        CHECK_FALSE(Address::fromBytes(localhostV4mapped) != Address::fromBytes(localhost4));
     }
 
     TEST_CASE("operator <")
