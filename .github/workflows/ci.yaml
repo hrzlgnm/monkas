@@ -10,7 +10,7 @@ jobs:
   Lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:109100b767c213e38f1f0e10d8bb39dcb27b01687688f8f390dc36d6e416acaf
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:ef6da99b029e4ecd0c26c4a0f66b981def2511d1910374ba73c8e3d2b42be86e
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
