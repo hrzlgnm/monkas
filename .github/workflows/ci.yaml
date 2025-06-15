@@ -41,6 +41,7 @@ jobs:
               CFLAGS: -stdlib=libstdc++,
               CMAKE_BUILD_TYPE: Debug,
               CMAKE_FLAGS: -G Ninja,
+              sccache: sccache,
             }
           - {
               runs_on: ubuntu-latest,
@@ -52,6 +53,7 @@ jobs:
               CMAKE_BUILD_TYPE: Debug,
               ASAN_OPTIONS: strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1,
               CMAKE_FLAGS: -G Ninja,
+              sccache: sccache,
             }
           - {
               runs_on: ubuntu-latest,
@@ -62,6 +64,7 @@ jobs:
               CFLAGS: -stdlib=libstdc++,
               CMAKE_BUILD_TYPE: Release,
               CMAKE_FLAGS: -G Ninja,
+              sccache: sccache,
             }
           - {
               runs_on: ubuntu-latest,
@@ -72,6 +75,7 @@ jobs:
               CFLAGS: "",
               CMAKE_BUILD_TYPE: Debug,
               CMAKE_FLAGS: -G Ninja,
+              sccache: sccache,
             }
           - {
               runs_on: ubuntu-latest,
@@ -83,6 +87,7 @@ jobs:
               CMAKE_BUILD_TYPE: Debug,
               CMAKE_FLAGS: -G Ninja,
               ASAN_OPTIONS: strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1,
+              sccache: sccache,
             }
           - {
               runs_on: ubuntu-latest,
@@ -93,6 +98,7 @@ jobs:
               CFLAGS: "",
               CMAKE_BUILD_TYPE: Release,
               CMAKE_FLAGS: -G Ninja,
+              sccache: sccache,
             }
     runs-on: ${{ matrix.toolchain.runs_on }}
     container: ${{ matrix.toolchain.image }}
@@ -106,11 +112,18 @@ jobs:
       CMAKE_EXE_LINKER_FLAGS: ${{ matrix.toolchain.CFLAGS }}
       CMAKE_EXTRA_FLAGS: ${{ matrix.toolchain.CMAKE_FLAGS }}
       CMAKE_SHARED_LINKER_FLAGS: ${{ matrix.toolchain.CFLAGS }}
+      CMAKE_C_COMPILER_LAUNCHER: ${{ matrix.toolchain.sccache }}
+      CMAKE_CXX_COMPILER_LAUNCHER: ${{ matrix.toolchain.sccache }}
+      SCCACHE_GHA_ENABLED: true
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - name: CMake Debug build with sanitizers
+      - name: Run sccache-action
+        if: ${{ matrix.toolchain.sccache }}
+        uses: mozilla-actions/sccache-action@7d986dd989559c6ecdb630a3fd2557667be217ad # v0.0.9
+
+      - name: Configure
         run: |
           env | grep '^ASAN_OPTIONS\|^CMAKE' | sort
           cmake -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" ${CMAKE_C_COMPILER+-DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"} ${CMAKE_CXX_COMPILER+-DCMAKE_CXX_COMPILER="${CMAKE_CXX_COMPILER}"} -DCMAKE_C_FLAGS="${CMAKE_C_FLAGS}" -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS}" -DCMAKE_EXE_LINKER_FLAGS="${CMAKE_EXE_LINKER_FLAGS}" -DCMAKE_SHARED_LINKER_FLAGS="${CMAKE_SHARED_LINKER_FLAGS}" ${CMAKE_EXTRA_FLAGS} -S . -B ../build
@@ -129,4 +142,5 @@ jobs:
 
       - name: CLI example nerdstats/dumppackets
         run: |
+          # todo add automatic exit to cli
           timeout --preserve-status 1 ../build/examples/cli/monka -nerdstats -dumppackets || true
