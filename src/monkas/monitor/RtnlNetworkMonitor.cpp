@@ -91,6 +91,16 @@ void RtnlNetworkMonitor::stop()
     m_running = false;
 }
 
+InterfacesListenerToken RtnlNetworkMonitor::addInterfacesListener(const InterfacesListener &listener)
+{
+    return m_interfacesBroadcaster.addListener(listener);
+}
+
+void RtnlNetworkMonitor::removeInterfacesListener(const InterfacesListenerToken &token)
+{
+    m_interfacesBroadcaster.removeListener(token);
+}
+
 OperationalStateListenerToken RtnlNetworkMonitor::addOperationalStateListener(const OperationalStateListener &listener)
 {
     return m_operationalStateBroadcaster.addListener(listener);
@@ -228,11 +238,18 @@ void RtnlNetworkMonitor::parseAttribute(const nlattr *a, uint16_t maxType, RtnlA
 
 NetworkInterfaceStatusTracker &RtnlNetworkMonitor::ensureNameCurrent(int ifIndex, const nlattr *nameAttribute)
 {
+    const auto before = m_trackers.size();
     auto &cacheEntry = m_trackers[ifIndex];
+
     // Sometimes interfaces are renamed, account for that
     if (nameAttribute)
     {
         cacheEntry.setName(mnl_attr_get_str(nameAttribute));
+    }
+    if (before != m_trackers.size() || cacheEntry.isDirty(DirtyFlag::NameChanged))
+    {
+        broadcastInterfacesSnapshot();
+        cacheEntry.clearFlag(DirtyFlag::NameChanged);
     }
     return cacheEntry;
 }
@@ -248,8 +265,9 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK)
     {
-        spdlog::trace("removing interface with index", ifi->ifi_index);
+        spdlog::trace("removing interface with index {}", ifi->ifi_index);
         m_trackers.erase(ifi->ifi_index);
+        broadcastInterfacesSnapshot();
         return;
     }
     auto attributes = parseAttributes(nlhdr, sizeof(*ifi), IFLA_MAX);
@@ -464,6 +482,22 @@ void RtnlNetworkMonitor::broadcastChanges()
                                                   tracker.networkAddresses());
             tracker.clearFlag(DirtyFlag::NetworkAddressesChanged);
         }
+    }
+}
+
+void RtnlNetworkMonitor::broadcastInterfacesSnapshot()
+{
+    if (m_interfacesBroadcaster.hasListeners())
+    {
+        Interfaces intfs;
+        for (const auto &[idx, tracker] : m_trackers)
+        {
+            if (tracker.hasName())
+            {
+                intfs.emplace(idx, tracker.name());
+            }
+        }
+        m_interfacesBroadcaster.broadcast(std::cref(intfs));
     }
 }
 
