@@ -121,6 +121,16 @@ void RtnlNetworkMonitor::removeNetworkAddressListener(const NetworkAddressListen
     m_networkAddressBroadcaster.removeListener(token);
 }
 
+GatewayAddressListenerToken RtnlNetworkMonitor::addGatewayAddressListener(const GatewayAddressListener &listener)
+{
+    return m_gatewayAddressBroadcaster.addListener(listener);
+}
+
+void RtnlNetworkMonitor::removeGatewayAddressListener(const GatewayAddressListenerToken &token)
+{
+    m_gatewayAddressBroadcaster.removeListener(token);
+}
+
 EnumerationDoneListenerToken RtnlNetworkMonitor::addEnumerationDoneListener(const EnumerationDoneListener &listener)
 {
     return m_enumerationDoneBroadcaster.addListener(listener);
@@ -504,8 +514,14 @@ void RtnlNetworkMonitor::broadcastChanges()
         if (m_networkAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::NetworkAddressesChanged))
         {
             m_networkAddressBroadcaster.broadcast(network::Interface{index, tracker.name()},
-                                                  tracker.networkAddresses());
+                                                  std::cref(tracker.networkAddresses()));
             tracker.clearFlag(DirtyFlag::NetworkAddressesChanged);
+        }
+        if (m_gatewayAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::GatewayAddressChanged))
+        {
+            m_gatewayAddressBroadcaster.broadcast(network::Interface{index, tracker.name()},
+                                                  std::cref(tracker.gatewayAddress()));
+            tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
         }
     }
 }
