@@ -289,7 +289,7 @@ auto operator<<(std::ostream &o, DirtyFlag d) -> std::ostream &
     case NetworkInterfaceStatusTracker::DirtyFlag::OperationalStateChanged:
         return o << "OperationalStateChanged";
     case NetworkInterfaceStatusTracker::DirtyFlag::MacAddressChanged:
-        return o << "EthernetAddressChanged";
+        return o << "MacAddressChanged";
     case NetworkInterfaceStatusTracker::DirtyFlag::BroadcastAddressChanged:
         return o << "BroadcastAddressChanged";
     case NetworkInterfaceStatusTracker::DirtyFlag::GatewayAddressChanged:
