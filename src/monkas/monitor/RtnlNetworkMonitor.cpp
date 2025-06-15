@@ -131,6 +131,16 @@ void RtnlNetworkMonitor::removeGatewayAddressListener(const GatewayAddressListen
     m_gatewayAddressBroadcaster.removeListener(token);
 }
 
+EthernetAddressListenerToken RtnlNetworkMonitor::addEthernetAddressListener(const EthernetAddressListener &listener)
+{
+    return m_ethernetAddressBroadcaster.addListener(listener);
+}
+
+void RtnlNetworkMonitor::removeEthernetAddressListener(const EthernetAddressListenerToken &token)
+{
+    m_ethernetAddressBroadcaster.removeListener(token);
+}
+
 EnumerationDoneListenerToken RtnlNetworkMonitor::addEnumerationDoneListener(const EnumerationDoneListener &listener)
 {
     return m_enumerationDoneBroadcaster.addListener(listener);
