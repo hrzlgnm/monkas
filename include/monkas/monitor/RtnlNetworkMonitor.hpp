@@ -47,8 +47,7 @@ using RuntimeOptions = uint32_t;
 
 using Interfaces = std::set<network::Interface>;
 
--using InterfacesBroadcaster = Observable<std::reference_wrapper<Interfaces>>;
-+using InterfacesBroadcaster = Observable<std::reference_wrapper<const Interfaces>>;
+using InterfacesBroadcaster = Observable<std::reference_wrapper<const Interfaces>>;
 using InterfacesListener = InterfacesBroadcaster::Observer;
 using InterfacesListenerToken = InterfacesBroadcaster::Token;
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
