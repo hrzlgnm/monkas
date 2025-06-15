@@ -523,6 +523,12 @@ void RtnlNetworkMonitor::broadcastChanges()
                                                   std::cref(tracker.gatewayAddress()));
             tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
         }
+        if (m_ethernetAddressBroadcaster.hasListeners() && tracker.isDirty(DirtyFlag::EthernetAddressChanged))
+        {
+            m_ethernetAddressBroadcaster.broadcast(network::Interface{index, tracker.name()},
+                                                   std::cref(tracker.ethernetAddress()));
+            tracker.clearFlag(DirtyFlag::EthernetAddressChanged);
+        }
     }
 }
 
