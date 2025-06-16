@@ -26,10 +26,7 @@ constexpr auto ipV4AddrLen = 4;
 class Address : public std::array<uint8_t, ipV6AddrLen>
 {
   public:
-    Address()
-        : std::array<uint8_t, ipV6AddrLen>{}
-    {
-    }
+    Address();
 
     /**
      * @returns true if address is not unspecified
