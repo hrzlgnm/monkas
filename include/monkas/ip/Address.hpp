@@ -49,10 +49,10 @@ class Address : public std::array<uint8_t, ipV6AddrLen>
 
 auto operator<<(std::ostream &o, const Address &a) -> std::ostream &;
 auto operator<(const Address &lhs, const Address &rhs) -> bool;
-auto operator<=(const Address &lhs, const Address &rhs) -> bool;
-auto operator>(const Address &lhs, const Address &rhs) -> bool;
-auto operator>=(const Address &lhs, const Address &rhs) -> bool;
-auto operator==(const Address &lhs, const Address &rhs) -> bool;
+constexpr auto operator<=(const Address &lhs, const Address &rhs) noexcept -> bool;
+constexpr auto operator>(const Address &lhs, const Address &rhs)  noexcept -> bool;
+constexpr auto operator>=(const Address &lhs, const Address &rhs) noexcept -> bool;
+auto      operator==(const Address &lhs, const Address &rhs)       -> bool;
 auto operator!=(const Address &lhs, const Address &rhs) -> bool;
 
 } // namespace monkas::ip
