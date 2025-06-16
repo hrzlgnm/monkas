@@ -156,17 +156,17 @@ auto operator<(const Address &lhs, const Address &rhs) -> bool
     return lhs.addressLength() < rhs.addressLength();
 }
 
-auto operator<=(const Address &lhs, const Address &rhs) -> bool
+constexpr auto operator<=(const Address &lhs, const Address &rhs) noexcept -> bool
 {
     return !(rhs < lhs);
 }
 
-auto operator>=(const Address &lhs, const Address &rhs) -> bool
+constexpr auto operator>=(const Address &lhs, const Address &rhs) noexcept -> bool
 {
     return !(lhs < rhs);
 }
 
-auto operator>(const Address &lhs, const Address &rhs) -> bool
+constexpr auto operator>(const Address &lhs, const Address &rhs) noexcept -> bool
 {
     return !(lhs <= rhs);
 }
