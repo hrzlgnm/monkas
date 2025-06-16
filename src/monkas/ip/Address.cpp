@@ -138,7 +138,7 @@ auto operator<<(std::ostream &o, const Address &a) -> std::ostream &
     return o << a.toString();
 }
 
-auto operator<(const Address &lhs, const Address &rhs) -> bool
+auto operator<(const Address &lhs, const Address &rhs) noexcept -> bool
 {
     if (lhs.addressFamily() == rhs.addressFamily())
     {
@@ -156,22 +156,22 @@ auto operator<(const Address &lhs, const Address &rhs) -> bool
     return lhs.addressLength() < rhs.addressLength();
 }
 
-constexpr auto operator<=(const Address &lhs, const Address &rhs) noexcept -> bool
+auto operator<=(const Address &lhs, const Address &rhs) noexcept -> bool
 {
     return !(rhs < lhs);
 }
 
-constexpr auto operator>=(const Address &lhs, const Address &rhs) noexcept -> bool
+auto operator>=(const Address &lhs, const Address &rhs) noexcept -> bool
 {
     return !(lhs < rhs);
 }
 
-constexpr auto operator>(const Address &lhs, const Address &rhs) noexcept -> bool
+auto operator>(const Address &lhs, const Address &rhs) noexcept -> bool
 {
     return !(lhs <= rhs);
 }
 
-auto operator==(const Address &lhs, const Address &rhs) -> bool
+auto operator==(const Address &lhs, const Address &rhs) noexcept -> bool
 {
     if (lhs.addressFamily() == rhs.addressFamily())
     {
@@ -189,7 +189,7 @@ auto operator==(const Address &lhs, const Address &rhs) -> bool
     return false;
 }
 
-auto operator!=(const Address &lhs, const Address &rhs) -> bool
+auto operator!=(const Address &lhs, const Address &rhs) noexcept -> bool
 {
     return !(lhs == rhs);
 }
