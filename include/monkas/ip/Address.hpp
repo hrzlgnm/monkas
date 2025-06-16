@@ -27,7 +27,8 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
 {
   public:
     Address();
-
+    [[nodiscard]] auto toString() const -> std::string;
+    static auto fromString(const std::string &address) -> Address;
     /**
      * @returns true if address is not unspecified
      */
@@ -36,9 +37,7 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     [[nodiscard]] auto addressFamily() const -> AddressFamily;
     [[nodiscard]] auto addressLength() const -> size_type;
     [[nodiscard]] auto isMappedV4() const -> bool;
-    [[nodiscard]] auto toString() const -> std::string;
 
-    static auto fromString(const std::string &address) -> Address;
     static auto fromBytes(const uint8_t *bytes, size_type len) -> Address;
     static auto fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes) -> Address;
     static auto fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes) -> Address;

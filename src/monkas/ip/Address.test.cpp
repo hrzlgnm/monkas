@@ -46,6 +46,41 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromString("::1").toString() == "::1");
     }
 
+    TEST_CASE("addressFamily")
+    {
+        CHECK(localhost4.addressFamily() == AddressFamily::IPv4);
+        CHECK(localHost6.addressFamily() == AddressFamily::IPv6);
+        CHECK(localhostV4mapped.addressFamily() == AddressFamily::IPv6);
+    }
+
+    TEST_CASE("addressLength")
+    {
+        CHECK(localhost4.addressLength() == IPV4_ADDR_LEN);
+        CHECK(localHost6.addressLength() == IPV6_ADDR_LEN);
+        CHECK(localhostV4mapped.addressLength() == IPV6_ADDR_LEN);
+    }
+
+    TEST_CASE("isMappedV4")
+    {
+        CHECK(!localhost4.isMappedV4());
+        CHECK(localhostV4mapped.isMappedV4());
+        CHECK(!localHost6.isMappedV4());
+    }
+
+    TEST_CASE("operator bool")
+    {
+        CHECK(!unspec);
+        CHECK(localhost4);
+        CHECK(localHost6);
+        CHECK(localhostV4mapped);
+        CHECK(any4);
+        CHECK(any6);
+        CHECK(countUpV4);
+        CHECK(countDownV4);
+        CHECK(countUpV6);
+        CHECK(countDownV6);
+    }
+
     TEST_CASE("operator ==")
     {
         CHECK(localhost4 == localhost4);
@@ -106,20 +141,6 @@ TEST_SUITE("[ip::Address]")
         CHECK(localHost6 >= localhost4);
         CHECK(localhostV4mapped >= localhost4);
         CHECK(localhost4 >= localhostV4mapped);
-    }
-
-    TEST_CASE("operator bool")
-    {
-        CHECK(!unspec);
-        CHECK(localhost4);
-        CHECK(localHost6);
-        CHECK(localhostV4mapped);
-        CHECK(any4);
-        CHECK(any6);
-        CHECK(countUpV4);
-        CHECK(countDownV4);
-        CHECK(countUpV6);
-        CHECK(countDownV6);
     }
 }
 
