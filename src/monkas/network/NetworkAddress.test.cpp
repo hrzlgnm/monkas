@@ -17,35 +17,72 @@ TEST_SUITE("[network::NetworkAddress]")
     std::array<uint8_t, 6> some_hw_addr{1, 2, 3, 4, 5, 0x1A};
     std::array<uint8_t, 4> some_ipv4{192, 168, 17, 1};
     std::array<uint8_t, 4> some_bcast{192, 168, 17, 255};
-    NetworkAddress addr{fam, Address::fromBytes(some_ipv4), Address::fromBytes(some_bcast), 24, scope, 10};
 
-    TEST_CASE("constructor")
+    const NetworkAddress addr{fam, Address::fromBytes(some_ipv4), Address::fromBytes(some_bcast), 24, scope, 10};
+    const NetworkAddress defaultNetworkAddress{};
+
+    TEST_CASE("operator bool")
     {
         CHECK(addr);
-        CHECK(!NetworkAddress{});
+        CHECK(!defaultNetworkAddress);
+    }
+
+    TEST_CASE("addressFamily")
+    {
+        CHECK(addr.addressFamily() == fam);
+        CHECK(defaultNetworkAddress.addressFamily() == AddressFamily::Unspecified);
+    }
+
+    TEST_CASE("ip")
+    {
+        CHECK(addr.ip() == Address::fromBytes(some_ipv4));
+        CHECK(defaultNetworkAddress.ip() == Address{});
+    }
+
+    TEST_CASE("broadcast")
+    {
+        CHECK(addr.broadcast() == Address::fromBytes(some_bcast));
+        CHECK(defaultNetworkAddress.broadcast() == Address{});
+    }
+
+    TEST_CASE("prefixLength")
+    {
+        CHECK(addr.prefixLength() == 24);
+        CHECK(defaultNetworkAddress.prefixLength() == 0);
+    }
+
+    TEST_CASE("scope")
+    {
+        CHECK(addr.scope() == scope);
+        CHECK(defaultNetworkAddress.scope() == AddressScope::Nowhere);
+    }
+
+    TEST_CASE("flags")
+    {
+        CHECK(addr.flags() == 10);
+        CHECK(defaultNetworkAddress.flags() == 0);
     }
 
     TEST_CASE("operator ==")
     {
-        CHECK(NetworkAddress{} == NetworkAddress{});
+        CHECK(defaultNetworkAddress == defaultNetworkAddress);
         CHECK(addr == addr);
     }
 
     TEST_CASE("operator !=")
     {
-        CHECK(NetworkAddress{} != addr);
+        CHECK(defaultNetworkAddress != addr);
     }
 
     TEST_CASE("operator <")
     {
-        CHECK(NetworkAddress{} < addr);
-        CHECK(addr >= NetworkAddress{});
+        CHECK(defaultNetworkAddress < addr);
+        CHECK(addr >= defaultNetworkAddress);
     }
 
-    TEST_CASE("operator <")
+    TEST_CASE("operator >=")
     {
-        CHECK(NetworkAddress{} < addr);
-        CHECK(addr >= NetworkAddress{});
+        CHECK(addr >= defaultNetworkAddress);
     }
 }
 
