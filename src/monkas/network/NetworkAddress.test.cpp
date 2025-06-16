@@ -27,6 +27,48 @@ TEST_SUITE("[network::NetworkAddress]")
         CHECK(!defaultNetworkAddress);
     }
 
+    TEST_CASE("operator bool")
+    {
+        CHECK(addr);
+        CHECK(!defaultNetworkAddress);
+    }
+
+    TEST_CASE("addressFamily")
+    {
+        CHECK(addr.addressFamily() == fam);
+        CHECK(defaultNetworkAddress.addressFamily() == AddressFamily::Unspecified);
+    }
+
+    TEST_CASE("ip")
+    {
+        CHECK(addr.ip() == Address::fromBytes(some_ipv4));
+        CHECK(defaultNetworkAddress.ip() == Address{});
+    }
+
+    TEST_CASE("broadcast")
+    {
+        CHECK(addr.broadcast() == Address::fromBytes(some_bcast));
+        CHECK(defaultNetworkAddress.broadcast() == Address{});
+    }
+
+    TEST_CASE("prefixLength")
+    {
+        CHECK(addr.prefixLength() == 24);
+        CHECK(defaultNetworkAddress.prefixLength() == 0);
+    }
+
+    TEST_CASE("scope")
+    {
+        CHECK(addr.scope() == scope);
+        CHECK(defaultNetworkAddress.scope() == AddressScope::Nowhere);
+    }
+
+    TEST_CASE("flags")
+    {
+        CHECK(addr.flags() == 10);
+        CHECK(defaultNetworkAddress.flags() == 0);
+    }
+
     TEST_CASE("operator ==")
     {
         CHECK(defaultNetworkAddress == defaultNetworkAddress);
