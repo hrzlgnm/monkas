@@ -1,4 +1,3 @@
-#include <cassert>
 #include <cstring>
 #include <ip/Address.hpp>
 
@@ -12,9 +11,13 @@ namespace
 {
 constexpr auto v4MappedPrefix = std::array<uint8_t, 12>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff};
 
-auto v4MappedCompare(const Address &v6, const Address &v4) -> int
+auto v4MappedCompare(const Address &v6, const Address &v4) noexcept(false) -> int
 {
-    assert(v6.isMappedV4() && v4.addressFamily() == AddressFamily::IPv4);
+
+    if (!v6.isMappedV4() || v4.addressFamily() != AddressFamily::IPv4)
+    {
+        throw std::invalid_argument("Invalid address families for v4MappedCompare");
+    }
     return std::memcmp(v6.data() + v4MappedPrefix.size(), v4.data(), v4.addressLength());
 }
 } // namespace
