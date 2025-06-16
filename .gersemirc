@@ -2,7 +2,7 @@
 
 disable_formatting: false
 indent: 4
-line_length: 80
+line_length: 120
 list_expansion: favour-expansion
 unsafe: false
 warn_about_unknown_commands: true
