@@ -11,7 +11,7 @@
 
 namespace monkas
 {
-/** NOT thread-safe; only call from main thread */
+/** NOT thread-safe; only call from one thread */
 template <typename... Args> class Watchable
 {
   public:
