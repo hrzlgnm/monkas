@@ -28,6 +28,11 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
   public:
     Address();
     [[nodiscard]] auto toString() const -> std::string;
+
+    /**
+     * Creates an Address from a string representation.
+     * If the string is not a valid address, it returns an unspecified Address.
+     */
     static auto fromString(const std::string &address) -> Address;
     /**
      * @returns true if address is not unspecified

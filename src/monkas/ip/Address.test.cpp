@@ -44,6 +44,7 @@ TEST_SUITE("[ip::Address]")
     {
         CHECK(Address::fromString("127.0.0.1").toString() == "127.0.0.1");
         CHECK(Address::fromString("::1").toString() == "::1");
+        CHECK(Address::fromString("ungabunga").toString() == "Unspecified");
     }
 
     TEST_CASE("addressFamily")

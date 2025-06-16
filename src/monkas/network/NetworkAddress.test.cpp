@@ -21,12 +21,6 @@ TEST_SUITE("[network::NetworkAddress]")
     const NetworkAddress addr{fam, Address::fromBytes(some_ipv4), Address::fromBytes(some_bcast), 24, scope, 10};
     const NetworkAddress defaultNetworkAddress{};
 
-    TEST_CASE("constructor")
-    {
-        CHECK(addr);
-        CHECK(!defaultNetworkAddress);
-    }
-
     TEST_CASE("operator bool")
     {
         CHECK(addr);
