@@ -34,7 +34,7 @@ auto toRtnlGroupFlag(rtnetlink_groups group) -> unsigned
     return (1U << (group - 1U));
 }
 
-inline constexpr size_t socketBufferSize = static_cast<const size_t>(32U * 1024U);
+inline constexpr size_t SOCKET_BUFFER_SIZE = static_cast<const size_t>(32U * 1024U);
 
 auto ensureMnlSocket(bool nonBlocking) -> mnl_socket *
 {
@@ -67,7 +67,7 @@ auto operator&(RuntimeOptions o, RuntimeFlag f) -> RuntimeOptions
 RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
     : m_mnlSocket{ensureMnlSocket(options.test(NonBlocking)), mnl_socket_close}
     , m_portid{mnl_socket_get_portid(m_mnlSocket.get())}
-    , m_buffer(socketBufferSize)
+    , m_buffer(SOCKET_BUFFER_SIZE)
     , m_runtimeOptions(options)
 {
     m_stats.startTime = std::chrono::steady_clock::now();
@@ -499,7 +499,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     if (attributes[IFA_BROADCAST] != nullptr)
     {
         auto addrLen = mnl_attr_get_payload_len(attributes[IFA_BROADCAST]);
-        if (addrLen == ip::ipV4AddrLen)
+        if (addrLen == ip::IPV4_ADDR_LEN)
         {
             const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFA_BROADCAST]));
             broadcast = ip::Address::fromBytes(addr, addrLen);
@@ -508,7 +508,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     if (attributes[IFA_LOCAL] != nullptr)
     {
         auto addrLen = mnl_attr_get_payload_len(attributes[IFA_LOCAL]);
-        if (addrLen == ip::ipV4AddrLen)
+        if (addrLen == ip::IPV4_ADDR_LEN)
         {
             const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFA_LOCAL]));
             address = ip::Address::fromBytes(addr, addrLen);
@@ -518,7 +518,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     {
         const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFA_ADDRESS]));
         auto addrLen = mnl_attr_get_payload_len(attributes[IFA_ADDRESS]);
-        if (addrLen == ip::ipV6AddrLen)
+        if (addrLen == ip::IPV6_ADDR_LEN)
         {
             address = ip::Address::fromBytes(addr, addrLen);
         }

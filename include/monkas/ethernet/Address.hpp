@@ -7,9 +7,9 @@
 
 namespace monkas::ethernet
 {
-constexpr auto addrLen = 6;
+constexpr auto ADDR_LEN = 6;
 
-class Address : public std::array<uint8_t, addrLen>
+class Address : public std::array<uint8_t, ADDR_LEN>
 {
   public:
     Address() = default;
@@ -20,7 +20,7 @@ class Address : public std::array<uint8_t, addrLen>
     explicit operator bool() const;
 
     static auto fromBytes(const uint8_t *bytes, size_type len) -> Address;
-    static auto fromBytes(const std::array<uint8_t, addrLen> &bytes) -> Address;
+    static auto fromBytes(const std::array<uint8_t, ADDR_LEN> &bytes) -> Address;
 };
 
 auto operator<<(std::ostream &o, const Address &a) -> std::ostream &;

@@ -9,8 +9,8 @@ using namespace monkas::ethernet;
 TEST_SUITE("[ethernet::Address]")
 {
 
-    std::array<uint8_t, addrLen> null{0, 0, 0, 0, 0, 0};
-    std::array<uint8_t, addrLen> some{1, 2, 3, 4, 5, 0x1A};
+    std::array<uint8_t, ADDR_LEN> null{0, 0, 0, 0, 0, 0};
+    std::array<uint8_t, ADDR_LEN> some{1, 2, 3, 4, 5, 0x1A};
     TEST_CASE("toString")
     {
         CHECK(Address::fromBytes(null).toString() == "00:00:00:00:00:00");
