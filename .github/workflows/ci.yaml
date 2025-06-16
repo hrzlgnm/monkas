@@ -26,6 +26,16 @@ jobs:
         if: always()
         uses: crate-ci/typos@b1ae8d918b6e85bd611117d3d9a3be4f903ee5e4 # v1.33.1
 
+      - name: Gersemi --check --diff
+        shell: bash
+        run: |
+          apt update --yes
+          apt install --yes --no-install-recommends python3-pip python3-venv
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install gersemi
+          gersemi --check --diff **/CMakeLists.txt
+
   Build-And-Test:
     name: ${{ matrix.toolchain.name }}
     strategy:

@@ -14,15 +14,12 @@ set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/watchable/Watchable.hpp
 )
 
-target_compile_definitions(${TARGET_NAME}
-    PUBLIC SPDLOG_FMT_EXTERNAL)
+target_compile_definitions(${TARGET_NAME} PUBLIC SPDLOG_FMT_EXTERNAL)
 
-target_include_directories(${TARGET_NAME}
-    PUBLIC
-        ${PUBLIC_INCLUDE_DIR}
-)
+target_include_directories(${TARGET_NAME} PUBLIC ${PUBLIC_INCLUDE_DIR})
 
-target_sources(${TARGET_NAME}
+target_sources(
+    ${TARGET_NAME}
     PRIVATE
         ${PUBLIC_HEADERS}
         ethernet/Address.cpp
@@ -33,25 +30,27 @@ target_sources(${TARGET_NAME}
         network/NetworkAddress.cpp
 )
 
-target_link_libraries(${TARGET_NAME}
+target_link_libraries(
+    ${TARGET_NAME}
     PRIVATE
         PkgConfig::gflags
         PkgConfig::libmnl
         spdlog::spdlog
 )
 
-if (BUILD_TESTS)
-  target_sources(${TARGET_NAME}
-    PRIVATE
-      ethernet/Address.test.cpp
-      ip/Address.test.cpp
-      network/NetworkAddress.test.cpp
-      watchable/Watchable.test.cpp
-  )
-  target_link_libraries(${TARGET_NAME}
-    PRIVATE
-       doctest::doctest
-       doctest::lib
-  )
+if(BUILD_TESTS)
+    target_sources(
+        ${TARGET_NAME}
+        PRIVATE
+            ethernet/Address.test.cpp
+            ip/Address.test.cpp
+            network/NetworkAddress.test.cpp
+            watchable/Watchable.test.cpp
+    )
+    target_link_libraries(
+        ${TARGET_NAME}
+        PRIVATE
+            doctest::doctest
+            doctest::lib
+    )
 endif()
-
