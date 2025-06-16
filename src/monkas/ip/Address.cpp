@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstring>
 #include <ip/Address.hpp>
 
@@ -10,6 +11,12 @@ namespace monkas::ip
 namespace
 {
 constexpr auto v4MappedPrefix = std::array<uint8_t, 12>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff};
+
+auto v4MappedCompare(const Address &v6, const Address &v4) -> int
+{
+    assert(v6.isMappedV4() && v4.addressFamily() == AddressFamily::IPv4);
+    return std::memcmp(v6.data() + v4MappedPrefix.size(), v4.data(), v4.addressLength());
+}
 } // namespace
 
 auto asLinuxAf(AddressFamily f) -> int
@@ -138,18 +145,30 @@ auto operator<(const Address &lhs, const Address &rhs) -> bool
         const auto addressLength = lhs.addressLength();
         return std::memcmp(lhs.data(), rhs.data(), addressLength) < 0;
     }
-    auto v4Cmp = [](const Address &v6, const Address &v4) {
-        return std::memcmp(v6.data() + v4MappedPrefix.size(), v4.data(), v4.addressLength()) < 0;
-    };
     if (lhs.isMappedV4() && rhs.addressFamily() == AddressFamily::IPv4)
     {
-        return v4Cmp(lhs, rhs);
+        return v4MappedCompare(lhs, rhs) < 0;
     }
     if (rhs.isMappedV4() && lhs.addressFamily() == AddressFamily::IPv4)
     {
-        return v4Cmp(rhs, lhs);
+        return v4MappedCompare(rhs, lhs) < 0;
     }
     return lhs.addressLength() < rhs.addressLength();
+}
+
+auto operator<=(const Address &lhs, const Address &rhs) -> bool
+{
+    return !(rhs < lhs);
+}
+
+auto operator>=(const Address &lhs, const Address &rhs) -> bool
+{
+    return !(lhs < rhs);
+}
+
+auto operator>(const Address &lhs, const Address &rhs) -> bool
+{
+    return !(lhs <= rhs);
 }
 
 auto operator==(const Address &lhs, const Address &rhs) -> bool
@@ -159,18 +178,14 @@ auto operator==(const Address &lhs, const Address &rhs) -> bool
         const auto addressLength = lhs.addressLength();
         return std::memcmp(lhs.data(), rhs.data(), addressLength) == 0;
     }
-    auto v4Eq = [](const Address &v6, const Address &v4) {
-        return std::memcmp(v6.data() + v4MappedPrefix.size(), v4.data(), v4.addressLength()) == 0;
-    };
     if (lhs.isMappedV4() && rhs.addressFamily() == AddressFamily::IPv4)
     {
-        return v4Eq(lhs, rhs);
+        return v4MappedCompare(lhs, rhs) == 0;
     }
     if (rhs.isMappedV4() && lhs.addressFamily() == AddressFamily::IPv4)
     {
-        return v4Eq(rhs, lhs);
+        return v4MappedCompare(rhs, lhs) == 0;
     }
-
     return false;
 }
 
