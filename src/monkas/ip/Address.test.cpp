@@ -9,21 +9,35 @@ using namespace monkas::ip;
 
 TEST_SUITE("[ip::Address]")
 {
-    std::array<uint8_t, 4> any4;
-    std::array<uint8_t, 16> any6;
+    std::array<uint8_t, 4> bytesAny4{};
+    std::array<uint8_t, 4> bytesV4CountUp{1, 2, 3, 4};
+    std::array<uint8_t, 4> bytesV4CountDown{4, 3, 2, 1};
+    std::array<uint8_t, 4> bytesLocalhost4{127, 0, 0, 1};
+    std::array<uint8_t, 4> bytesLocalhost4OtherSubnet{127, 0, 1, 1};
 
-    std::array<uint8_t, 4> localhost4{127, 0, 0, 1};
-    std::array<uint8_t, 4> localhost4OtherSubnet{127, 0, 1, 1};
-    std::array<uint8_t, 16> localhost6{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-    std::array<uint8_t, 16> localhostV4mapped{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 127, 0, 0, 1};
-    std::array<uint8_t, 4> v4countUp{1, 2, 3, 4};
-    std::array<uint8_t, 4> v4countDown{4, 3, 2, 1};
-    std::array<uint8_t, 16> v6countUp{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    std::array<uint8_t, 16> v6countDown{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+    std::array<uint8_t, 16> bytesAny6{};
+    std::array<uint8_t, 16> bytesLocalHost6{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+    std::array<uint8_t, 16> bytesV6CountUp{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    std::array<uint8_t, 16> bytesV6CountDown{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+
+    std::array<uint8_t, 16> bytesLocalhostV4mapped{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 127, 0, 0, 1};
+
+    const auto any4 = Address::fromBytes(bytesAny4);
+    const auto any6 = Address::fromBytes(bytesAny6);
+    const auto localhost4 = Address::fromBytes(bytesLocalhost4);
+    const auto localhost4OtherSubnet = Address::fromBytes(bytesLocalhost4OtherSubnet);
+    const auto localHost6 = Address::fromBytes(bytesLocalHost6);
+    const auto localhostV4mapped = Address::fromBytes(bytesLocalhostV4mapped);
+    const auto countUpV4 = Address::fromBytes(bytesV4CountUp);
+    const auto countDownV4 = Address::fromBytes(bytesV4CountDown);
+    const auto countUpV6 = Address::fromBytes(bytesV6CountUp);
+    const auto countDownV6 = Address::fromBytes(bytesV6CountDown);
+    const auto unspec = Address{};
+
     TEST_CASE("toString")
     {
-        CHECK(Address::fromBytes(localhost4).toString() == "127.0.0.1");
-        CHECK(Address::fromBytes(localhost6).toString() == "::1");
+        CHECK(localhost4.toString() == "127.0.0.1");
+        CHECK(localHost6.toString() == "::1");
     }
 
     TEST_CASE("fromString")
@@ -34,64 +48,64 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("operator ==")
     {
-        CHECK(Address::fromBytes(localhost4) == Address::fromBytes(localhost4));
-        CHECK(Address::fromBytes(localhost4) == Address::fromBytes(localhostV4mapped));
-        CHECK(Address::fromBytes(localhostV4mapped) == Address::fromBytes(localhost4));
-        CHECK(Address::fromBytes(localhostV4mapped) == Address::fromBytes(localhostV4mapped));
+        CHECK(localhost4 == localhost4);
+        CHECK(localhost4 == localhostV4mapped);
+        CHECK(localhostV4mapped == localhost4);
+        CHECK(localhostV4mapped == localhostV4mapped);
     }
 
     TEST_CASE("operator !=")
     {
-        CHECK(Address{} != Address::fromBytes(any4));
-        CHECK(Address{} != Address::fromBytes(any6));
-        CHECK(Address::fromBytes(any6) != Address::fromBytes(any4));
-        CHECK(Address::fromBytes(localhost4) != Address::fromBytes(localhost6));
-        CHECK(Address{} != Address::fromBytes(localhost4));
-        CHECK(Address{} != Address::fromBytes(localhost6));
-        CHECK_FALSE(Address::fromBytes(localhostV4mapped) != Address::fromBytes(localhost4));
+        CHECK(unspec != any4);
+        CHECK(unspec != any6);
+        CHECK(any6 != any4);
+        CHECK(localhost4 != localHost6);
+        CHECK(unspec != localhost4);
+        CHECK(unspec != localHost6);
+        CHECK_FALSE(localhostV4mapped != localhost4);
     }
 
     TEST_CASE("operator <")
     {
-        CHECK(Address{} < Address::fromBytes(localhost4));
-        CHECK(v4countUp < v4countDown);
-        CHECK(v6countUp < v6countDown);
-        CHECK(Address::fromBytes(localhost4) < Address::fromBytes(localhost4OtherSubnet));
-        CHECK(Address::fromBytes(localhost4) < Address::fromBytes(localhost6));
+        CHECK(unspec < localhost4);
+        CHECK(countUpV4 < countDownV4);
+        CHECK(countUpV6 < countDownV6);
+        CHECK(localhost4 < localhost4OtherSubnet);
+        CHECK(localhost4 < localHost6);
     }
 
     TEST_CASE("operator <=")
     {
-        CHECK(Address{} <= Address{});
-        CHECK(Address{} <= Address::fromBytes(localhost4));
-        CHECK(v6countUp <= v6countDown);
-        CHECK(v4countUp <= v4countDown);
-        CHECK(Address::fromBytes(localhost4) <= Address::fromBytes(localhost4));
-        CHECK(Address::fromBytes(localhost4) <= Address::fromBytes(localhostV4mapped));
-        CHECK(Address::fromBytes(localhostV4mapped) <= Address::fromBytes(localhost4));
-        CHECK(Address::fromBytes(localhost4) <= Address::fromBytes(localhost6));
+        CHECK(unspec <= unspec);
+        CHECK(unspec <= localhost4);
+        CHECK(countUpV6 <= countDownV6);
+        CHECK(countUpV4 <= countDownV4);
+        CHECK(localhost4 <= localhost4);
+        CHECK(localhost4 <= localhostV4mapped);
+        CHECK(localhostV4mapped <= localhost4);
+        CHECK(localhost4 <= localHost6);
     }
 
     TEST_CASE("operator >")
     {
-        CHECK(v4countDown > v4countUp);
-        CHECK(v6countDown > v6countUp);
-        CHECK(Address::fromBytes(localhost6) > Address{});
-        CHECK(Address::fromBytes(localhost4) > Address{});
-        CHECK(Address::fromBytes(localhost4OtherSubnet) > Address::fromBytes(localhost4));
-        CHECK(Address::fromBytes(localhost6) > Address::fromBytes(localhost4));
+        CHECK(countDownV4 > countUpV4);
+        CHECK(countDownV6 > countUpV6);
+        CHECK(localHost6 > unspec);
+        CHECK(localhost4 > unspec);
+        CHECK(localhost4OtherSubnet > localhost4);
+        CHECK(localHost6 > localhost4);
     }
 
     TEST_CASE("operator >=")
     {
-        CHECK(v4countDown >= v4countUp);
-        CHECK(v6countDown >= v6countUp);
-        CHECK(Address::fromBytes(localhost6) >= Address{});
-        CHECK(Address::fromBytes(localhost4) >= Address{});
-        CHECK(Address::fromBytes(localhost4OtherSubnet) >= Address::fromBytes(localhost4));
-        CHECK(Address::fromBytes(localhost6) >= Address::fromBytes(localhost4));
-        CHECK(Address::fromBytes(localhostV4mapped) >= Address::fromBytes(localhost4));
-        CHECK(Address::fromBytes(localhost4) >= Address::fromBytes(localhostV4mapped));
+        CHECK(countDownV4 >= countUpV4);
+        CHECK(countDownV6 >= countUpV6);
+        CHECK(localHost6 >= unspec);
+        CHECK(localhost4 >= unspec);
+        CHECK(localhost4OtherSubnet >= localhost4);
+        CHECK(localHost6 >= localhost4);
+        CHECK(localhostV4mapped >= localhost4);
+        CHECK(localhost4 >= localhostV4mapped);
     }
 }
 
