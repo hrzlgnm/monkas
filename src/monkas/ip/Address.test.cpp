@@ -107,6 +107,20 @@ TEST_SUITE("[ip::Address]")
         CHECK(localhostV4mapped >= localhost4);
         CHECK(localhost4 >= localhostV4mapped);
     }
+
+    TEST_CASE("operator bool")
+    {
+        CHECK(!unspec);
+        CHECK(localhost4);
+        CHECK(localHost6);
+        CHECK(localhostV4mapped);
+        CHECK(any4);
+        CHECK(any6);
+        CHECK(countUpV4);
+        CHECK(countDownV4);
+        CHECK(countUpV6);
+        CHECK(countDownV6);
+    }
 }
 
 // NOLINTEND(*)
