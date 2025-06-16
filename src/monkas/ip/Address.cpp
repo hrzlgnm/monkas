@@ -43,6 +43,11 @@ auto operator<<(std::ostream &o, AddressFamily a) -> std::ostream &
     return o;
 }
 
+Address::Address()
+    : std::array<uint8_t, ipV6AddrLen>{}
+{
+}
+
 Address::operator bool() const
 {
     return m_addressFamily != AddressFamily::Unspecified;
@@ -131,7 +136,7 @@ auto operator<(const Address &lhs, const Address &rhs) -> bool
     if (lhs.addressFamily() == rhs.addressFamily())
     {
         const auto addressLength = lhs.addressLength();
-        return std::memcmp(lhs.data(), rhs.data(), lhs.addressLength()) < 0;
+        return std::memcmp(lhs.data(), rhs.data(), addressLength) < 0;
     }
     auto v4Cmp = [](const Address &v6, const Address &v4) {
         return std::memcmp(v6.data() + v4MappedPrefix.size(), v4.data(), v4.addressLength()) < 0;
