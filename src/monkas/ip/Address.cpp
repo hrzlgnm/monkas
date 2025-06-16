@@ -13,7 +13,6 @@ constexpr auto v4MappedPrefix = std::array<uint8_t, 12>{0, 0, 0, 0, 0, 0, 0, 0, 
 
 auto v4MappedCompare(const Address &v6, const Address &v4) noexcept -> int
 {
-
     return std::memcmp(v6.data() + v4MappedPrefix.size(), v4.data(), v4.addressLength());
 }
 } // namespace
