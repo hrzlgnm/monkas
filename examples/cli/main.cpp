@@ -1,8 +1,8 @@
 #include <gflags/gflags.h>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <monitor/RtnlNetworkMonitor.hpp>
+#include <network/Address.hpp>
 #include <network/Interface.hpp>
-#include <network/NetworkAddress.hpp>
 #include <spdlog/spdlog.h>
 
 DEFINE_bool(nerdstats, false, "Enable stats for nerds");
@@ -75,7 +75,7 @@ auto main(int argc, char *argv[]) -> int
         },
         InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addNetworkAddressWatcher(
-        [](const network::Interface &iface, const NetworkAddresses &addresses) {
+        [](const network::Interface &iface, const Addresses &addresses) {
             spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", "));
         },
         InitialSnapshotMode::InitialSnapshot);

@@ -4,15 +4,16 @@
 #include <chrono>
 #include <ethernet/Address.hpp>
 #include <fmt/ostream.h>
-#include <network/NetworkAddress.hpp>
+#include <network/Address.hpp>
 #include <set>
 #include <string>
 #include <type_traits>
 
-namespace monkas
+namespace monkas::monitor
 {
+
 using Duration = std::chrono::duration<int64_t, std::milli>;
-using NetworkAddresses = std::set<network::NetworkAddress>;
+using Addresses = std::set<network::Address>;
 
 // TODO: stats for nerds per interface descriptor
 class NetworkInterfaceStatusTracker
@@ -67,10 +68,10 @@ class NetworkInterfaceStatusTracker
     void setGatewayAddress(const ip::Address &gateway);
     void clearGatewayAddress(GatewayClearReason r);
 
-    [[nodiscard]] auto networkAddresses() const -> const NetworkAddresses &;
+    [[nodiscard]] auto networkAddresses() const -> const Addresses &;
 
-    void addNetworkAddress(const network::NetworkAddress &address);
-    void removeNetworkAddress(const network::NetworkAddress &address);
+    void addNetworkAddress(const network::Address &address);
+    void removeNetworkAddress(const network::Address &address);
 
     [[nodiscard]] auto age() const -> Duration;
 
@@ -90,7 +91,7 @@ class NetworkInterfaceStatusTracker
     ethernet::Address m_macAddress;
     ethernet::Address m_broadcastAddress;
     OperationalState m_operState{OperationalState::Unknown};
-    NetworkAddresses m_networkAddresses;
+    Addresses m_networkAddresses;
     ip::Address m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
     DirtyFlags m_dirtyFlags;
@@ -105,24 +106,24 @@ using DirtyFlags = NetworkInterfaceStatusTracker::DirtyFlags;
 auto operator<<(std::ostream &o, DirtyFlag d) -> std::ostream &;
 auto operator<<(std::ostream &o, const DirtyFlags &d) -> std::ostream &;
 
-} // namespace monkas
+} // namespace monkas::monitor
 
-template <> struct fmt::formatter<monkas::NetworkInterfaceStatusTracker> : fmt::ostream_formatter
+template <> struct fmt::formatter<monkas::monitor::NetworkInterfaceStatusTracker> : fmt::ostream_formatter
 {
 };
 
-template <> struct fmt::formatter<monkas::OperationalState> : fmt::ostream_formatter
+template <> struct fmt::formatter<monkas::monitor::OperationalState> : fmt::ostream_formatter
 {
 };
 
-template <> struct fmt::formatter<monkas::GatewayClearReason> : fmt::ostream_formatter
+template <> struct fmt::formatter<monkas::monitor::GatewayClearReason> : fmt::ostream_formatter
 {
 };
 
-template <> struct fmt::formatter<monkas::DirtyFlag> : fmt::ostream_formatter
+template <> struct fmt::formatter<monkas::monitor::DirtyFlag> : fmt::ostream_formatter
 {
 };
 
-template <> struct fmt::formatter<monkas::DirtyFlags> : fmt::ostream_formatter
+template <> struct fmt::formatter<monkas::monitor::DirtyFlags> : fmt::ostream_formatter
 {
 };

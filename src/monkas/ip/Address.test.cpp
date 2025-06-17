@@ -49,9 +49,9 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("addressFamily")
     {
-        CHECK(localhost4.addressFamily() == AddressFamily::IPv4);
-        CHECK(localHost6.addressFamily() == AddressFamily::IPv6);
-        CHECK(localhostV4mapped.addressFamily() == AddressFamily::IPv6);
+        CHECK(localhost4.family() == Family::IPv4);
+        CHECK(localHost6.family() == Family::IPv6);
+        CHECK(localhostV4mapped.family() == Family::IPv6);
     }
 
     TEST_CASE("addressLength")
@@ -66,6 +66,28 @@ TEST_SUITE("[ip::Address]")
         CHECK(!localhost4.isMappedV4());
         CHECK(localhostV4mapped.isMappedV4());
         CHECK(!localHost6.isMappedV4());
+    }
+
+    TEST_CASE("isV4")
+    {
+        CHECK(localhost4.isV4());
+        CHECK(!localHost6.isV4());
+        CHECK(!localhostV4mapped.isV4());
+    }
+
+    TEST_CASE("isV6")
+    {
+        CHECK(!localhost4.isV6());
+        CHECK(localHost6.isV6());
+        CHECK(localhostV4mapped.isV6());
+    }
+
+    TEST_CASE("isUnspecified")
+    {
+        CHECK(unspec.isUnspecified());
+        CHECK(!localhost4.isUnspecified());
+        CHECK(!localHost6.isUnspecified());
+        CHECK(!localhostV4mapped.isUnspecified());
     }
 
     TEST_CASE("operator bool")

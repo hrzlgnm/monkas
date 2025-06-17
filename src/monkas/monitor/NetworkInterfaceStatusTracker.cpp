@@ -1,7 +1,7 @@
 #include <fmt/format.h>
 #include <ip/Address.hpp>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
-#include <network/NetworkAddress.hpp>
+#include <network/Address.hpp>
 
 #include <algorithm>
 #include <ostream>
@@ -10,8 +10,9 @@
 #include <string_view>
 #include <sys/types.h>
 
-namespace monkas
+namespace monkas::monitor
 {
+
 namespace
 {
 template <typename T>
@@ -140,12 +141,12 @@ void NetworkInterfaceStatusTracker::clearGatewayAddress(GatewayClearReason r)
     }
 }
 
-auto NetworkInterfaceStatusTracker::networkAddresses() const -> const NetworkAddresses &
+auto NetworkInterfaceStatusTracker::networkAddresses() const -> const Addresses &
 {
     return m_networkAddresses;
 }
 
-void NetworkInterfaceStatusTracker::addNetworkAddress(const network::NetworkAddress &address)
+void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address &address)
 {
     if (address.ip())
     {
@@ -165,7 +166,7 @@ void NetworkInterfaceStatusTracker::addNetworkAddress(const network::NetworkAddr
     }
 }
 
-void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::NetworkAddress &address)
+void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::Address &address)
 {
     auto res = m_networkAddresses.erase(address);
     if (res > 0)
@@ -173,9 +174,7 @@ void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::NetworkA
         logTrace(address, this, "address removed");
         touch(DirtyFlag::NetworkAddressesChanged);
         if (std::count_if(std::begin(m_networkAddresses), std::end(m_networkAddresses),
-                          [](const network::NetworkAddress &a) -> bool {
-                              return a.addressFamily() == ip::AddressFamily::IPv4;
-                          }) == 0)
+                          [](const network::Address &a) -> bool { return a.family() == ip::Family::IPv4; }) == 0)
         {
             clearGatewayAddress(GatewayClearReason::AllIPv4AddressesRemoved);
         }
@@ -370,4 +369,4 @@ auto operator<<(std::ostream &o, const NetworkInterfaceStatusTracker &s) -> std:
     o << " dirty " << dirtyFlagsToString(s.dirtyFlags());
     return o;
 }
-} // namespace monkas
+} // namespace monkas::monitor

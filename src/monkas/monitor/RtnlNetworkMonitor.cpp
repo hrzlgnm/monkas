@@ -9,6 +9,8 @@
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 
+namespace monkas::monitor
+{
 namespace
 {
 template <typename T> [[noreturn]] void pfatal(const T &msg)
@@ -25,10 +27,6 @@ template <typename T> void pwarn(const T &msg)
     spdlog::warn("{} failed: {}[{}]", msg, strerror(errno), errno);
 }
 
-} // namespace
-
-namespace
-{
 auto toRtnlGroupFlag(rtnetlink_groups group) -> unsigned
 {
     return (1U << (group - 1U));
@@ -47,8 +45,6 @@ auto ensureMnlSocket(bool nonBlocking) -> mnl_socket *
 }
 } // namespace
 
-namespace monkas
-{
 namespace
 {
 auto operator|=(RuntimeOptions &o, RuntimeFlag f) -> RuntimeOptions &
@@ -523,8 +519,8 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
             address = ip::Address::fromBytes(addr, addrLen);
         }
     }
-    const network::NetworkAddress networkAddress{
-        address.addressFamily(), address, broadcast, ifa->ifa_prefixlen, network::fromRtnlScope(ifa->ifa_scope), flags};
+    const network::Address networkAddress{address, broadcast, ifa->ifa_prefixlen,
+                                          network::fromRtnlScope(ifa->ifa_scope), flags};
     if (nlhdr->nlmsg_type == RTM_NEWADDR)
     {
         cacheEntry.addNetworkAddress(networkAddress);
@@ -689,4 +685,4 @@ auto RtnlNetworkMonitor::getInterfacesSnapshot() const -> Interfaces
     return intfs;
 }
 
-} // namespace monkas
+} // namespace monkas::monitor

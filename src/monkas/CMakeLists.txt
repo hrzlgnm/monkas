@@ -8,7 +8,7 @@ set(PUBLIC_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/${TARGET_NAME})
 set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/ethernet/Address.hpp
     ${PUBLIC_INCLUDE_DIR}/ip/Address.hpp
-    ${PUBLIC_INCLUDE_DIR}/network/NetworkAddress.hpp
+    ${PUBLIC_INCLUDE_DIR}/network/Address.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/NetworkInterfaceStatusTracker.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/RtnlNetworkMonitor.hpp
     ${PUBLIC_INCLUDE_DIR}/watchable/Watchable.hpp
@@ -29,7 +29,7 @@ target_sources(
         monitor/NetworkInterfaceStatusTracker.cpp
         monitor/RtnlNetworkMonitor.cpp
         network/Interface.cpp
-        network/NetworkAddress.cpp
+        network/Address.cpp
 )
 
 target_link_libraries(
@@ -46,7 +46,7 @@ if(BUILD_TESTS)
         PRIVATE
             ethernet/Address.test.cpp
             ip/Address.test.cpp
-            network/NetworkAddress.test.cpp
+            network/Address.test.cpp
             watchable/Watchable.test.cpp
     )
     target_link_libraries(

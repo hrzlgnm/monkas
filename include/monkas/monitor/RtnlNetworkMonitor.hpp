@@ -22,7 +22,7 @@ struct ifaddrmsg;
 struct rtmsg;
 struct nlattr;
 
-namespace monkas
+namespace monkas::monitor
 {
 
 // neat ADL trick to treat uint8_t as numbers
@@ -64,7 +64,7 @@ using OperationalStateNotifier = Watchable<const network::Interface, Operational
 using OperationalStateWatcher = OperationalStateNotifier::Watcher;
 using OperationalStateWatcherToken = OperationalStateNotifier::Token;
 
-using NetworkAddressNotifier = Watchable<const network::Interface, const NetworkAddresses>;
+using NetworkAddressNotifier = Watchable<const network::Interface, const Addresses>;
 using NetworkAddressWatcher = NetworkAddressNotifier::Watcher;
 using NetworkAddressWatcherToken = NetworkAddressNotifier::Token;
 
@@ -222,4 +222,4 @@ class RtnlNetworkMonitor
     BroadcastAddressNotifier m_broadcastAddressNotifier;
     EnumerationDoneNotifier m_enumerationDoneNotifier;
 };
-} // namespace monkas
+} // namespace monkas::monitor
