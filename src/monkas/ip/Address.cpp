@@ -131,65 +131,45 @@ auto Address::fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes) -> Addr
     return fromBytes(bytes.data(), bytes.size());
 }
 
-auto operator<<(std::ostream &o, const Address &a) -> std::ostream &
+auto Address::operator<=>(const Address &rhs) const noexcept -> std::strong_ordering
 {
-    return o << a.toString();
+    if (m_addressFamily == rhs.m_addressFamily)
+    {
+        const auto len = addressLength();
+        return std::memcmp(data(), rhs.data(), len) <=> 0;
+    }
+    if (isMappedV4() && rhs.m_addressFamily == AddressFamily::IPv4)
+    {
+        return v4MappedCompare(*this, rhs) <=> 0;
+    }
+    if (rhs.isMappedV4() && m_addressFamily == AddressFamily::IPv4)
+    {
+        return v4MappedCompare(rhs, *this) <=> 0;
+    }
+    return m_addressFamily <=> rhs.m_addressFamily;
 }
 
-auto operator<(const Address &lhs, const Address &rhs) noexcept -> bool
+auto Address::operator==(const Address &rhs) const noexcept -> bool
 {
-    if (lhs.addressFamily() == rhs.addressFamily())
+    if (m_addressFamily == rhs.m_addressFamily)
     {
-        const auto addressLength = lhs.addressLength();
-        return std::memcmp(lhs.data(), rhs.data(), addressLength) < 0;
+        const auto len = addressLength();
+        return std::memcmp(data(), rhs.data(), len) == 0;
     }
-    if (lhs.isMappedV4() && rhs.addressFamily() == AddressFamily::IPv4)
+    if (isMappedV4() && rhs.addressFamily() == AddressFamily::IPv4)
     {
-        return v4MappedCompare(lhs, rhs) < 0;
+        return v4MappedCompare(*this, rhs) == 0;
     }
-    if (rhs.isMappedV4() && lhs.addressFamily() == AddressFamily::IPv4)
+    if (rhs.isMappedV4() && addressFamily() == AddressFamily::IPv4)
     {
-        return v4MappedCompare(rhs, lhs) < 0;
-    }
-    return lhs.addressLength() < rhs.addressLength();
-}
-
-auto operator<=(const Address &lhs, const Address &rhs) noexcept -> bool
-{
-    return !(rhs < lhs);
-}
-
-auto operator>=(const Address &lhs, const Address &rhs) noexcept -> bool
-{
-    return !(lhs < rhs);
-}
-
-auto operator>(const Address &lhs, const Address &rhs) noexcept -> bool
-{
-    return !(lhs <= rhs);
-}
-
-auto operator==(const Address &lhs, const Address &rhs) noexcept -> bool
-{
-    if (lhs.addressFamily() == rhs.addressFamily())
-    {
-        const auto addressLength = lhs.addressLength();
-        return std::memcmp(lhs.data(), rhs.data(), addressLength) == 0;
-    }
-    if (lhs.isMappedV4() && rhs.addressFamily() == AddressFamily::IPv4)
-    {
-        return v4MappedCompare(lhs, rhs) == 0;
-    }
-    if (rhs.isMappedV4() && lhs.addressFamily() == AddressFamily::IPv4)
-    {
-        return v4MappedCompare(rhs, lhs) == 0;
+        return v4MappedCompare(rhs, *this) == 0;
     }
     return false;
 }
 
-auto operator!=(const Address &lhs, const Address &rhs) noexcept -> bool
+auto operator<<(std::ostream &o, const Address &a) -> std::ostream &
 {
-    return !(lhs == rhs);
+    return o << a.toString();
 }
 
 } // namespace monkas::ip

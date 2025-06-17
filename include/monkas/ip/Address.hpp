@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <compare>
 #include <cstdint>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -47,18 +48,14 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     static auto fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes) -> Address;
     static auto fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes) -> Address;
 
+    auto operator<=>(const Address &rhs) const noexcept -> std::strong_ordering;
+    auto operator==(const Address &rhs) const noexcept -> bool;
+
   private:
     AddressFamily m_addressFamily{AddressFamily::Unspecified};
 };
 
 auto operator<<(std::ostream &o, const Address &a) -> std::ostream &;
-
-auto operator<(const Address &lhs, const Address &rhs) noexcept -> bool;
-auto operator<=(const Address &lhs, const Address &rhs) noexcept -> bool;
-auto operator>(const Address &lhs, const Address &rhs) noexcept -> bool;
-auto operator>=(const Address &lhs, const Address &rhs) noexcept -> bool;
-auto operator==(const Address &lhs, const Address &rhs) noexcept -> bool;
-auto operator!=(const Address &lhs, const Address &rhs) noexcept -> bool;
 
 } // namespace monkas::ip
 
