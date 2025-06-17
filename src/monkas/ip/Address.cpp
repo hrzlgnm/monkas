@@ -136,6 +136,10 @@ auto Address::operator<=>(const Address &rhs) const noexcept -> std::strong_orde
     if (m_addressFamily == rhs.m_addressFamily)
     {
         const auto len = addressLength();
+        if (len == 0)
+        {
+            return std::strong_ordering::equal;
+        }
         return std::memcmp(data(), rhs.data(), len) <=> 0;
     }
     if (isMappedV4() && rhs.m_addressFamily == AddressFamily::IPv4)
