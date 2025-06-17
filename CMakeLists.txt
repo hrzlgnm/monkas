@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.18)
 project(
     monkas
+    DESCRIPTION "Monkas - A C++ library for monitoring network interfaces"
+    HOMEPAGE_URL "https:://github.com/hrzlgnm/monkaS"
     LANGUAGES
         CXX
         C
@@ -9,7 +11,7 @@ project(
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
