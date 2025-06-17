@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.23)
 project(
     monkas
     DESCRIPTION "Monkas - A C++ library for monitoring network interfaces"
@@ -11,7 +11,6 @@ project(
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
 
-cmake_minimum_required(VERSION 3.23)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
