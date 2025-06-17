@@ -151,20 +151,7 @@ auto Address::operator<=>(const Address &rhs) const noexcept -> std::strong_orde
 
 auto Address::operator==(const Address &rhs) const noexcept -> bool
 {
-    if (m_addressFamily == rhs.m_addressFamily)
-    {
-        const auto len = addressLength();
-        return std::memcmp(data(), rhs.data(), len) == 0;
-    }
-    if (isMappedV4() && rhs.addressFamily() == AddressFamily::IPv4)
-    {
-        return v4MappedCompare(*this, rhs) == 0;
-    }
-    if (rhs.isMappedV4() && addressFamily() == AddressFamily::IPv4)
-    {
-        return v4MappedCompare(rhs, *this) == 0;
-    }
-    return false;
+    return (*this <=> rhs) == std::strong_ordering::equal;
 }
 
 auto operator<<(std::ostream &o, const Address &a) -> std::ostream &
