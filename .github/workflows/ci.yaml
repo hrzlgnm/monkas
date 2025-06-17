@@ -34,7 +34,7 @@ jobs:
           python3 -m venv venv
           source venv/bin/activate
           pip install gersemi
-          gersemi --check --diff **/CMakeLists.txt
+          gersemi --check --diff .
 
   Build-And-Test:
     name: ${{ matrix.toolchain.name }}
