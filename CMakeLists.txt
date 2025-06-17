@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(
     monkas
     DESCRIPTION "Monkas - A C++ library for monitoring network interfaces"
-    HOMEPAGE_URL "https:://github.com/hrzlgnm/monkaS"
+    HOMEPAGE_URL "https://github.com/hrzlgnm/monkaS"
     LANGUAGES
         CXX
         C
