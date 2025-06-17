@@ -48,8 +48,10 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     static auto fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes) -> Address;
     static auto fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes) -> Address;
 
-    auto operator<=>(const Address &rhs) const noexcept -> std::strong_ordering;
-    auto operator==(const Address &rhs) const noexcept -> bool;
+    // overload the one from std::array<uint8_t, IPV6_ADDR_LEN>
+    [[nodiscard]] auto operator<=>(const Address &rhs) const noexcept -> std::strong_ordering;
+    // overload the one from std::array<uint8_t, IPV6_ADDR_LEN>
+    [[nodiscard]] auto operator==(const Address &rhs) const noexcept -> bool;
 
   private:
     AddressFamily m_addressFamily{AddressFamily::Unspecified};
