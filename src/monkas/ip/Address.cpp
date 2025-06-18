@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <ostream>
-#include <span>
-#include <type_traits>
 
 namespace monkas::ip
 {
@@ -125,7 +123,7 @@ auto Address::isLoopback() const -> bool
     if (isV6())
     {
         // Loopback address in IPv6 is ::1
-        return std::count(cbegin(), cend(), 0) == IPV6_ADDR_LEN - 1 && data()[IPV6_ADDR_LEN - 1] == 1;
+        return std::all_of(cbegin(), cend() - 1, [](uint8_t b) { return b == 0; }) && data()[IPV6_ADDR_LEN - 1] == 1;
     }
     return false;
 }
