@@ -74,9 +74,6 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     [[nodiscard]] auto scope() const -> uint8_t; // TODO: use Scope enum
     [[nodiscard]] auto flags() const -> uint32_t;
 
-    [[nodiscard]] auto toBytes() const -> std::array<uint8_t, IPV6_ADDR_LEN>;
-    [[nodiscard]] auto toBytesV4() const -> std::array<uint8_t, IPV4_ADDR_LEN>;
-    [[nodiscard]] auto toBytesV6() const -> std::array<uint8_t, IPV6_ADDR_LEN>;
     [[nodiscard]] auto family() const -> Family;
     [[nodiscard]] auto addressLength() const -> size_type;
 
