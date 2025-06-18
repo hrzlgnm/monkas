@@ -1,5 +1,6 @@
 #pragma once
 
+#include <compare>
 #include <fmt/ostream.h>
 #include <ip/Address.hpp>
 
