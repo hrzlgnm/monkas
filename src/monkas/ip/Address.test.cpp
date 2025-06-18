@@ -68,6 +68,12 @@ TEST_SUITE("[ip::Address]")
         CHECK(!localHost6.isMappedV4());
     }
 
+    TEST_CASE("toMappedV4")
+    {
+        CHECK(localhost4.toMappedV4() == localhost4);
+        CHECK(!localHost6.toMappedV4());
+    }
+
     TEST_CASE("isV4")
     {
         CHECK(localhost4.isV4());
@@ -90,6 +96,83 @@ TEST_SUITE("[ip::Address]")
         CHECK(!localhostV4mapped.isUnspecified());
     }
 
+    TEST_CASE("isMulticast")
+    {
+        CHECK(Address::fromString("224.0.0.1").isMulticast());
+        CHECK(Address::fromString("239.255.255.253").isMulticast());
+        CHECK(Address::fromString("ff02::1").isMulticast());
+        CHECK(Address::fromString("ff02::2").isMulticast());
+        CHECK(Address::fromString("ff02::3").isMulticast());
+        CHECK(Address::fromString("ff02::4").isMulticast());
+        CHECK(!unspec.isMulticast());
+        CHECK(!localhost4.isMulticast());
+        CHECK(!localHost6.isMulticast());
+        CHECK(!localhostV4mapped.isMulticast());
+        CHECK(!any4.isMulticast());
+        CHECK(!any6.isMulticast());
+    }
+
+    TEST_CASE("isLinkLocal")
+    {
+        CHECK(Address::fromString("169.254.0.1").isLinkLocal());
+        CHECK(Address::fromString("169.254.255.255").isLinkLocal());
+        CHECK(Address::fromString("fe80::1").isLinkLocal());
+        CHECK(Address::fromString("fe80::2").isLinkLocal());
+        CHECK(Address::fromString("fe80::3").isLinkLocal());
+        CHECK(!unspec.isLinkLocal());
+        CHECK(!localhost4.isLinkLocal());
+        CHECK(!localHost6.isLinkLocal());
+        CHECK(!localhostV4mapped.isLinkLocal());
+        CHECK(!any4.isLinkLocal());
+        CHECK(!any6.isLinkLocal());
+    }
+
+    TEST_CASE("isUniqueLocal")
+    {
+        CHECK(Address::fromString("fc00::1").isUniqueLocal());
+        CHECK(Address::fromString("fd00::1").isUniqueLocal());
+        CHECK(Address::fromString("fc00:1234:5678:9abc:def0:1234:5678:9abc").isUniqueLocal());
+        CHECK(!unspec.isUniqueLocal());
+        CHECK(!localhost4.isUniqueLocal());
+        CHECK(!localHost6.isUniqueLocal());
+        CHECK(!localhostV4mapped.isUniqueLocal());
+        CHECK(!any4.isUniqueLocal());
+        CHECK(!any6.isUniqueLocal());
+    }
+
+    TEST_CASE("isBroadcast")
+    {
+        CHECK(Address::fromString("255.255.255.255").isBroadcast());
+        CHECK(!Address::fromString("192.168.1.1").isBroadcast());
+        CHECK(!localhost4.isBroadcast());
+        CHECK(!localHost6.isBroadcast());
+        CHECK(!any4.isBroadcast());
+        CHECK(!any6.isBroadcast());
+    }
+
+    TEST_CASE("isLoopback")
+    {
+        CHECK(localhost4.isLoopback());
+        CHECK(localHost6.isLoopback());
+        CHECK(localhostV4mapped.isLoopback());
+        CHECK(Address::fromString("127.253.253.123").isLoopback());
+    }
+
+    TEST_CASE("isPrivate")
+    {
+        CHECK(Address::fromString("192.168.0.1").isPrivate());
+        CHECK(Address::fromString("172.16.0.1").isPrivate());
+        CHECK(Address::fromString("10.0.0.1").isPrivate());
+        CHECK(Address::fromString("10.0.0.1").toMappedV4().value().isPrivate());
+    }
+
+    TEST_CASE("isDocumentation")
+    {
+        CHECK(Address::fromString("192.0.2.1").isDocumentation());
+        CHECK(Address::fromString("198.51.100.1").isDocumentation());
+        CHECK(Address::fromString("203.0.113.1").isDocumentation());
+        CHECK(Address::fromString("203.0.113.1").toMappedV4().value().isDocumentation());
+    }
     TEST_CASE("operator bool")
     {
         CHECK(!unspec);

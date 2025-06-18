@@ -19,71 +19,99 @@ TEST_SUITE("[network::Address]")
 
     const auto someV4 = ip::Address::fromBytes(some_ipv4);
     const auto someBcastV4 = ip::Address::fromBytes(some_bcast);
-    const Address addr{someV4, someBcastV4, 24, scope, 10};
+    const auto someV6 = ip::Address::fromString("2001:db8::1");
+    const Address addrV6{someV6, someBcastV4, 24, scope, 5};
+    const Address addrV4{someV4, someBcastV4, 24, scope, 10};
     const Address defaultAddress{};
 
     TEST_CASE("operator bool")
     {
-        CHECK(addr);
+        CHECK(addrV4);
         CHECK(!defaultAddress);
     }
 
     TEST_CASE("family")
     {
-        CHECK(addr.family() == someV4.family());
+        CHECK(addrV4.family() == someV4.family());
         CHECK(defaultAddress.family() == network::Family::Unspecified);
+    }
+
+    TEST_CASE("isV4")
+    {
+        CHECK(addrV4.isV4());
+        CHECK(!defaultAddress.isV4());
+    }
+
+    TEST_CASE("isV6")
+    {
+        CHECK(!addrV4.isV6());
+        CHECK(addrV6.isV6());
+        CHECK(!defaultAddress.isV6());
+    }
+
+    TEST_CASE("isUnspecified")
+    {
+        CHECK(defaultAddress.isUnspecified());
+        CHECK(!addrV6.isUnspecified());
+        CHECK(!addrV4.isUnspecified());
+    }
+
+    TEST_CASE("isMappedV4")
+    {
+        CHECK(!addrV4.isMappedV4());
+        CHECK(!defaultAddress.isMappedV4());
     }
 
     TEST_CASE("ip")
     {
-        CHECK(addr.ip() == someV4);
+        CHECK(addrV4.ip() == someV4);
         CHECK(defaultAddress.ip() == ip::Address{});
     }
 
     TEST_CASE("broadcast")
     {
-        CHECK(addr.broadcast() == someBcastV4);
+        CHECK(addrV4.broadcast() == someBcastV4);
         CHECK(defaultAddress.broadcast() == ip::Address{});
     }
 
     TEST_CASE("prefixLength")
     {
-        CHECK(addr.prefixLength() == 24);
+        CHECK(addrV4.prefixLength() == 24);
         CHECK(defaultAddress.prefixLength() == 0);
     }
 
     TEST_CASE("scope")
     {
-        CHECK(addr.scope() == scope);
+        CHECK(addrV4.scope() == scope);
         CHECK(defaultAddress.scope() == network::Scope::Nowhere);
     }
 
     TEST_CASE("flags")
     {
-        CHECK(addr.flags() == 10);
+        CHECK(addrV4.flags() == 10);
         CHECK(defaultAddress.flags() == 0);
     }
 
     TEST_CASE("operator ==")
     {
         CHECK(defaultAddress == defaultAddress);
-        CHECK(addr == addr);
+        CHECK(addrV4 == addrV4);
     }
 
     TEST_CASE("operator !=")
     {
-        CHECK(defaultAddress != addr);
+        CHECK(defaultAddress != addrV4);
     }
 
     TEST_CASE("operator <")
     {
-        CHECK(defaultAddress < addr);
-        CHECK(addr >= defaultAddress);
+        CHECK(defaultAddress < addrV4);
+        CHECK(addrV4 >= defaultAddress);
     }
 
     TEST_CASE("operator >=")
     {
-        CHECK(addr >= defaultAddress);
+        CHECK(addrV4 >= defaultAddress);
     }
 }
 

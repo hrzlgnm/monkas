@@ -25,6 +25,26 @@ auto Address::family() const -> Family
     return m_ip.family();
 }
 
+auto Address::isV4() const -> bool
+{
+    return m_ip.isV4();
+}
+
+auto Address::isV6() const -> bool
+{
+    return m_ip.isV6();
+}
+
+auto Address::isUnspecified() const -> bool
+{
+    return m_ip.isUnspecified();
+}
+
+auto Address::isMappedV4() const -> bool
+{
+    return m_ip.isMappedV4();
+}
+
 auto Address::ip() const -> const ip::Address &
 {
     return m_ip;
