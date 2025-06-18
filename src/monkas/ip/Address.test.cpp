@@ -143,6 +143,11 @@ TEST_SUITE("[ip::Address]")
     TEST_CASE("isBroadcast")
     {
         CHECK(Address::fromString("255.255.255.255").isBroadcast());
+        CHECK(!Address::fromString("192.168.1.1").isBroadcast());
+        CHECK(!localhost4.isBroadcast());
+        CHECK(!localHost6.isBroadcast());
+        CHECK(!any4.isBroadcast());
+        CHECK(!any6.isBroadcast());
     }
 
     TEST_CASE("isLoopback")
