@@ -233,12 +233,12 @@ auto Address::toMappedV4() const -> std::optional<Address>
     {
         Address v6;
         // Set the IPv4-mapped IPv6 prefix: ::ffff:0:0/96
-        constexpr size_t PREFIX_FF_INDEX_1 = 10;
-        constexpr size_t PREFIX_FF_INDEX_2 = 11;
-        constexpr uint8_t PREFIX_FF_VALUE = 0xff;
-        v6[PREFIX_FF_INDEX_1] = PREFIX_FF_VALUE;
-        v6[PREFIX_FF_INDEX_2] = PREFIX_FF_VALUE;
-        std::copy_n(data(), IPV4_ADDR_LEN, v6.begin() + V4_MAPPED_PREFIX.size());
+        std::copy(V4_MAPPED_PREFIX.begin(),
+                  V4_MAPPED_PREFIX.end(),
+                  v6.begin());
+        std::copy_n(data(),
+                    IPV4_ADDR_LEN,
+                    v6.begin() + V4_MAPPED_PREFIX.size());
         v6.m_family = Family::IPv6;
         return v6;
     }
