@@ -34,6 +34,32 @@ TEST_SUITE("[network::Address]")
         CHECK(defaultAddress.family() == network::Family::Unspecified);
     }
 
+    TEST_CASE("isV4")
+    {
+        CHECK(addr.isV4());
+        CHECK(!addr.isV6());
+        CHECK(defaultAddress.isUnspecified());
+    }
+
+    TEST_CASE("isV6")
+    {
+        CHECK(!addr.isV6());
+        CHECK(addr.isV4());
+        CHECK(defaultAddress.isUnspecified());
+    }
+
+    TEST_CASE("isUnspecified")
+    {
+        CHECK(defaultAddress.isUnspecified());
+        CHECK(!addr.isUnspecified());
+    }
+
+    TEST_CASE("isMappedV4")
+    {
+        CHECK(!addr.isMappedV4());
+        CHECK(!defaultAddress.isMappedV4());
+    }
+
     TEST_CASE("ip")
     {
         CHECK(addr.ip() == someV4);
