@@ -11,15 +11,15 @@
 namespace monkas::ip
 {
 
-enum class AddressFamily : uint8_t
+enum class Family : uint8_t
 {
     Unspecified,
     IPv4,
     IPv6,
 };
 
-auto asLinuxAf(AddressFamily f) -> int;
-auto operator<<(std::ostream &o, AddressFamily a) -> std::ostream &;
+auto asLinuxAf(Family f) -> int;
+auto operator<<(std::ostream &o, Family a) -> std::ostream &;
 
 constexpr auto IPV6_ADDR_LEN = 16;
 constexpr auto IPV4_ADDR_LEN = 4;
@@ -40,9 +40,24 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
      */
     explicit operator bool() const;
 
-    [[nodiscard]] auto addressFamily() const -> AddressFamily;
-    [[nodiscard]] auto addressLength() const -> size_type;
+    [[nodiscard]] auto isV4() const -> bool
+    {
+        return m_family == Family::IPv4;
+    }
+
+    [[nodiscard]] auto isV6() const -> bool
+    {
+        return m_family == Family::IPv6;
+    }
+
+    [[nodiscard]] auto isUnspecified() const -> bool
+    {
+        return m_family == Family::Unspecified;
+    }
+
     [[nodiscard]] auto isMappedV4() const -> bool;
+    [[nodiscard]] auto family() const -> Family;
+    [[nodiscard]] auto addressLength() const -> size_type;
 
     static auto fromBytes(const uint8_t *bytes, size_type len) -> Address;
     static auto fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN> &bytes) -> Address;
@@ -54,7 +69,7 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     [[nodiscard]] auto operator==(const Address &rhs) const noexcept -> bool;
 
   private:
-    AddressFamily m_addressFamily{AddressFamily::Unspecified};
+    Family m_family{Family::Unspecified};
 };
 
 auto operator<<(std::ostream &o, const Address &a) -> std::ostream &;

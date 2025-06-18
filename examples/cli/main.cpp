@@ -1,8 +1,8 @@
 #include <gflags/gflags.h>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <monitor/RtnlNetworkMonitor.hpp>
+#include <network/Address.hpp>
 #include <network/Interface.hpp>
-#include <network/NetworkAddress.hpp>
 #include <spdlog/spdlog.h>
 
 DEFINE_bool(nerdstats, false, "Enable stats for nerds");
@@ -17,6 +17,10 @@ DEFINE_validator(family,
 
 DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, critical, off");
 
+// NOLINTNEXTLINE(google-build-*)
+using namespace monkas::monitor;
+// NOLINTNEXTLINE(google-build-*)
+using namespace monkas::network;
 // NOLINTNEXTLINE(google-build-*)
 using namespace monkas;
 
@@ -44,25 +48,25 @@ auto main(int argc, char *argv[]) -> int
     {
         spdlog::set_level(level);
     }
-    constexpr auto flushEvery = std::chrono::seconds(5);
-    spdlog::flush_every(flushEvery);
+    constexpr auto FLUSH_EVERY = std::chrono::seconds(5);
+    spdlog::flush_every(FLUSH_EVERY);
     RuntimeOptions options;
     if (FLAGS_nerdstats)
     {
-        options.set(monkas::RuntimeFlag::StatsForNerds);
+        options.set(RuntimeFlag::StatsForNerds);
     }
     if (FLAGS_dumppackets)
     {
-        options.set(monkas::RuntimeFlag::DumpPackets);
+        options.set(RuntimeFlag::DumpPackets);
     }
     if (FLAGS_family == 4)
     {
-        options.set(monkas::RuntimeFlag::PreferredFamilyV4);
+        options.set(RuntimeFlag::PreferredFamilyV4);
     }
-    constexpr auto v6 = 6U;
-    if (FLAGS_family == v6)
+    constexpr auto V6 = 6U;
+    if (FLAGS_family == V6)
     {
-        options.set(monkas::RuntimeFlag::PreferredFamilyV6);
+        options.set(RuntimeFlag::PreferredFamilyV6);
     }
     RtnlNetworkMonitor mon(options);
     mon.enumerateInterfaces();
@@ -70,27 +74,27 @@ auto main(int argc, char *argv[]) -> int
         [](const Interfaces &interfaces) { spdlog::info("Interfaces changed to: {}", fmt::join(interfaces, ", ")); },
         InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addOperationalStateWatcher(
-        [](const network::Interface &iface, OperationalState state) {
+        [](const Interface &iface, OperationalState state) {
             spdlog::info("{} changed operational state to {}", iface, state);
         },
         InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addNetworkAddressWatcher(
-        [](const network::Interface &iface, const NetworkAddresses &addresses) {
+        [](const Interface &iface, const Addresses &addresses) {
             spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", "));
         },
         InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addGatewayAddressWatcher(
-        [](const network::Interface &iface, const ip::Address &gateway) {
+        [](const Interface &iface, const ip::Address &gateway) {
             spdlog::info("{} changed gateway address to {}", iface, gateway);
         },
         InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addMacAddressWatcher(
-        [](const network::Interface &iface, const ethernet::Address &mac) {
+        [](const Interface &iface, const ethernet::Address &mac) {
             spdlog::info("{} changed MAC address to {}", iface, mac);
         },
         InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addBroadcastAddressWatcher(
-        [](const network::Interface &iface, const ethernet::Address &broadcast) {
+        [](const Interface &iface, const ethernet::Address &broadcast) {
             spdlog::info("{} changed broadcast address to {}", iface, broadcast);
         },
         InitialSnapshotMode::InitialSnapshot);

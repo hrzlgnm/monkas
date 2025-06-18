@@ -17,31 +17,31 @@ auto v4MappedCompare(const Address &v6, const Address &v4) noexcept -> int
 }
 } // namespace
 
-auto asLinuxAf(AddressFamily f) -> int
+auto asLinuxAf(Family f) -> int
 {
     switch (f)
     {
-    case AddressFamily::IPv4:
+    case Family::IPv4:
         return AF_INET;
-    case AddressFamily::IPv6:
+    case Family::IPv6:
         return AF_INET6;
-    case AddressFamily::Unspecified:
+    case Family::Unspecified:
     default:
         return AF_UNSPEC;
     }
 }
 
-auto operator<<(std::ostream &o, AddressFamily a) -> std::ostream &
+auto operator<<(std::ostream &o, Family a) -> std::ostream &
 {
     switch (a)
     {
-    case AddressFamily::IPv4:
+    case Family::IPv4:
         o << "inet";
         break;
-    case AddressFamily::IPv6:
+    case Family::IPv6:
         o << "inet6";
         break;
-    case AddressFamily::Unspecified:
+    case Family::Unspecified:
         o << "unspec";
         break;
     }
@@ -55,21 +55,21 @@ Address::Address()
 
 Address::operator bool() const
 {
-    return m_addressFamily != AddressFamily::Unspecified;
+    return m_family != Family::Unspecified;
 }
 
-auto Address::addressFamily() const -> AddressFamily
+auto Address::family() const -> Family
 {
-    return m_addressFamily;
+    return m_family;
 }
 
 auto Address::addressLength() const -> Address::size_type
 {
-    if (m_addressFamily == AddressFamily::IPv4)
+    if (m_family == Family::IPv4)
     {
         return IPV4_ADDR_LEN;
     }
-    if (m_addressFamily == AddressFamily::IPv6)
+    if (m_family == Family::IPv6)
     {
         return IPV6_ADDR_LEN;
     }
@@ -78,7 +78,7 @@ auto Address::addressLength() const -> Address::size_type
 
 auto Address::isMappedV4() const -> bool
 {
-    if (m_addressFamily == AddressFamily::IPv6)
+    if (m_family == Family::IPv6)
     {
         return std::memcmp(data(), V4_MAPPED_PREFIX.data(), V4_MAPPED_PREFIX.size()) == 0;
     }
@@ -88,7 +88,7 @@ auto Address::isMappedV4() const -> bool
 auto Address::toString() const -> std::string
 {
     std::array<char, INET6_ADDRSTRLEN> out{};
-    if (inet_ntop(asLinuxAf(m_addressFamily), data(), out.data(), out.size()) != nullptr)
+    if (inet_ntop(asLinuxAf(m_family), data(), out.data(), out.size()) != nullptr)
     {
         return {out.data()};
     }
@@ -115,7 +115,7 @@ auto Address::fromBytes(const uint8_t *bytes, size_type len) -> Address
     {
         Address a;
         std::copy_n(bytes, len, a.begin());
-        a.m_addressFamily = (len == IPV6_ADDR_LEN ? AddressFamily::IPv6 : AddressFamily::IPv4);
+        a.m_family = (len == IPV6_ADDR_LEN ? Family::IPv6 : Family::IPv4);
         return a;
     }
     return {};
@@ -133,7 +133,7 @@ auto Address::fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN> &bytes) -> Addr
 
 auto Address::operator<=>(const Address &rhs) const noexcept -> std::strong_ordering
 {
-    if (m_addressFamily == rhs.m_addressFamily)
+    if (m_family == rhs.m_family)
     {
         const auto len = addressLength();
         if (len == 0)
@@ -142,15 +142,18 @@ auto Address::operator<=>(const Address &rhs) const noexcept -> std::strong_orde
         }
         return std::memcmp(data(), rhs.data(), len) <=> 0;
     }
-    if (isMappedV4() && rhs.m_addressFamily == AddressFamily::IPv4)
+
+    if (isMappedV4() && rhs.isV4())
     {
         return v4MappedCompare(*this, rhs) <=> 0;
     }
-    if (rhs.isMappedV4() && m_addressFamily == AddressFamily::IPv4)
+
+    if (rhs.isMappedV4() && isV4())
     {
-        return v4MappedCompare(rhs, *this) <=> 0;
+        return 0 <=> v4MappedCompare(rhs, *this);
     }
-    return m_addressFamily <=> rhs.m_addressFamily;
+
+    return m_family <=> rhs.m_family;
 }
 
 auto Address::operator==(const Address &rhs) const noexcept -> bool
@@ -160,7 +163,16 @@ auto Address::operator==(const Address &rhs) const noexcept -> bool
 
 auto operator<<(std::ostream &o, const Address &a) -> std::ostream &
 {
-    return o << a.toString();
+    std::array<char, INET6_ADDRSTRLEN> buf{};
+    if (inet_ntop(asLinuxAf(a.family()), a.data(), buf.data(), buf.size()) != nullptr)
+    {
+        o << buf.data();
+    }
+    else
+    {
+        o << "Unspecified";
+    }
+    return o;
 }
 
 } // namespace monkas::ip
