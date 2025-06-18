@@ -38,7 +38,7 @@ class Address
     [[nodiscard]] auto flags() const -> uint32_t;
 
     [[nodiscard]] auto operator<=>(const Address &other) const -> std::strong_ordering;
-    [[nodiscard]] constexpr auto operator==(const Address &other) const -> bool = default;
+    [[nodiscard]] auto operator==(const Address &other) const -> bool = default;
 
   private:
     ip::Address m_ip;
