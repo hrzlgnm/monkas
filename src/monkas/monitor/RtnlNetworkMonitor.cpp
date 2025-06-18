@@ -45,21 +45,6 @@ auto ensureMnlSocket(bool nonBlocking) -> mnl_socket *
 }
 } // namespace
 
-namespace
-{
-auto operator|=(RuntimeOptions &o, RuntimeFlag f) -> RuntimeOptions &
-{
-    o |= static_cast<RuntimeOptions>(f);
-    return o;
-}
-
-auto operator&(RuntimeOptions o, RuntimeFlag f) -> RuntimeOptions
-{
-    return o & static_cast<RuntimeOptions>(f);
-}
-
-} // namespace
-
 RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
     : m_mnlSocket{ensureMnlSocket(options.test(NonBlocking)), mnl_socket_close}
     , m_portid{mnl_socket_get_portid(m_mnlSocket.get())}
