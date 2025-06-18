@@ -7,6 +7,7 @@
 #include <fmt/ostream.h>
 #include <iosfwd>
 #include <optional>
+#include <span>
 #include <string>
 
 namespace monkas::ip
@@ -89,6 +90,8 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     [[nodiscard]] auto operator==(const Address &rhs) const noexcept -> bool;
 
   private:
+    [[nodiscard]] auto ipv4() const -> uint32_t;
+
     Family m_family{Family::Unspecified};
 };
 

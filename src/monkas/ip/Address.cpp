@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <ostream>
+#include <span>
+#include <type_traits>
 
 namespace monkas::ip
 {
@@ -60,17 +62,19 @@ Address::operator bool() const
 
 auto Address::isMulticast() const -> bool
 {
-    if (m_family == Family::IPv4)
+    if (isV4() || isMappedV4())
     {
+        // IPv4 multicast addresses are in the range
         constexpr auto V4_MCAST_START = 224;
         constexpr auto V4_MCAST_END = 239;
-        return data()[0] >= V4_MCAST_START && data()[0] <= V4_MCAST_END;
+        const auto upperOctetd = operator[](isMappedV4() ? V4_MAPPED_PREFIX.size()
+                                                         : 0); // Ensure the address is not empty
+        return upperOctetd >= V4_MCAST_START && upperOctetd <= V4_MCAST_END;
     }
-    if (m_family == Family::IPv6)
+    if (isV6())
     {
         constexpr auto V6_MCAST_PREFIX = 0xffU;
-        constexpr auto V6_MCAST_MASK = 0xf0U;
-        return data()[0] == V6_MCAST_PREFIX && (data()[1] & V6_MCAST_MASK) == 0x00;
+        return data()[0] == V6_MCAST_PREFIX;
     }
     return false;
 }
@@ -150,20 +154,9 @@ auto Address::isPrivate() const -> bool
     constexpr uint32_t IPV4_192_168_0_0 = 0xC0A80000;     // 192.168.0.0
     constexpr uint32_t IPV4_192_168_255_255 = 0xC0A8FFFF; // 192.168.255.255
 
-    if (isV4())
+    if (isV4() || isMappedV4())
     {
-        uint32_t addr = ntohl(*std::bit_cast<uint32_t *>(data()));
-        if ((addr >= IPV4_10_0_0_0 && addr <= IPV4_10_255_255_255) ||   // 10.0.0.0/8
-            (addr >= IPV4_172_16_0_0 && addr <= IPV4_172_31_255_255) || // 172.16.0.0/12
-            (addr >= IPV4_192_168_0_0 && addr <= IPV4_192_168_255_255)) // 192.168.0.0/16
-        {
-            return true;
-        }
-    }
-    if (isMappedV4())
-    {
-        // Check the mapped IPv4 address
-        uint32_t addr = ntohl(*std::bit_cast<uint32_t *>(data() + V4_MAPPED_PREFIX.size()));
+        const auto addr = ipv4();
         if ((addr >= IPV4_10_0_0_0 && addr <= IPV4_10_255_255_255) ||   // 10.0.0.0/8
             (addr >= IPV4_172_16_0_0 && addr <= IPV4_172_31_255_255) || // 172.16.0.0/12
             (addr >= IPV4_192_168_0_0 && addr <= IPV4_192_168_255_255)) // 192.168.0.0/16
@@ -194,9 +187,8 @@ auto Address::isDocumentation() const -> bool
     static constexpr uint32_t DOC3_BASE = (203U << 24U) | (0U << 16U) | (113U << 8U);  // 203.0.113.0
     static constexpr uint32_t DOC_MASK = 0xFFFFFF00;                                   // /24 mask
 
+    const auto addr = ipv4();
     // Assume Address has a method to get IPv4 as uint32_t in host byte order
-    uint32_t addr = ntohl(*std::bit_cast<uint32_t *>(isMappedV4() ? data() + V4_MAPPED_PREFIX.size() : data()));
-
     return ((addr & DOC_MASK) == DOC1_BASE) || ((addr & DOC_MASK) == DOC2_BASE) || ((addr & DOC_MASK) == DOC3_BASE);
 }
 
@@ -233,12 +225,8 @@ auto Address::toMappedV4() const -> std::optional<Address>
     {
         Address v6;
         // Set the IPv4-mapped IPv6 prefix: ::ffff:0:0/96
-        std::copy(V4_MAPPED_PREFIX.begin(),
-                  V4_MAPPED_PREFIX.end(),
-                  v6.begin());
-        std::copy_n(data(),
-                    IPV4_ADDR_LEN,
-                    v6.begin() + V4_MAPPED_PREFIX.size());
+        std::copy(V4_MAPPED_PREFIX.begin(), V4_MAPPED_PREFIX.end(), v6.begin());
+        std::copy_n(data(), IPV4_ADDR_LEN, v6.begin() + V4_MAPPED_PREFIX.size());
         v6.m_family = Family::IPv6;
         return v6;
     }
@@ -314,6 +302,22 @@ auto Address::operator<=>(const Address &rhs) const noexcept -> std::strong_orde
     }
 
     return m_family <=> rhs.m_family;
+}
+
+auto Address::ipv4() const -> uint32_t
+{
+    if (!isV4() && !isMappedV4())
+    {
+        return 0;
+    }
+    auto offset = 0U;
+
+    if (isMappedV4())
+    {
+        offset = V4_MAPPED_PREFIX.size();
+    }
+    return (static_cast<uint32_t>(data()[0 + offset]) << 24U) | (static_cast<uint32_t>(data()[1 + offset]) << 16U) |
+           (static_cast<uint32_t>(data()[2 + offset]) << 8U) | static_cast<uint32_t>(data()[3 + offset]);
 }
 
 auto Address::operator==(const Address &rhs) const noexcept -> bool
