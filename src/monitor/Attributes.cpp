@@ -25,7 +25,7 @@ void Attributes::parseAttribute(const nlattr *a, uint64_t &counter)
     if (mnl_attr_type_valid(a, m_attributes.size() - 1) > 0)
     {
         counter++;
-        m_attributes.at(type) = a;
+        m_attributes[type] = a;
     }
     else
     {
