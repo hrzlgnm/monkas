@@ -409,11 +409,11 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
 {
     m_stats.linkMessagesSeen++;
     // TODO ifi_type filters
-    if (ifi->ifi_type != ARPHRD_ETHER)
-    {
-        m_stats.msgsDiscarded++;
-        return;
-    }
+    // if (ifi->ifi_type != ARPHRD_ETHER)
+    // {
+    //     m_stats.msgsDiscarded++;
+    //     return;
+    // }
     if (nlhdr->nlmsg_type == RTM_DELLINK)
     {
         spdlog::trace("removing interface with index {}", ifi->ifi_index);
