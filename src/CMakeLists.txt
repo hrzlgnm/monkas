@@ -1,8 +1,7 @@
 set(TARGET_NAME monkas)
 
-add_library(${TARGET_NAME} OBJECT)
+add_library(${TARGET_NAME} STATIC)
 add_library(${TARGET_NAME}::lib ALIAS ${TARGET_NAME})
-
 set(PUBLIC_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/${TARGET_NAME})
 
 set(PUBLIC_HEADERS
