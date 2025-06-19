@@ -47,72 +47,29 @@ auto Attributes::has(uint16_t type) const -> bool
 
 auto Attributes::getString(uint16_t type) const -> std::optional<std::string>
 {
-    if (!has(type))
-    {
-        return std::nullopt;
-    }
-    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_STRING) < 0)
-    {
-        spdlog::warn("attribute of type {} is invalid", type);
-        return std::nullopt;
-    }
-    return mnl_attr_get_str(m_attributes[type]);
-}
-
-auto Attributes::getU64(uint16_t type) const -> std::optional<uint64_t>
-{
-    if (!has(type))
-    {
-        return std::nullopt;
-    }
-    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U64) < 0)
-    {
-        spdlog::warn("attribute of type {} is invalid", type);
-        return std::nullopt;
-    }
-    return mnl_attr_get_u64(m_attributes[type]);
+    return getTypedAttribute<const char *>(type, MNL_TYPE_STRING, mnl_attr_get_str).transform([](const char *str) {
+        return std::string(str);
+    });
 }
 
 auto Attributes::getU8(uint16_t type) const -> std::optional<uint8_t>
 {
-    if (!has(type))
-    {
-        return std::nullopt;
-    }
-    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U8) < 0)
-    {
-        spdlog::warn("attribute of type {} is invalid", type);
-        return std::nullopt;
-    }
-    return mnl_attr_get_u8(m_attributes[type]);
+    return getTypedAttribute<uint8_t>(type, MNL_TYPE_U8, mnl_attr_get_u8);
 }
 
 auto Attributes::getU16(uint16_t type) const -> std::optional<uint16_t>
 {
-    if (!has(type))
-    {
-        return std::nullopt;
-    }
-    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U16) < 0)
-    {
-        spdlog::warn("attribute of type {} is invalid", type);
-        return std::nullopt;
-    }
-    return mnl_attr_get_u16(m_attributes[type]);
+    return getTypedAttribute<uint16_t>(type, MNL_TYPE_U16, mnl_attr_get_u16);
 }
 
 auto Attributes::getU32(uint16_t type) const -> std::optional<uint32_t>
 {
-    if (!has(type))
-    {
-        return std::nullopt;
-    }
-    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U32) < 0)
-    {
-        spdlog::warn("attribute of type {} is invalid", type);
-        return std::nullopt;
-    }
-    return mnl_attr_get_u32(m_attributes[type]);
+    return getTypedAttribute<uint32_t>(type, MNL_TYPE_U32, mnl_attr_get_u32);
+}
+
+auto Attributes::getU64(uint16_t type) const -> std::optional<uint64_t>
+{
+    return getTypedAttribute<uint64_t>(type, MNL_TYPE_U64, mnl_attr_get_u64);
 }
 
 } // namespace monkas::monitor
