@@ -15,6 +15,7 @@ target_link_libraries(
         doctest::doctest
         doctest::lib
         monkas::lib
+        monkas::tests
 )
 add_executable(doctest::exe ALIAS doctest_exe)
 set_property(
