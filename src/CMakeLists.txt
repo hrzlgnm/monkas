@@ -8,6 +8,7 @@ set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/ethernet/Address.hpp
     ${PUBLIC_INCLUDE_DIR}/ip/Address.hpp
     ${PUBLIC_INCLUDE_DIR}/network/Address.hpp
+    ${PUBLIC_INCLUDE_DIR}/network/Interface.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/NetworkInterfaceStatusTracker.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/RtnlNetworkMonitor.hpp
     ${PUBLIC_INCLUDE_DIR}/watchable/Watchable.hpp
