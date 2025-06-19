@@ -22,7 +22,7 @@ Attributes::Attributes(std::size_t toAlloc)
 void Attributes::parseAttribute(const nlattr *a, uint64_t &counter)
 {
     const auto type = mnl_attr_get_type(a);
-    if (mnl_attr_type_valid(a, m_attributes.size()) > 0)
+    if (mnl_attr_type_valid(a, m_attributes.size() - 1) > 0)
     {
         counter++;
         m_attributes.at(type) = a;
