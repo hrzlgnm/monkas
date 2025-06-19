@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ip/Address.hpp"
 #include <chrono>
 #include <cstdint>
+#include <ip/Address.hpp>
 #include <map>
 #include <memory>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
@@ -24,15 +24,6 @@ struct nlattr;
 
 namespace monkas::monitor
 {
-
-// neat ADL trick to treat uint8_t as numbers
-inline auto operator<<(std::ostream &os, uint8_t c) -> std::ostream &
-{
-    return os << static_cast<uint16_t>(c);
-}
-
-// TODO: wrap this into a own class with validating getters
-using RtnlAttributes = std::vector<const nlattr *>;
 
 enum class InitialSnapshotMode : uint8_t
 {
@@ -85,10 +76,10 @@ using EnumerationDoneNotifier = Watchable<>;
 using EnumerationDoneWatcher = EnumerationDoneNotifier::Watcher;
 using EnumerationDoneWatcherToken = EnumerationDoneNotifier::Token;
 
-class RtnlNetworkMonitor
+class NetworkMonitor
 {
   public:
-    explicit RtnlNetworkMonitor(const RuntimeOptions &options);
+    explicit NetworkMonitor(const RuntimeOptions &options);
     void enumerateInterfaces();
     auto run() -> int;
     void stop();
@@ -136,28 +127,16 @@ class RtnlNetworkMonitor
     /* @note: only one such request can be in progress until the reply is received */
     void sendDumpRequest(uint16_t msgType);
 
+    auto ensureNameCurrent(uint32_t ifIndex, const std::optional<std::string> &name) -> NetworkInterfaceStatusTracker &;
+
     void parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi);
     void parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa);
     void parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm);
-
-    auto ensureNameCurrent(uint32_t ifIndex, const nlattr *nameAttribute) -> NetworkInterfaceStatusTracker &;
 
     void printStatsForNerdsIfEnabled();
 
     auto mnlMessageCallback(const nlmsghdr *n) -> int;
     static auto dispatchMnMessageCallbackToSelf(const struct nlmsghdr *n, void *self) -> int;
-
-    auto parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxType) -> RtnlAttributes;
-    static void parseAttribute(const nlattr *a, uint16_t maxType, RtnlAttributes &attrs, uint64_t &counter);
-
-    struct MnlAttributeCallbackArgs
-    {
-        RtnlAttributes *attrs;
-        uint16_t *maxType;
-        uint64_t *counter;
-    };
-
-    static auto dispatchMnlAttributeCallback(const struct nlattr *a, void *self) -> int;
 
     [[nodiscard]] auto isEnumerating() const -> bool
     {

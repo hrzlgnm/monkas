@@ -1,7 +1,11 @@
+#include "ethernet/Address.hpp"
 #include <cstddef>
 #include <ip/Address.hpp>
-#include <monitor/RtnlNetworkMonitor.hpp>
+#include <linux/if_link.h>
+#include <monitor/Attributes.hpp>
+#include <monitor/NetworkMonitor.hpp>
 
+#include <fmt/std.h>
 #include <libmnl/libmnl.h>
 #include <linux/rtnetlink.h>
 #include <memory.h>
@@ -45,7 +49,7 @@ auto ensureMnlSocket(bool nonBlocking) -> mnl_socket *
 }
 } // namespace
 
-RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
+NetworkMonitor::NetworkMonitor(const RuntimeOptions &options)
     : m_mnlSocket{ensureMnlSocket(options.test(NonBlocking)), mnl_socket_close}
     , m_portid{mnl_socket_get_portid(m_mnlSocket.get())}
     , m_buffer(SOCKET_BUFFER_SIZE)
@@ -71,7 +75,7 @@ RtnlNetworkMonitor::RtnlNetworkMonitor(const RuntimeOptions &options)
     }
 }
 
-void RtnlNetworkMonitor::enumerateInterfaces()
+void NetworkMonitor::enumerateInterfaces()
 {
     if (m_cacheState == CacheState::WaitingForChanges)
     {
@@ -86,7 +90,7 @@ void RtnlNetworkMonitor::enumerateInterfaces()
     }
 }
 
-auto RtnlNetworkMonitor::run() -> int
+auto NetworkMonitor::run() -> int
 {
     // someone may call enumerateInterfaces() and stop() during enumerateInterfaces
     if (!m_mnlSocket)
@@ -94,7 +98,7 @@ auto RtnlNetworkMonitor::run() -> int
         return 0;
     }
     m_running = true;
-    spdlog::trace("Starting RtnlNetworkMonitor");
+    spdlog::trace("Starting NetworkMonitor");
     enumerateInterfaces();
     spdlog::trace("Starting to receive and process messages from mnl socket {} m_running={}",
                   static_cast<void *>(m_mnlSocket.get()), m_running);
@@ -105,14 +109,14 @@ auto RtnlNetworkMonitor::run() -> int
     return 0;
 }
 
-void RtnlNetworkMonitor::stop()
+void NetworkMonitor::stop()
 {
-    spdlog::debug("Stopping RtnlNetworkMonitor");
+    spdlog::debug("Stopping NetworkMonitor");
     m_mnlSocket.reset();
     m_running = false;
 }
 
-auto RtnlNetworkMonitor::addInterfacesWatcher(const InterfacesWatcher &watcher, InitialSnapshotMode initialSnapshot)
+auto NetworkMonitor::addInterfacesWatcher(const InterfacesWatcher &watcher, InitialSnapshotMode initialSnapshot)
     -> InterfacesWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot)
@@ -122,13 +126,13 @@ auto RtnlNetworkMonitor::addInterfacesWatcher(const InterfacesWatcher &watcher, 
     return m_interfacesNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeInterfacesWatcher(const InterfacesWatcherToken &token)
+void NetworkMonitor::removeInterfacesWatcher(const InterfacesWatcherToken &token)
 {
     m_interfacesNotifier.removeWatcher(token);
 }
 
-auto RtnlNetworkMonitor::addOperationalStateWatcher(const OperationalStateWatcher &watcher,
-                                                    InitialSnapshotMode initialSnapshot) -> OperationalStateWatcherToken
+auto NetworkMonitor::addOperationalStateWatcher(const OperationalStateWatcher &watcher,
+                                                InitialSnapshotMode initialSnapshot) -> OperationalStateWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot)
     {
@@ -141,13 +145,13 @@ auto RtnlNetworkMonitor::addOperationalStateWatcher(const OperationalStateWatche
     return m_operationalStateNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeOperationalStateWatcher(const OperationalStateWatcherToken &token)
+void NetworkMonitor::removeOperationalStateWatcher(const OperationalStateWatcherToken &token)
 {
     m_operationalStateNotifier.removeWatcher(token);
 }
 
-auto RtnlNetworkMonitor::addNetworkAddressWatcher(const NetworkAddressWatcher &watcher,
-                                                  InitialSnapshotMode initialSnapshot) -> NetworkAddressWatcherToken
+auto NetworkMonitor::addNetworkAddressWatcher(const NetworkAddressWatcher &watcher, InitialSnapshotMode initialSnapshot)
+    -> NetworkAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot)
     {
@@ -160,13 +164,13 @@ auto RtnlNetworkMonitor::addNetworkAddressWatcher(const NetworkAddressWatcher &w
     return m_networkAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeNetworkAddressWatcher(const NetworkAddressWatcherToken &token)
+void NetworkMonitor::removeNetworkAddressWatcher(const NetworkAddressWatcherToken &token)
 {
     m_networkAddressNotifier.removeWatcher(token);
 }
 
-auto RtnlNetworkMonitor::addGatewayAddressWatcher(const GatewayAddressWatcher &watcher,
-                                                  InitialSnapshotMode initialSnapshot) -> GatewayAddressWatcherToken
+auto NetworkMonitor::addGatewayAddressWatcher(const GatewayAddressWatcher &watcher, InitialSnapshotMode initialSnapshot)
+    -> GatewayAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot)
     {
@@ -179,12 +183,12 @@ auto RtnlNetworkMonitor::addGatewayAddressWatcher(const GatewayAddressWatcher &w
     return m_gatewayAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeGatewayAddressWatcher(const GatewayAddressWatcherToken &token)
+void NetworkMonitor::removeGatewayAddressWatcher(const GatewayAddressWatcherToken &token)
 {
     m_gatewayAddressNotifier.removeWatcher(token);
 }
 
-auto RtnlNetworkMonitor::addMacAddressWatcher(const MacAddressWatcher &watcher, InitialSnapshotMode initialSnapshot)
+auto NetworkMonitor::addMacAddressWatcher(const MacAddressWatcher &watcher, InitialSnapshotMode initialSnapshot)
     -> MacAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot)
@@ -198,13 +202,13 @@ auto RtnlNetworkMonitor::addMacAddressWatcher(const MacAddressWatcher &watcher, 
     return m_macAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeMacAddressWatcher(const MacAddressWatcherToken &token)
+void NetworkMonitor::removeMacAddressWatcher(const MacAddressWatcherToken &token)
 {
     m_macAddressNotifier.removeWatcher(token);
 }
 
-auto RtnlNetworkMonitor::addBroadcastAddressWatcher(const BroadcastAddressWatcher &watcher,
-                                                    InitialSnapshotMode initialSnapshot) -> BroadcastAddressWatcherToken
+auto NetworkMonitor::addBroadcastAddressWatcher(const BroadcastAddressWatcher &watcher,
+                                                InitialSnapshotMode initialSnapshot) -> BroadcastAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot)
     {
@@ -217,12 +221,12 @@ auto RtnlNetworkMonitor::addBroadcastAddressWatcher(const BroadcastAddressWatche
     return m_broadcastAddressNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken &token)
+void NetworkMonitor::removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken &token)
 {
     m_broadcastAddressNotifier.removeWatcher(token);
 }
 
-auto RtnlNetworkMonitor::addEnumerationDoneWatcher(const EnumerationDoneWatcher &watcher)
+auto NetworkMonitor::addEnumerationDoneWatcher(const EnumerationDoneWatcher &watcher)
     -> std::optional<EnumerationDoneWatcherToken>
 {
     if (m_cacheState == CacheState::WaitingForChanges)
@@ -233,14 +237,14 @@ auto RtnlNetworkMonitor::addEnumerationDoneWatcher(const EnumerationDoneWatcher 
     return m_enumerationDoneNotifier.addWatcher(watcher);
 }
 
-void RtnlNetworkMonitor::removeEnumerationDoneWatcher(const EnumerationDoneWatcherToken &token)
+void NetworkMonitor::removeEnumerationDoneWatcher(const EnumerationDoneWatcherToken &token)
 {
     m_enumerationDoneNotifier.removeWatcher(token);
 }
 
 // NOLINTBEGIN(readability-function-cognitive-complexity)
 
-void RtnlNetworkMonitor::receiveAndProcess()
+void NetworkMonitor::receiveAndProcess()
 {
     // someone may call stop() while we are notifying watchers
     if (!m_mnlSocket)
@@ -262,7 +266,7 @@ void RtnlNetworkMonitor::receiveAndProcess()
         }
         const auto seqNo = isEnumerating() ? m_sequenceNumber : 0;
         const auto callbackResult = mnl_cb_run(m_buffer.data(), receiveResult, seqNo, m_portid,
-                                               &RtnlNetworkMonitor::dispatchMnMessageCallbackToSelf, this);
+                                               &NetworkMonitor::dispatchMnMessageCallbackToSelf, this);
         if (callbackResult == MNL_CB_ERROR)
         {
             pwarn("mnl_cb_run");
@@ -319,7 +323,7 @@ void RtnlNetworkMonitor::receiveAndProcess()
 
 // NOLINTEND(readability-function-cognitive-complexity)
 
-void RtnlNetworkMonitor::sendDumpRequest(uint16_t msgType)
+void NetworkMonitor::sendDumpRequest(uint16_t msgType)
 {
     nlmsghdr *nlh = mnl_nlmsg_put_header(m_buffer.data());
     nlh->nlmsg_type = msgType;
@@ -337,7 +341,7 @@ void RtnlNetworkMonitor::sendDumpRequest(uint16_t msgType)
     m_stats.bytesSent += ret;
 }
 
-auto RtnlNetworkMonitor::mnlMessageCallback(const nlmsghdr *n) -> int
+auto NetworkMonitor::mnlMessageCallback(const nlmsghdr *n) -> int
 {
     if (!m_mnlSocket)
     {
@@ -372,30 +376,16 @@ auto RtnlNetworkMonitor::mnlMessageCallback(const nlmsghdr *n) -> int
     return MNL_CB_OK;
 }
 
-void RtnlNetworkMonitor::parseAttribute(const nlattr *a, uint16_t maxType, RtnlAttributes &attrs, uint64_t &counter)
-{
-    const auto type = mnl_attr_get_type(a);
-    if (mnl_attr_type_valid(a, maxType) > 0)
-    {
-        counter++;
-        attrs.at(type) = a;
-    }
-    else
-    {
-        spdlog::warn("ignoring unexpected nlattr type {}", type);
-    }
-}
-
-auto RtnlNetworkMonitor::ensureNameCurrent(uint32_t ifIndex, const nlattr *nameAttribute)
+auto NetworkMonitor::ensureNameCurrent(uint32_t ifIndex, const std::optional<std::string> &name)
     -> NetworkInterfaceStatusTracker &
 {
     const auto before = m_trackers.size();
     auto &cacheEntry = m_trackers[ifIndex];
 
     // Sometimes interfaces are renamed, account for that
-    if (nameAttribute != nullptr)
+    if (name.has_value())
     {
-        cacheEntry.setName(mnl_attr_get_str(nameAttribute));
+        cacheEntry.setName(name.value());
     }
     if (before != m_trackers.size() || cacheEntry.isDirty(DirtyFlag::NameChanged))
     {
@@ -405,22 +395,21 @@ auto RtnlNetworkMonitor::ensureNameCurrent(uint32_t ifIndex, const nlattr *nameA
     return cacheEntry;
 }
 
-void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi)
+void NetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi)
 {
     m_stats.linkMessagesSeen++;
-    auto attributes = parseAttributes(nlhdr, sizeof(*ifi), IFLA_MAX);
+    const auto attributes = Attributes::parse(nlhdr, sizeof(*ifi), IFLA_MAX, m_stats.seenAttributes);
+    const auto itfName = attributes.getString(IFLA_IFNAME);
     if (ifi->ifi_type != ARPHRD_ETHER && ifi->ifi_type != ARPHRD_IEEE80211)
     {
-        const auto *const itfName =
-            attributes[IFLA_IFNAME] != nullptr ? mnl_attr_get_str(attributes[IFLA_IFNAME]) : "unknown";
         if (!m_runtimeOptions.test(RuntimeFlag::IncludeNonIeee802))
         {
             spdlog::debug("Discarding interface {}: {} (use --include_non_ieee802 to include)", ifi->ifi_index,
-                          itfName);
+                          itfName.value_or("unknown"));
             m_stats.msgsDiscarded++;
             return;
         }
-        spdlog::trace("Including non-IEEE 802.X interface {}: {}", ifi->ifi_index, itfName);
+        spdlog::trace("Including non-IEEE 802.X interface {}: {}", ifi->ifi_index, itfName.value_or("unknown"));
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK)
     {
@@ -430,29 +419,37 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
         return;
     }
 
-    auto &cacheEntry = ensureNameCurrent(ifi->ifi_index, attributes[IFLA_IFNAME]);
-    if (attributes[IFLA_OPERSTATE] != nullptr)
+    auto &cacheEntry = ensureNameCurrent(ifi->ifi_index, itfName);
+    const auto operationalStateOpt = attributes.getU8(IFLA_OPERSTATE);
+    if (operationalStateOpt.has_value())
     {
-        auto operstate{mnl_attr_get_u16(attributes[IFLA_OPERSTATE])};
-        cacheEntry.setOperationalState(static_cast<OperationalState>(operstate));
+        cacheEntry.setOperationalState(static_cast<OperationalState>(operationalStateOpt.value()));
     }
-    if (attributes[IFLA_ADDRESS] != nullptr)
+
+    const auto macAddressOpt = attributes.getPayload<ethernet::ADDR_LEN>(IFLA_ADDRESS);
+    if (macAddressOpt.has_value())
     {
-        const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFLA_ADDRESS]));
-        const auto len = mnl_attr_get_payload_len(attributes[IFLA_ADDRESS]);
-        auto macAddress = ethernet::Address::fromBytes(addr, len);
-        cacheEntry.setMacAddress(macAddress);
+        const auto mac = ethernet::Address::fromBytes(macAddressOpt->data(), macAddressOpt->size());
+        cacheEntry.setMacAddress(mac);
     }
-    if (attributes[IFLA_BROADCAST] != nullptr)
+    else
     {
-        const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFLA_BROADCAST]));
-        const auto len = mnl_attr_get_payload_len(attributes[IFLA_BROADCAST]);
-        auto broadcastAddress = ethernet::Address::fromBytes(addr, len);
-        cacheEntry.setBroadcastAddress(broadcastAddress);
+        spdlog::warn("Interface {}: {} has no MAC address", ifi->ifi_index, cacheEntry.name());
+    }
+
+    const auto broadcastAddressOpt = attributes.getPayload<ethernet::ADDR_LEN>(IFLA_BROADCAST);
+    if (broadcastAddressOpt.has_value())
+    {
+        const auto broadcast = ethernet::Address::fromBytes(broadcastAddressOpt->data(), broadcastAddressOpt->size());
+        cacheEntry.setBroadcastAddress(broadcast);
+    }
+    else
+    {
+        spdlog::warn("Interface {}: {} has no broadcast address", ifi->ifi_index, cacheEntry.name());
     }
 }
 
-void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa)
+void NetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa)
 {
     m_stats.addressMessagesSeen++;
     if (m_trackers.find(ifa->ifa_index) == m_trackers.cend())
@@ -472,44 +469,33 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
         return;
     }
 
-    auto attributes = parseAttributes(nlhdr, sizeof(*ifa), IFA_MAX);
+    const auto attributes = Attributes::parse(nlhdr, sizeof(*ifa), IFA_MAX, m_stats.seenAttributes);
 
     uint32_t flags = ifa->ifa_flags; // will be overwritten if IFA_FLAGS is present
     ip::Address address;
     ip::Address broadcast;
 
-    auto &cacheEntry = ensureNameCurrent(ifa->ifa_index, attributes[IFA_LABEL]);
-    if (attributes[IFA_FLAGS] != nullptr)
-    {
-        flags = {mnl_attr_get_u32(attributes[IFA_FLAGS])};
-    }
+    auto &cacheEntry = ensureNameCurrent(ifa->ifa_index, attributes.getString(IFA_LABEL));
 
-    if (attributes[IFA_BROADCAST] != nullptr)
+    const auto flagsOpt = attributes.getU32(IFA_FLAGS);
+    if (flagsOpt.has_value())
     {
-        auto addrLen = mnl_attr_get_payload_len(attributes[IFA_BROADCAST]);
-        if (addrLen == ip::IPV4_ADDR_LEN)
-        {
-            const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFA_BROADCAST]));
-            broadcast = ip::Address::fromBytes(addr, addrLen);
-        }
+        flags = flagsOpt.value();
     }
-    if (attributes[IFA_LOCAL] != nullptr)
+    const auto broadcastOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(IFA_BROADCAST);
+    if (broadcastOpt.has_value())
     {
-        auto addrLen = mnl_attr_get_payload_len(attributes[IFA_LOCAL]);
-        if (addrLen == ip::IPV4_ADDR_LEN)
-        {
-            const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFA_LOCAL]));
-            address = ip::Address::fromBytes(addr, addrLen);
-        }
+        broadcast = ip::Address::fromBytes(broadcastOpt->data(), broadcastOpt->size());
     }
-    if (attributes[IFA_ADDRESS] != nullptr)
+    const auto localOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(IFA_LOCAL);
+    if (localOpt.has_value())
     {
-        const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[IFA_ADDRESS]));
-        auto addrLen = mnl_attr_get_payload_len(attributes[IFA_ADDRESS]);
-        if (addrLen == ip::IPV6_ADDR_LEN)
-        {
-            address = ip::Address::fromBytes(addr, addrLen);
-        }
+        address = ip::Address::fromBytes(localOpt->data(), localOpt->size());
+    }
+    const auto addressOpt = attributes.getPayload<ip::IPV6_ADDR_LEN>(IFA_ADDRESS);
+    if (addressOpt.has_value())
+    {
+        address = ip::Address::fromBytes(addressOpt->data(), addressOpt->size());
     }
     const network::Address networkAddress{address, broadcast, ifa->ifa_prefixlen,
                                           network::fromRtnlScope(ifa->ifa_scope), flags};
@@ -523,7 +509,7 @@ void RtnlNetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddr
     }
 }
 
-void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
+void NetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
 {
     m_stats.routeMessagesSeen++;
     if (rtm->rtm_family != AF_INET)
@@ -537,53 +523,46 @@ void RtnlNetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *r
         return;
     }
 
-    auto attributes = parseAttributes(nlhdr, sizeof(*rtm), RTA_MAX);
+    const auto attributes = Attributes::parse(nlhdr, sizeof(*rtm), RTA_MAX, m_stats.seenAttributes);
+    auto ifIndexOpt = attributes.getU32(RTA_OIF);
+    auto gatewayOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(RTA_GATEWAY);
+
     if (nlhdr->nlmsg_type == RTM_DELROUTE)
     {
-        // remove ipv4 routing default gateway when a linkdown was detected for the interface
-        if (((rtm->rtm_flags & RTNH_F_LINKDOWN) != 0U) && (attributes[RTA_OIF] != nullptr))
+        if (ifIndexOpt.has_value())
         {
-            auto outIfIndex = mnl_attr_get_u32(attributes[RTA_OIF]);
-            auto itr = m_trackers.find(outIfIndex);
-            if (itr != m_trackers.end() && itr->second.gatewayAddress())
+            if ((rtm->rtm_flags & RTNH_F_LINKDOWN) != 0U)
             {
-                itr->second.clearGatewayAddress(GatewayClearReason::LinkDown);
+                auto itr = m_trackers.find(ifIndexOpt.value());
+                if (itr != m_trackers.end())
+                {
+                    itr->second.clearGatewayAddress(GatewayClearReason::LinkDown);
+                }
+                return;
             }
-        }
-        else if ((attributes[RTA_GATEWAY] != nullptr) && (attributes[RTA_OIF] != nullptr))
-        {
-            auto outIfIndex = mnl_attr_get_u32(attributes[RTA_OIF]);
-            auto itr = m_trackers.find(outIfIndex);
-            if (itr != m_trackers.end())
+            if (gatewayOpt.has_value())
             {
-                itr->second.clearGatewayAddress(GatewayClearReason::RouteDeleted);
+                auto itr = m_trackers.find(ifIndexOpt.value());
+                if (itr != m_trackers.end())
+                {
+                    itr->second.clearGatewayAddress(GatewayClearReason::RouteDeleted);
+                }
             }
         }
         return;
     }
-    if ((attributes[RTA_GATEWAY] != nullptr) && (attributes[RTA_OIF] != nullptr))
+
+    if (ifIndexOpt.has_value() && gatewayOpt.has_value())
     {
-        auto outif = mnl_attr_get_u32(attributes[RTA_OIF]);
-        auto itr = m_trackers.find(outif);
+        const auto itr = m_trackers.find(ifIndexOpt.value());
         if (itr != m_trackers.end())
         {
-            const auto *addr = static_cast<const uint8_t *>(mnl_attr_get_payload(attributes[RTA_GATEWAY]));
-            auto len = mnl_attr_get_payload_len(attributes[RTA_GATEWAY]);
-            itr->second.setGatewayAddress(ip::Address::fromBytes(addr, len));
+            itr->second.setGatewayAddress(ip::Address::fromBytes(gatewayOpt->data(), gatewayOpt->size()));
         }
     }
 }
 
-auto RtnlNetworkMonitor::parseAttributes(const nlmsghdr *n, size_t offset, uint16_t maxType) -> RtnlAttributes
-{
-    RtnlAttributes::size_type typesToAllocate = maxType + 1;
-    RtnlAttributes attributes{typesToAllocate};
-    MnlAttributeCallbackArgs arg{&attributes, &maxType, &m_stats.seenAttributes};
-    mnl_attr_parse(n, offset, &RtnlNetworkMonitor::dispatchMnlAttributeCallback, &arg);
-    return attributes;
-}
-
-void RtnlNetworkMonitor::printStatsForNerdsIfEnabled()
+void NetworkMonitor::printStatsForNerdsIfEnabled()
 {
     if (isEnumerating() || !m_runtimeOptions.test(RuntimeFlag::StatsForNerds))
     {
@@ -611,19 +590,12 @@ void RtnlNetworkMonitor::printStatsForNerdsIfEnabled()
     spdlog::info("-------------------------------------------------");
 }
 
-auto RtnlNetworkMonitor::dispatchMnMessageCallbackToSelf(const nlmsghdr *n, void *self) -> int
+auto NetworkMonitor::dispatchMnMessageCallbackToSelf(const nlmsghdr *n, void *self) -> int
 {
-    return static_cast<RtnlNetworkMonitor *>(self)->mnlMessageCallback(n);
+    return static_cast<NetworkMonitor *>(self)->mnlMessageCallback(n);
 }
 
-auto RtnlNetworkMonitor::dispatchMnlAttributeCallback(const nlattr *a, void *self) -> int
-{
-    auto *args = static_cast<MnlAttributeCallbackArgs *>(self);
-    parseAttribute(a, *args->maxType, *args->attrs, *args->counter);
-    return MNL_CB_OK;
-}
-
-void RtnlNetworkMonitor::notifyChanges()
+void NetworkMonitor::notifyChanges()
 {
     for (auto &[index, tracker] : m_trackers)
     {
@@ -656,7 +628,7 @@ void RtnlNetworkMonitor::notifyChanges()
     }
 }
 
-void RtnlNetworkMonitor::notifyInterfacesSnapshot()
+void NetworkMonitor::notifyInterfacesSnapshot()
 {
     if (m_interfacesNotifier.hasWatchers())
     {
@@ -664,7 +636,7 @@ void RtnlNetworkMonitor::notifyInterfacesSnapshot()
     }
 }
 
-auto RtnlNetworkMonitor::getInterfacesSnapshot() const -> Interfaces
+auto NetworkMonitor::getInterfacesSnapshot() const -> Interfaces
 {
     Interfaces intfs;
     for (const auto &[idx, tracker] : m_trackers)

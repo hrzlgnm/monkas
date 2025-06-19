@@ -1,6 +1,6 @@
 #include <gflags/gflags.h>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
-#include <monitor/RtnlNetworkMonitor.hpp>
+#include <monitor/NetworkMonitor.hpp>
 #include <network/Address.hpp>
 #include <network/Interface.hpp>
 #include <spdlog/spdlog.h>
@@ -74,7 +74,7 @@ auto main(int argc, char *argv[]) -> int
     {
         options.set(RuntimeFlag::IncludeNonIeee802);
     }
-    RtnlNetworkMonitor mon(options);
+    NetworkMonitor mon(options);
     mon.enumerateInterfaces();
     std::ignore = mon.addInterfacesWatcher(
         [](const Interfaces &interfaces) { spdlog::info("Interfaces changed to: {}", fmt::join(interfaces, ", ")); },
