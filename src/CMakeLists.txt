@@ -40,8 +40,10 @@ target_link_libraries(
 )
 
 if(BUILD_TESTS)
+    add_library(${TARGET_NAME}_tests STATIC)
+    add_library(${TARGET_NAME}::tests ALIAS ${TARGET_NAME}_tests)
     target_sources(
-        ${TARGET_NAME}
+        ${TARGET_NAME}_tests
         PRIVATE
             ethernet/Address.test.cpp
             ip/Address.test.cpp
@@ -49,9 +51,10 @@ if(BUILD_TESTS)
             watchable/Watchable.test.cpp
     )
     target_link_libraries(
-        ${TARGET_NAME}
+        ${TARGET_NAME}_tests
         PRIVATE
             doctest::doctest
             doctest::lib
+            ${TARGET_NAME}::lib
     )
 endif()
