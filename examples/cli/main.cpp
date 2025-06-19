@@ -11,6 +11,8 @@ DEFINE_bool(dumppackets, false, "Enable dumping of rtnl packets");
 
 DEFINE_bool(exit_after_enumeration, false, "Exit after enumeration is done");
 
+DEFINE_bool(include_non_ieee802, false, "Include non IEEE 802.X interfaces in the enumeration");
+
 DEFINE_uint32(family, 0, "Preferred address family <0|4|6>");
 DEFINE_validator(family,
                  [](const char * /*flagname*/, uint32_t value) { return value == 0 || value == 4 || value == 6; });
@@ -67,6 +69,10 @@ auto main(int argc, char *argv[]) -> int
     if (FLAGS_family == V6)
     {
         options.set(RuntimeFlag::PreferredFamilyV6);
+    }
+    if (FLAGS_include_non_ieee802)
+    {
+        options.set(RuntimeFlag::IncludeNonIeee802);
     }
     RtnlNetworkMonitor mon(options);
     mon.enumerateInterfaces();

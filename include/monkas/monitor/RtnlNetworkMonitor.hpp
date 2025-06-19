@@ -45,6 +45,7 @@ enum RuntimeFlag : uint8_t
     StatsForNerds,
     PreferredFamilyV4,
     PreferredFamilyV6,
+    IncludeNonIeee802,
     DumpPackets,
     NonBlocking,
     // NOTE: keep FlagsCount last
