@@ -1,9 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <array>
-#include <cerrno>
 #include <cstdint>
-#include <cstring>
 #include <libmnl/libmnl.h>
 #include <optional>
 #include <spdlog/spdlog.h>
