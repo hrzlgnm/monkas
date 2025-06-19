@@ -76,11 +76,10 @@ class Attributes
     struct CallbackArgs
     {
         Attributes *attrs;
-        uint16_t *maxType;
         uint64_t *counter;
     };
 
-    void parseAttribute(const nlattr *a, uint16_t maxType, uint64_t &counter);
+    void parseAttribute(const nlattr *a, uint64_t &counter);
     static auto dispatchMnlAttributeCallback(const nlattr *attr, void *args) -> int;
 
     std::vector<const nlattr *> m_attributes;

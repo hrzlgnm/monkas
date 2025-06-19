@@ -8,9 +8,8 @@ namespace monkas::monitor
 
 auto Attributes::parse(const nlmsghdr *n, size_t offset, uint16_t maxType, u_int64_t &counter) -> Attributes
 {
-    std::size_t typesToAllocate = maxType + 1;
-    Attributes attributes{typesToAllocate};
-    CallbackArgs arg{.attrs = &attributes, .maxType = &maxType, .counter = &counter};
+    Attributes attributes{maxType + 1U};
+    CallbackArgs arg{.attrs = &attributes, .counter = &counter};
     mnl_attr_parse(n, offset, &Attributes::dispatchMnlAttributeCallback, &arg);
     return attributes;
 }
@@ -20,10 +19,10 @@ Attributes::Attributes(std::size_t toAlloc)
 {
 }
 
-void Attributes::parseAttribute(const nlattr *a, uint16_t maxType, uint64_t &counter)
+void Attributes::parseAttribute(const nlattr *a, uint64_t &counter)
 {
     const auto type = mnl_attr_get_type(a);
-    if (mnl_attr_type_valid(a, maxType) > 0)
+    if (mnl_attr_type_valid(a, m_attributes.size()) > 0)
     {
         counter++;
         m_attributes.at(type) = a;
@@ -37,7 +36,7 @@ void Attributes::parseAttribute(const nlattr *a, uint16_t maxType, uint64_t &cou
 auto Attributes::dispatchMnlAttributeCallback(const nlattr *attr, void *args) -> int
 {
     auto *cb = static_cast<CallbackArgs *>(args);
-    cb->attrs->parseAttribute(attr, *cb->maxType, *cb->counter);
+    cb->attrs->parseAttribute(attr, *cb->counter);
     return MNL_CB_OK;
 }
 
