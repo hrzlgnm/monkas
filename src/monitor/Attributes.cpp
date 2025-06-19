@@ -1,0 +1,105 @@
+#include <libmnl/libmnl.h>
+#include <monitor/Attributes.hpp>
+#include <spdlog/spdlog.h>
+#include <sys/types.h>
+
+namespace monkas::monitor
+{
+
+auto Attributes::parse(const nlmsghdr *n, size_t offset, uint16_t maxType, u_int64_t &counter) -> Attributes
+{
+    std::size_t typesToAllocate = maxType + 1;
+    Attributes attributes{typesToAllocate};
+    CallbackArgs arg{.attrs = &attributes, .maxType = &maxType, .counter = &counter};
+    mnl_attr_parse(n, offset, &Attributes::dispatchMnlAttributeCallback, &arg);
+    return attributes;
+}
+
+Attributes::Attributes(std::size_t toAlloc)
+    : m_attributes(toAlloc, nullptr)
+{
+}
+
+void Attributes::parseAttribute(const nlattr *a, uint16_t maxType, uint64_t &counter)
+{
+    const auto type = mnl_attr_get_type(a);
+    if (mnl_attr_type_valid(a, maxType) > 0)
+    {
+        counter++;
+        m_attributes.at(type) = a;
+    }
+    else
+    {
+        spdlog::warn("ignoring unexpected nlattr type {}", type);
+    }
+}
+
+auto Attributes::dispatchMnlAttributeCallback(const nlattr *attr, void *args) -> int
+{
+    auto *cb = static_cast<CallbackArgs *>(args);
+    cb->attrs->parseAttribute(attr, *cb->maxType, *cb->counter);
+    return MNL_CB_OK;
+}
+
+auto Attributes::getStr(uint16_t type) const -> const char *
+{
+    if (type >= m_attributes.size() || m_attributes[type] == nullptr)
+    {
+        spdlog::trace("str attribute with type {} does not exist", type);
+        return nullptr;
+    }
+    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_STRING) < 0)
+    {
+        spdlog::warn("str attribute is invalid for type {}", type);
+        return nullptr;
+    }
+    return mnl_attr_get_str(m_attributes[type]);
+}
+
+void Attributes::applyU8(uint16_t type, const std::function<void(uint8_t)> &callback) const
+{
+    if (type >= m_attributes.size() || m_attributes[type] == nullptr)
+    {
+        spdlog::trace("u8 attribute with type {} does not exist", type);
+        return;
+    }
+    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U8) < 0)
+    {
+
+        spdlog::warn("u8 attribute is invalid for type {}", type);
+        return;
+    }
+    callback(mnl_attr_get_u8(m_attributes[type]));
+}
+
+void Attributes::applyU16(uint16_t type, const std::function<void(uint16_t)> &callback) const
+{
+    if (type >= m_attributes.size() || m_attributes[type] == nullptr)
+    {
+        spdlog::trace("u16 attribute with type {} does not exist", type);
+        return;
+    }
+    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U16) < 0)
+    {
+        spdlog::warn("u16 attribute is invalid for type {}", type);
+        return;
+    }
+    callback(mnl_attr_get_u16(m_attributes[type]));
+}
+
+void Attributes::applyU32(uint16_t type, const std::function<void(uint32_t)> &callback) const
+{
+    if (type >= m_attributes.size() || m_attributes[type] == nullptr)
+    {
+        spdlog::trace("u32 attribute with type {} does not exist", type);
+        return;
+    }
+    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U32) < 0)
+    {
+        spdlog::warn("u32 attribute is invalid for type {}", type);
+        return;
+    }
+    callback(mnl_attr_get_u32(m_attributes[type]));
+}
+
+} // namespace monkas::monitor
