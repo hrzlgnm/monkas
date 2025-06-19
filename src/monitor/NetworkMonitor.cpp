@@ -428,8 +428,8 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *if
         cacheEntry.setMacAddress(macAddress);
     });
     attributes.applyPayload<ethernet::ADDR_LEN>(IFLA_BROADCAST, [&cacheEntry](const auto &bytes) {
-        const auto broadcastAddresss = ethernet::Address::fromBytes(bytes.data(), bytes.size());
-        cacheEntry.setBroadcastAddress(broadcastAddresss);
+        const auto broadcastAddress = ethernet::Address::fromBytes(bytes.data(), bytes.size());
+        cacheEntry.setBroadcastAddress(broadcastAddress);
     });
 }
 
