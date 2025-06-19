@@ -127,7 +127,7 @@ class NetworkMonitor
     /* @note: only one such request can be in progress until the reply is received */
     void sendDumpRequest(uint16_t msgType);
 
-    auto ensureNameCurrent(uint32_t ifIndex, const char *name) -> NetworkInterfaceStatusTracker &;
+    auto ensureNameCurrent(uint32_t ifIndex, const std::optional<std::string> &name) -> NetworkInterfaceStatusTracker &;
 
     void parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi);
     void parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa);

@@ -5,6 +5,7 @@
 #include <monitor/Attributes.hpp>
 #include <monitor/NetworkMonitor.hpp>
 
+#include <fmt/std.h>
 #include <libmnl/libmnl.h>
 #include <linux/rtnetlink.h>
 #include <memory.h>
@@ -375,15 +376,16 @@ auto NetworkMonitor::mnlMessageCallback(const nlmsghdr *n) -> int
     return MNL_CB_OK;
 }
 
-auto NetworkMonitor::ensureNameCurrent(uint32_t ifIndex, const char *name) -> NetworkInterfaceStatusTracker &
+auto NetworkMonitor::ensureNameCurrent(uint32_t ifIndex, const std::optional<std::string> &name)
+    -> NetworkInterfaceStatusTracker &
 {
     const auto before = m_trackers.size();
     auto &cacheEntry = m_trackers[ifIndex];
 
     // Sometimes interfaces are renamed, account for that
-    if (name != nullptr)
+    if (name.has_value())
     {
-        cacheEntry.setName(name);
+        cacheEntry.setName(name.value());
     }
     if (before != m_trackers.size() || cacheEntry.isDirty(DirtyFlag::NameChanged))
     {
@@ -397,18 +399,17 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *if
 {
     m_stats.linkMessagesSeen++;
     const auto attributes = Attributes::parse(nlhdr, sizeof(*ifi), IFLA_MAX, m_stats.seenAttributes);
-    const auto *const itfName = attributes.getStr(IFLA_IFNAME);
+    const auto itfName = attributes.getString(IFLA_IFNAME);
     if (ifi->ifi_type != ARPHRD_ETHER && ifi->ifi_type != ARPHRD_IEEE80211)
     {
         if (!m_runtimeOptions.test(RuntimeFlag::IncludeNonIeee802))
         {
             spdlog::debug("Discarding interface {}: {} (use --include_non_ieee802 to include)", ifi->ifi_index,
-                          (itfName != nullptr) ? itfName : "unknown");
+                          itfName.value_or("unknown"));
             m_stats.msgsDiscarded++;
             return;
         }
-        spdlog::trace("Including non-IEEE 802.X interface {}: {}", ifi->ifi_index,
-                      (itfName != nullptr) ? itfName : "unknown");
+        spdlog::trace("Including non-IEEE 802.X interface {}: {}", ifi->ifi_index, itfName.value_or("unknown"));
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK)
     {
@@ -419,18 +420,33 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *if
     }
 
     auto &cacheEntry = ensureNameCurrent(ifi->ifi_index, itfName);
-    attributes.applyU8(IFLA_OPERSTATE, [&cacheEntry](uint8_t operationalState) {
-        cacheEntry.setOperationalState(static_cast<OperationalState>(operationalState));
-    });
+    const auto operationalStateOpt = attributes.getU8(IFLA_OPERSTATE);
+    if (operationalStateOpt.has_value())
+    {
+        cacheEntry.setOperationalState(static_cast<OperationalState>(operationalStateOpt.value()));
+    }
 
-    attributes.applyPayload<ethernet::ADDR_LEN>(IFLA_ADDRESS, [&cacheEntry](const auto &bytes) {
-        const auto macAddress = ethernet::Address::fromBytes(bytes.data(), bytes.size());
-        cacheEntry.setMacAddress(macAddress);
-    });
-    attributes.applyPayload<ethernet::ADDR_LEN>(IFLA_BROADCAST, [&cacheEntry](const auto &bytes) {
-        const auto broadcastAddress = ethernet::Address::fromBytes(bytes.data(), bytes.size());
-        cacheEntry.setBroadcastAddress(broadcastAddress);
-    });
+    const auto macAddressOpt = attributes.getPayload<ethernet::ADDR_LEN>(IFLA_ADDRESS);
+    if (macAddressOpt.has_value())
+    {
+        const auto mac = ethernet::Address::fromBytes(macAddressOpt->data(), macAddressOpt->size());
+        cacheEntry.setMacAddress(mac);
+    }
+    else
+    {
+        spdlog::warn("Interface {}: {} has no MAC address", ifi->ifi_index, cacheEntry.name());
+    }
+
+    const auto broadcastAddressOpt = attributes.getPayload<ethernet::ADDR_LEN>(IFLA_BROADCAST);
+    if (broadcastAddressOpt.has_value())
+    {
+        const auto broadcast = ethernet::Address::fromBytes(broadcastAddressOpt->data(), broadcastAddressOpt->size());
+        cacheEntry.setBroadcastAddress(broadcast);
+    }
+    else
+    {
+        spdlog::warn("Interface {}: {} has no broadcast address", ifi->ifi_index, cacheEntry.name());
+    }
 }
 
 void NetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa)
@@ -459,19 +475,28 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg 
     ip::Address address;
     ip::Address broadcast;
 
-    auto &cacheEntry = ensureNameCurrent(ifa->ifa_index, attributes.getStr(IFA_LABEL));
+    auto &cacheEntry = ensureNameCurrent(ifa->ifa_index, attributes.getString(IFA_LABEL));
 
-    attributes.applyU32(IFA_FLAGS, [&flags](uint32_t f) { flags = f; });
-
-    attributes.applyPayload<ip::IPV4_ADDR_LEN>(IFA_BROADCAST, [&cacheEntry, &broadcast](const auto &arr) {
-        broadcast = ip::Address::fromBytes(arr.data(), arr.size());
-    });
-    attributes.applyPayload<ip::IPV4_ADDR_LEN>(IFA_LOCAL, [&cacheEntry, &address](const auto &arr) {
-        address = ip::Address::fromBytes(arr.data(), arr.size());
-    });
-    attributes.applyPayload<ip::IPV6_ADDR_LEN>(IFA_ADDRESS, [&cacheEntry, &address](const auto &arr) {
-        address = ip::Address::fromBytes(arr.data(), arr.size());
-    });
+    const auto flagsOpt = attributes.getU32(IFA_FLAGS);
+    if (flagsOpt.has_value())
+    {
+        flags = flagsOpt.value();
+    }
+    const auto broadcastOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(IFA_BROADCAST);
+    if (broadcastOpt.has_value())
+    {
+        broadcast = ip::Address::fromBytes(broadcastOpt->data(), broadcastOpt->size());
+    }
+    const auto localOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(IFA_LOCAL);
+    if (localOpt.has_value())
+    {
+        address = ip::Address::fromBytes(localOpt->data(), localOpt->size());
+    }
+    const auto addressOpt = attributes.getPayload<ip::IPV6_ADDR_LEN>(IFA_ADDRESS);
+    if (addressOpt.has_value())
+    {
+        address = ip::Address::fromBytes(addressOpt->data(), addressOpt->size());
+    }
     const network::Address networkAddress{address, broadcast, ifa->ifa_prefixlen,
                                           network::fromRtnlScope(ifa->ifa_scope), flags};
     if (nlhdr->nlmsg_type == RTM_NEWADDR)
@@ -499,39 +524,42 @@ void NetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
     }
 
     const auto attributes = Attributes::parse(nlhdr, sizeof(*rtm), RTA_MAX, m_stats.seenAttributes);
+    auto ifIndexOpt = attributes.getU32(RTA_OIF);
+    auto gatewayOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(RTA_GATEWAY);
 
     if (nlhdr->nlmsg_type == RTM_DELROUTE)
     {
-        attributes.applyU32(RTA_OIF, [this, &attributes, rtm](uint32_t ifIndex) {
+        if (ifIndexOpt.has_value())
+        {
             if ((rtm->rtm_flags & RTNH_F_LINKDOWN) != 0U)
             {
-                auto itr = m_trackers.find(ifIndex);
+                auto itr = m_trackers.find(ifIndexOpt.value());
                 if (itr != m_trackers.end())
                 {
                     itr->second.clearGatewayAddress(GatewayClearReason::LinkDown);
                 }
                 return;
             }
-            if (attributes.hasAttribute(RTA_GATEWAY))
+            if (gatewayOpt.has_value())
             {
-                auto itr = m_trackers.find(ifIndex);
+                auto itr = m_trackers.find(ifIndexOpt.value());
                 if (itr != m_trackers.end())
                 {
                     itr->second.clearGatewayAddress(GatewayClearReason::RouteDeleted);
                 }
             }
-        });
+        }
         return;
     }
-    attributes.applyU32(RTA_OIF, [this, &attributes, rtm](uint32_t ifIndex) {
-        attributes.applyPayload<ip::IPV4_ADDR_LEN>(RTA_GATEWAY, [this, ifIndex](const auto &arr) {
-            auto itr = m_trackers.find(ifIndex);
-            if (itr != m_trackers.end())
-            {
-                itr->second.setGatewayAddress(ip::Address::fromBytes(arr.data(), arr.size()));
-            }
-        });
-    });
+
+    if (ifIndexOpt.has_value() && gatewayOpt.has_value())
+    {
+        const auto itr = m_trackers.find(ifIndexOpt.value());
+        if (itr != m_trackers.end())
+        {
+            itr->second.setGatewayAddress(ip::Address::fromBytes(gatewayOpt->data(), gatewayOpt->size()));
+        }
+    }
 }
 
 void NetworkMonitor::printStatsForNerdsIfEnabled()
