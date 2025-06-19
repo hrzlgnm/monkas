@@ -56,6 +56,23 @@ class Attributes
   private:
     explicit Attributes(std::size_t toAlloc);
 
+    template <typename T>
+    void applyValue(uint16_t type, mnl_attr_data_type mnlType, const std::function<void(T)> &callback,
+                    T (*getter)(const nlattr *), const char *typeName) const
+    {
+        if (type >= m_attributes.size() || m_attributes[type] == nullptr)
+        {
+            spdlog::trace("{} attribute with type {} does not exist", typeName, type);
+            return;
+        }
+        if (mnl_attr_validate(m_attributes[type], mnlType) < 0)
+        {
+            spdlog::warn("{} attribute is invalid for type {}", typeName, type);
+            return;
+        }
+        callback(getter(m_attributes[type]));
+    }
+
     struct CallbackArgs
     {
         Attributes *attrs;

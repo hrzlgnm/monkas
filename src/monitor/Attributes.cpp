@@ -58,48 +58,17 @@ auto Attributes::getStr(uint16_t type) const -> const char *
 
 void Attributes::applyU8(uint16_t type, const std::function<void(uint8_t)> &callback) const
 {
-    if (type >= m_attributes.size() || m_attributes[type] == nullptr)
-    {
-        spdlog::trace("u8 attribute with type {} does not exist", type);
-        return;
-    }
-    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U8) < 0)
-    {
-
-        spdlog::warn("u8 attribute is invalid for type {}", type);
-        return;
-    }
-    callback(mnl_attr_get_u8(m_attributes[type]));
+    applyValue<uint8_t>(type, MNL_TYPE_U8, callback, mnl_attr_get_u8, "u8");
 }
 
 void Attributes::applyU16(uint16_t type, const std::function<void(uint16_t)> &callback) const
 {
-    if (type >= m_attributes.size() || m_attributes[type] == nullptr)
-    {
-        spdlog::trace("u16 attribute with type {} does not exist", type);
-        return;
-    }
-    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U16) < 0)
-    {
-        spdlog::warn("u16 attribute is invalid for type {}", type);
-        return;
-    }
-    callback(mnl_attr_get_u16(m_attributes[type]));
+    applyValue<uint16_t>(type, MNL_TYPE_U16, callback, mnl_attr_get_u16, "u16");
 }
 
 void Attributes::applyU32(uint16_t type, const std::function<void(uint32_t)> &callback) const
 {
-    if (type >= m_attributes.size() || m_attributes[type] == nullptr)
-    {
-        spdlog::trace("u32 attribute with type {} does not exist", type);
-        return;
-    }
-    if (mnl_attr_validate(m_attributes[type], MNL_TYPE_U32) < 0)
-    {
-        spdlog::warn("u32 attribute is invalid for type {}", type);
-        return;
-    }
-    callback(mnl_attr_get_u32(m_attributes[type]));
+    applyValue<uint32_t>(type, MNL_TYPE_U32, callback, mnl_attr_get_u32, "u32");
 }
 
 } // namespace monkas::monitor
