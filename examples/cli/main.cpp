@@ -72,7 +72,7 @@ auto main(int argc, char *argv[]) -> int
     }
     if (FLAGS_include_non_ieee802)
     {
-        options.set(RuntimeFlag::IncludeNonIeee802x);
+        options.set(RuntimeFlag::IncludeNonIeee802);
     }
     RtnlNetworkMonitor mon(options);
     mon.enumerateInterfaces();

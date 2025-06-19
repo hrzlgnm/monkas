@@ -408,13 +408,19 @@ auto RtnlNetworkMonitor::ensureNameCurrent(uint32_t ifIndex, const nlattr *nameA
 void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi)
 {
     m_stats.linkMessagesSeen++;
+    auto attributes = parseAttributes(nlhdr, sizeof(*ifi), IFLA_MAX);
     if (ifi->ifi_type != ARPHRD_ETHER && ifi->ifi_type != ARPHRD_IEEE80211)
     {
-        if (!m_runtimeOptions.test(RuntimeFlag::IncludeNonIeee802x))
+        const auto *const itfName =
+            attributes[IFLA_IFNAME] != nullptr ? mnl_attr_get_str(attributes[IFLA_IFNAME]) : "unknown";
+        if (!m_runtimeOptions.test(RuntimeFlag::IncludeNonIeee802))
         {
+            spdlog::debug("Discarding interface {}: {} (use --include_non_ieee802 to include)", ifi->ifi_index,
+                          itfName);
             m_stats.msgsDiscarded++;
             return;
         }
+        spdlog::trace("Including non-IEEE 802.X interface {}: {}", ifi->ifi_index, itfName);
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK)
     {
@@ -423,7 +429,6 @@ void RtnlNetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg
         notifyInterfacesSnapshot();
         return;
     }
-    auto attributes = parseAttributes(nlhdr, sizeof(*ifi), IFLA_MAX);
 
     auto &cacheEntry = ensureNameCurrent(ifi->ifi_index, attributes[IFLA_IFNAME]);
     if (attributes[IFLA_OPERSTATE] != nullptr)
