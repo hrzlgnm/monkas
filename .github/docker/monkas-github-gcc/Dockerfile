@@ -15,7 +15,7 @@ RUN apt-get update && \
     ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
-LABEL org.opencontainers.image.source="https://github.com/hrzlgnm/monkaS"
-LABEL org.opencontainers.image.title="monkaS GitHub GCC"
+LABEL org.opencontainers.image.source="https://github.com/hrzlgnm/monkas"
+LABEL org.opencontainers.image.title="monkas GitHub GCC"
 LABEL org.opencontainers.image.base.name="docker.io/library/gcc"
 
