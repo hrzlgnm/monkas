@@ -1,7 +1,8 @@
-#include <doctest/doctest.h>
 #include <memory>
 #include <stdexcept>
 #include <utility>
+
+#include <doctest/doctest.h>
 #include <watchable/Watchable.hpp>
 
 namespace
@@ -51,15 +52,16 @@ TEST_CASE("Watchable tests")
     SUBCASE("unregistered watcher during notify is not called when notifying")
     {
         auto u = std::make_shared<Watchable<int>::Token>();
-        std::ignore = watchable.addWatcher([&watchable, &lastA, u](int x) {
-            if (lastA == 0)
+        std::ignore = watchable.addWatcher(
+            [&watchable, &lastA, u](int x)
             {
-                watchable.removeWatcher(*u);
-                // remove twice to check that it is safe
-                watchable.removeWatcher(*u);
-            }
-            lastA = x;
-        });
+                if (lastA == 0) {
+                    watchable.removeWatcher(*u);
+                    // remove twice to check that it is safe
+                    watchable.removeWatcher(*u);
+                }
+                lastA = x;
+            });
         *u = watchable.addWatcher(assignToLastB);
 
         watchable.notify(5);
@@ -87,4 +89,4 @@ TEST_CASE("Watchable tests")
 
 TEST_SUITE_END();
 // NOLINTEND(*)
-} // namespace
+}  // namespace

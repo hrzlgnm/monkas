@@ -6,10 +6,10 @@
 namespace monkas::monitor
 {
 
-auto Attributes::parse(const nlmsghdr *n, size_t offset, uint16_t maxType, u_int64_t &counter) -> Attributes
+auto Attributes::parse(const nlmsghdr* n, size_t offset, uint16_t maxType, u_int64_t& counter) -> Attributes
 {
-    Attributes attributes{maxType + 1U};
-    CallbackArgs arg{.attrs = &attributes, .counter = &counter};
+    Attributes attributes {maxType + 1U};
+    CallbackArgs arg {.attrs = &attributes, .counter = &counter};
     mnl_attr_parse(n, offset, &Attributes::dispatchMnlAttributeCallback, &arg);
     return attributes;
 }
@@ -19,23 +19,20 @@ Attributes::Attributes(std::size_t toAlloc)
 {
 }
 
-void Attributes::parseAttribute(const nlattr *a, uint64_t &counter)
+void Attributes::parseAttribute(const nlattr* a, uint64_t& counter)
 {
     const auto type = mnl_attr_get_type(a);
-    if (mnl_attr_type_valid(a, m_attributes.size() - 1) > 0)
-    {
+    if (mnl_attr_type_valid(a, m_attributes.size() - 1) > 0) {
         counter++;
         m_attributes[type] = a;
-    }
-    else
-    {
+    } else {
         spdlog::warn("ignoring unexpected nlattr type {}", type);
     }
 }
 
-auto Attributes::dispatchMnlAttributeCallback(const nlattr *attr, void *args) -> int
+auto Attributes::dispatchMnlAttributeCallback(const nlattr* attr, void* args) -> int
 {
-    auto *cb = static_cast<CallbackArgs *>(args);
+    auto* cb = static_cast<CallbackArgs*>(args);
     cb->attrs->parseAttribute(attr, *cb->counter);
     return MNL_CB_OK;
 }
@@ -47,9 +44,8 @@ auto Attributes::has(uint16_t type) const -> bool
 
 auto Attributes::getString(uint16_t type) const -> std::optional<std::string>
 {
-    return getTypedAttribute<const char *>(type, MNL_TYPE_STRING, mnl_attr_get_str).transform([](const char *str) {
-        return std::string(str);
-    });
+    return getTypedAttribute<const char*>(type, MNL_TYPE_STRING, mnl_attr_get_str)
+        .transform([](const char* str) { return std::string(str); });
 }
 
 auto Attributes::getU8(uint16_t type) const -> std::optional<uint8_t>
@@ -74,17 +70,17 @@ auto Attributes::getU64(uint16_t type) const -> std::optional<uint64_t>
 
 auto Attributes::getEthernetAddress(uint16_t type) const -> std::optional<ethernet::Address>
 {
-    return getPayload<ethernet::ADDR_LEN>(type).transform(
-        [](const auto &arr) { return ethernet::Address::fromBytes(arr); });
+    return getPayload<ethernet::ADDR_LEN>(type).transform([](const auto& arr)
+                                                          { return ethernet::Address::fromBytes(arr); });
 }
 
 auto Attributes::getIpV6Address(uint16_t type) const -> std::optional<ip::Address>
 {
-    return getPayload<ip::IPV6_ADDR_LEN>(type).transform([](const auto &arr) { return ip::Address::fromBytes(arr); });
+    return getPayload<ip::IPV6_ADDR_LEN>(type).transform([](const auto& arr) { return ip::Address::fromBytes(arr); });
 }
 
 auto Attributes::getIpV4Address(uint16_t type) const -> std::optional<ip::Address>
 {
-    return getPayload<ip::IPV4_ADDR_LEN>(type).transform([](const auto &arr) { return ip::Address::fromBytes(arr); });
+    return getPayload<ip::IPV4_ADDR_LEN>(type).transform([](const auto& arr) { return ip::Address::fromBytes(arr); });
 }
-} // namespace monkas::monitor
+}  // namespace monkas::monitor

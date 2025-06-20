@@ -1,6 +1,7 @@
 #pragma once
 
 #include <compare>
+
 #include <fmt/ostream.h>
 #include <ip/Address.hpp>
 
@@ -16,7 +17,7 @@ enum class Scope : uint8_t
     Host,
     Nowhere,
 };
-auto operator<<(std::ostream &o, Scope a) -> std::ostream &;
+auto operator<<(std::ostream& o, Scope a) -> std::ostream&;
 
 auto fromRtnlScope(uint8_t rtnlScope) -> Scope;
 
@@ -24,7 +25,11 @@ class Address
 {
   public:
     Address() = default;
-    Address(const ip::Address &address, const ip::Address &broadcast, uint8_t prefixLen, Scope scope, uint32_t flags,
+    Address(const ip::Address& address,
+            const ip::Address& broadcast,
+            uint8_t prefixLen,
+            Scope scope,
+            uint32_t flags,
             uint8_t proto);
     /**
      * @returns true if AddressFamily is not Unspecified
@@ -38,29 +43,30 @@ class Address
     [[nodiscard]] auto isUnspecified() const -> bool;
     [[nodiscard]] auto isMappedV4() const -> bool;
 
-    [[nodiscard]] auto ip() const -> const ip::Address &;
-    [[nodiscard]] auto broadcast() const -> const ip::Address &;
+    [[nodiscard]] auto ip() const -> const ip::Address&;
+    [[nodiscard]] auto broadcast() const -> const ip::Address&;
     [[nodiscard]] auto prefixLength() const -> uint8_t;
     [[nodiscard]] auto scope() const -> Scope;
     [[nodiscard]] auto flags() const -> uint32_t;
     [[nodiscard]] auto proto() const -> uint8_t;
 
-    [[nodiscard]] auto operator<=>(const Address &other) const -> std::strong_ordering;
-    [[nodiscard]] auto operator==(const Address &other) const -> bool = default;
+    [[nodiscard]] auto operator<=>(const Address& other) const -> std::strong_ordering;
+    [[nodiscard]] auto operator==(const Address& other) const -> bool = default;
 
   private:
     ip::Address m_ip;
     ip::Address m_brd;
-    uint8_t m_prefixlen{};
-    Scope m_scope{Scope::Nowhere};
-    uint32_t m_flags{};
-    uint8_t m_prot{0};
+    uint8_t m_prefixlen {};
+    Scope m_scope {Scope::Nowhere};
+    uint32_t m_flags {};
+    uint8_t m_prot {0};
 };
 
-auto operator<<(std::ostream &o, const Address &a) -> std::ostream &;
+auto operator<<(std::ostream& o, const Address& a) -> std::ostream&;
 
-} // namespace monkas::network
+}  // namespace monkas::network
 
-template <> struct fmt::formatter<monkas::network::Address> : fmt::ostream_formatter
+template<>
+struct fmt::formatter<monkas::network::Address> : fmt::ostream_formatter
 {
 };

@@ -9,18 +9,18 @@ using namespace monkas::ip;
 
 TEST_SUITE("[ip::Address]")
 {
-    std::array<uint8_t, 4> bytesAny4{};
-    std::array<uint8_t, 4> bytesV4CountUp{1, 2, 3, 4};
-    std::array<uint8_t, 4> bytesV4CountDown{4, 3, 2, 1};
-    std::array<uint8_t, 4> bytesLocalhost4{127, 0, 0, 1};
-    std::array<uint8_t, 4> bytesLocalhost4OtherSubnet{127, 0, 1, 1};
+    std::array<uint8_t, 4> bytesAny4 {};
+    std::array<uint8_t, 4> bytesV4CountUp {1, 2, 3, 4};
+    std::array<uint8_t, 4> bytesV4CountDown {4, 3, 2, 1};
+    std::array<uint8_t, 4> bytesLocalhost4 {127, 0, 0, 1};
+    std::array<uint8_t, 4> bytesLocalhost4OtherSubnet {127, 0, 1, 1};
 
-    std::array<uint8_t, 16> bytesAny6{};
-    std::array<uint8_t, 16> bytesLocalHost6{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-    std::array<uint8_t, 16> bytesV6CountUp{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    std::array<uint8_t, 16> bytesV6CountDown{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+    std::array<uint8_t, 16> bytesAny6 {};
+    std::array<uint8_t, 16> bytesLocalHost6 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+    std::array<uint8_t, 16> bytesV6CountUp {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    std::array<uint8_t, 16> bytesV6CountDown {16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
 
-    std::array<uint8_t, 16> bytesLocalhostV4mapped{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 127, 0, 0, 1};
+    std::array<uint8_t, 16> bytesLocalhostV4mapped {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 127, 0, 0, 1};
 
     const auto any4 = Address::fromBytes(bytesAny4);
     const auto any6 = Address::fromBytes(bytesAny6);
@@ -32,7 +32,7 @@ TEST_SUITE("[ip::Address]")
     const auto countDownV4 = Address::fromBytes(bytesV4CountDown);
     const auto countUpV6 = Address::fromBytes(bytesV6CountUp);
     const auto countDownV6 = Address::fromBytes(bytesV6CountDown);
-    const auto unspec = Address{};
+    const auto unspec = Address {};
 
     TEST_CASE("toString")
     {
@@ -251,4 +251,4 @@ TEST_SUITE("[ip::Address]")
 }
 
 // NOLINTEND(*)
-} // namespace
+}  // namespace

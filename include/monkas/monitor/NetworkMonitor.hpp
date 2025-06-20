@@ -2,13 +2,14 @@
 
 #include <chrono>
 #include <cstdint>
-#include <ip/Address.hpp>
 #include <map>
 #include <memory>
-#include <monitor/NetworkInterfaceStatusTracker.hpp>
-#include <network/Interface.hpp>
 #include <optional>
 #include <vector>
+
+#include <ip/Address.hpp>
+#include <monitor/NetworkInterfaceStatusTracker.hpp>
+#include <network/Interface.hpp>
 #include <watchable/Watchable.hpp>
 
 // TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what do we want
@@ -79,47 +80,47 @@ using EnumerationDoneWatcherToken = EnumerationDoneNotifier::Token;
 class NetworkMonitor
 {
   public:
-    explicit NetworkMonitor(const RuntimeOptions &options);
+    explicit NetworkMonitor(const RuntimeOptions& options);
     void enumerateInterfaces();
     auto run() -> int;
     void stop();
 
     [[nodiscard]] auto addInterfacesWatcher(
-        const InterfacesWatcher &watcher, InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
+        const InterfacesWatcher& watcher, InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
         -> InterfacesWatcherToken;
-    void removeInterfacesWatcher(const InterfacesWatcherToken &token);
+    void removeInterfacesWatcher(const InterfacesWatcherToken& token);
 
     [[nodiscard]] auto addOperationalStateWatcher(
-        const OperationalStateWatcher &watcher,
+        const OperationalStateWatcher& watcher,
         InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot) -> OperationalStateWatcherToken;
-    void removeOperationalStateWatcher(const OperationalStateWatcherToken &token);
+    void removeOperationalStateWatcher(const OperationalStateWatcherToken& token);
 
     [[nodiscard]] auto addNetworkAddressWatcher(
-        const NetworkAddressWatcher &watcher,
+        const NetworkAddressWatcher& watcher,
         InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot) -> NetworkAddressWatcherToken;
-    void removeNetworkAddressWatcher(const NetworkAddressWatcherToken &token);
+    void removeNetworkAddressWatcher(const NetworkAddressWatcherToken& token);
 
     [[nodiscard]] auto addGatewayAddressWatcher(
-        const GatewayAddressWatcher &watcher,
+        const GatewayAddressWatcher& watcher,
         InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot) -> GatewayAddressWatcherToken;
-    void removeGatewayAddressWatcher(const GatewayAddressWatcherToken &token);
+    void removeGatewayAddressWatcher(const GatewayAddressWatcherToken& token);
 
     [[nodiscard]] auto addMacAddressWatcher(
-        const MacAddressWatcher &watcher, InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
+        const MacAddressWatcher& watcher, InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
         -> MacAddressWatcherToken;
-    void removeMacAddressWatcher(const MacAddressWatcherToken &token);
+    void removeMacAddressWatcher(const MacAddressWatcherToken& token);
 
     [[nodiscard]] auto addBroadcastAddressWatcher(
-        const BroadcastAddressWatcher &watcher,
+        const BroadcastAddressWatcher& watcher,
         InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot) -> BroadcastAddressWatcherToken;
 
-    void removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken &token);
+    void removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken& token);
 
     // enumeration done watcher is called when enumeration is done, or immediately if enumeration is already done
     // the optional return value is used to indicate that enumeration is already done
-    [[nodiscard]] auto addEnumerationDoneWatcher(const EnumerationDoneWatcher &watcher)
+    [[nodiscard]] auto addEnumerationDoneWatcher(const EnumerationDoneWatcher& watcher)
         -> std::optional<EnumerationDoneWatcherToken>;
-    void removeEnumerationDoneWatcher(const EnumerationDoneWatcherToken &token);
+    void removeEnumerationDoneWatcher(const EnumerationDoneWatcherToken& token);
 
   private:
     void receiveAndProcess();
@@ -127,46 +128,37 @@ class NetworkMonitor
     /* @note: only one such request can be in progress until the reply is received */
     void sendDumpRequest(uint16_t msgType);
 
-    auto ensureNameCurrent(uint32_t ifIndex, const std::optional<std::string> &name) -> NetworkInterfaceStatusTracker &;
+    auto ensureNameCurrent(uint32_t ifIndex, const std::optional<std::string>& name) -> NetworkInterfaceStatusTracker&;
 
-    void parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *ifi);
-    void parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg *ifa);
-    void parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm);
+    void parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* ifi);
+    void parseAddressMessage(const nlmsghdr* nlhdr, const ifaddrmsg* ifa);
+    void parseRouteMessage(const nlmsghdr* nlhdr, const rtmsg* rtm);
 
     void printStatsForNerdsIfEnabled();
 
-    auto mnlMessageCallback(const nlmsghdr *n) -> int;
-    static auto dispatchMnMessageCallbackToSelf(const struct nlmsghdr *n, void *self) -> int;
+    auto mnlMessageCallback(const nlmsghdr* n) -> int;
+    static auto dispatchMnMessageCallbackToSelf(const struct nlmsghdr* n, void* self) -> int;
 
-    [[nodiscard]] auto isEnumerating() const -> bool
-    {
-        return m_cacheState != CacheState::WaitingForChanges;
-    }
+    [[nodiscard]] auto isEnumerating() const -> bool { return m_cacheState != CacheState::WaitingForChanges; }
 
-    [[nodiscard]] auto isEnumeratingLinks() const -> bool
-    {
-        return m_cacheState == CacheState::EnumeratingLinks;
-    }
+    [[nodiscard]] auto isEnumeratingLinks() const -> bool { return m_cacheState == CacheState::EnumeratingLinks; }
 
     [[nodiscard]] auto isEnumeratingAddresses() const -> bool
     {
         return m_cacheState == CacheState::EnumeratingAddresses;
     }
 
-    [[nodiscard]] auto isEnumeratingRoutes() const -> bool
-    {
-        return m_cacheState == CacheState::EnumeratingRoutes;
-    }
+    [[nodiscard]] auto isEnumeratingRoutes() const -> bool { return m_cacheState == CacheState::EnumeratingRoutes; }
 
     void notifyChanges();
     void notifyInterfacesSnapshot();
     [[nodiscard]] auto getInterfacesSnapshot() const -> Interfaces;
 
-    std::unique_ptr<mnl_socket, int (*)(mnl_socket *)> m_mnlSocket;
+    std::unique_ptr<mnl_socket, int (*)(mnl_socket*)> m_mnlSocket;
     std::vector<uint8_t> m_buffer;
-    bool m_running{false};
-    uint32_t m_portid{};
-    uint32_t m_sequenceNumber{};
+    bool m_running {false};
+    uint32_t m_portid {};
+    uint32_t m_sequenceNumber {};
 
     std::map<uint32_t, NetworkInterfaceStatusTracker> m_trackers;
 
@@ -176,21 +168,21 @@ class NetworkMonitor
         EnumeratingAddresses,
         EnumeratingRoutes,
         WaitingForChanges
-    } m_cacheState{CacheState::EnumeratingLinks};
+    } m_cacheState {CacheState::EnumeratingLinks};
 
     struct Statistics
     {
         std::chrono::time_point<std::chrono::steady_clock> startTime;
-        uint64_t bytesSent{};
-        uint64_t bytesReceived{};
-        uint64_t packetsSent{};
-        uint64_t packetsReceived{};
-        uint64_t msgsReceived{};
-        uint64_t msgsDiscarded{};
-        uint64_t seenAttributes{};
-        uint64_t addressMessagesSeen{};
-        uint64_t linkMessagesSeen{};
-        uint64_t routeMessagesSeen{};
+        uint64_t bytesSent {};
+        uint64_t bytesReceived {};
+        uint64_t packetsSent {};
+        uint64_t packetsReceived {};
+        uint64_t msgsReceived {};
+        uint64_t msgsDiscarded {};
+        uint64_t seenAttributes {};
+        uint64_t addressMessagesSeen {};
+        uint64_t linkMessagesSeen {};
+        uint64_t routeMessagesSeen {};
     } m_stats;
 
     RuntimeOptions m_runtimeOptions;
@@ -202,4 +194,4 @@ class NetworkMonitor
     BroadcastAddressNotifier m_broadcastAddressNotifier;
     EnumerationDoneNotifier m_enumerationDoneNotifier;
 };
-} // namespace monkas::monitor
+}  // namespace monkas::monitor

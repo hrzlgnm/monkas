@@ -3,8 +3,9 @@
 #include <array>
 #include <compare>
 #include <cstdint>
-#include <fmt/ostream.h>
 #include <iosfwd>
+
+#include <fmt/ostream.h>
 
 namespace monkas::ethernet
 {
@@ -21,20 +22,21 @@ class Address : public std::array<uint8_t, ADDR_LEN>
      */
     explicit operator bool() const;
 
-    static auto fromBytes(const uint8_t *bytes, size_type len) -> Address;
-    static auto fromBytes(const std::array<uint8_t, ADDR_LEN> &bytes) -> Address;
+    static auto fromBytes(const uint8_t* bytes, size_type len) -> Address;
+    static auto fromBytes(const std::array<uint8_t, ADDR_LEN>& bytes) -> Address;
 
-    [[nodiscard]] auto operator<=>(const Address &) const -> std::strong_ordering;
-    [[nodiscard]] auto operator==(const Address &) const -> bool;
+    [[nodiscard]] auto operator<=>(const Address&) const -> std::strong_ordering;
+    [[nodiscard]] auto operator==(const Address&) const -> bool;
 
   private:
-    bool m_isValid{false};
+    bool m_isValid {false};
 };
 
-auto operator<<(std::ostream &o, const Address &a) -> std::ostream &;
+auto operator<<(std::ostream& o, const Address& a) -> std::ostream&;
 
-} // namespace monkas::ethernet
+}  // namespace monkas::ethernet
 
-template <> struct fmt::formatter<monkas::ethernet::Address> : fmt::ostream_formatter
+template<>
+struct fmt::formatter<monkas::ethernet::Address> : fmt::ostream_formatter
 {
 };
