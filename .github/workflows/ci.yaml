@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Check clang-format
+        if: always()
         run: |
           find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format --dry-run --Werror {} +
 
@@ -27,13 +28,8 @@ jobs:
         uses: crate-ci/typos@b1ae8d918b6e85bd611117d3d9a3be4f903ee5e4 # v1.33.1
 
       - name: Gersemi --check --diff
-        shell: bash
+        if: always()
         run: |
-          apt update --yes
-          apt install --yes --no-install-recommends python3-pip python3-venv
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install gersemi
           gersemi --check --diff .
 
   Build-And-Test:

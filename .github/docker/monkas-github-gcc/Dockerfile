@@ -13,6 +13,8 @@ RUN apt-get update && \
     libspdlog-dev \
     libubsan1 \
     ninja-build \
+    python3-pip \
+    && python3 -m pip install --break-system-packages gersemi \
     && rm -rf /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.source="https://github.com/hrzlgnm/monkas"
