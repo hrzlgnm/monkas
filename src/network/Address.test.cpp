@@ -24,13 +24,6 @@ TEST_SUITE("[network::Address]")
     const Address addrV4{someV4, someBcastV4, 24, scope, 10, 1};
     const Address defaultAddress{};
 
-    TEST_CASE("proto")
-    {
-        CHECK(addrV4.proto() == 1);
-        CHECK(addrV6.proto() == 0);
-        CHECK(defaultAddress.proto() == 0);
-    }
-
     TEST_CASE("operator bool")
     {
         CHECK(addrV4);
@@ -97,6 +90,13 @@ TEST_SUITE("[network::Address]")
     {
         CHECK(addrV4.flags() == 10);
         CHECK(defaultAddress.flags() == 0);
+    }
+
+    TEST_CASE("proto")
+    {
+        CHECK(addrV4.proto() == 1);
+        CHECK(addrV6.proto() == 0);
+        CHECK(defaultAddress.proto() == 0);
     }
 
     TEST_CASE("operator ==")
