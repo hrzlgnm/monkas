@@ -33,25 +33,6 @@ class Attributes
     [[nodiscard]] auto getIpV4Address(uint16_t type) const -> std::optional<ip::Address>;
     [[nodiscard]] auto getIpV6Address(uint16_t type) const -> std::optional<ip::Address>;
 
-    template <std::size_t N> [[nodiscard]] auto getPayload(uint16_t type) const -> std::optional<std::array<uint8_t, N>>
-    {
-        if (!has(type))
-        {
-            return std::nullopt;
-        }
-
-        if (mnl_attr_validate2(m_attributes[type], MNL_TYPE_UNSPEC, N) < 0)
-        {
-            spdlog::trace("payload of type {} has len {} != {}", type, mnl_attr_get_payload_len(m_attributes[type]), N);
-            return std::nullopt;
-        }
-
-        const auto *payload = static_cast<const uint8_t *>(mnl_attr_get_payload(m_attributes[type]));
-        std::array<uint8_t, N> arr;
-        std::copy_n(payload, N, arr.data());
-        return arr;
-    }
-
   private:
     explicit Attributes(std::size_t toAlloc);
 
@@ -69,6 +50,25 @@ class Attributes
             return std::nullopt;
         }
         return getter(m_attributes[type]);
+    }
+
+    template <std::size_t N> [[nodiscard]] auto getPayload(uint16_t type) const -> std::optional<std::array<uint8_t, N>>
+    {
+        if (!has(type))
+        {
+            return std::nullopt;
+        }
+
+        if (mnl_attr_validate2(m_attributes[type], MNL_TYPE_UNSPEC, N) < 0)
+        {
+            spdlog::trace("payload of type {} has len {} != {}", type, mnl_attr_get_payload_len(m_attributes[type]), N);
+            return std::nullopt;
+        }
+
+        const auto *payload = static_cast<const uint8_t *>(mnl_attr_get_payload(m_attributes[type]));
+        std::array<uint8_t, N> arr;
+        std::copy_n(payload, N, arr.data());
+        return arr;
     }
 
     struct CallbackArgs
