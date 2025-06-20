@@ -36,6 +36,21 @@ jobs:
           pip install gersemi
           gersemi --check --diff .
 
+  Non-Default-Build-Config:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:e53c157d3aabd78259a3653790e68e839e8033907c224239f9933db647e34868
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Run sccache-action
+        uses: mozilla-actions/sccache-action@7d986dd989559c6ecdb630a3fd2557667be217ad
+
+      - name: Configure
+        run: cmake -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF -S . -B ../build
+
+      - name: Build
+        run: cmake --build ../build
+
   Build-And-Test:
     name: ${{ matrix.toolchain.name }}
     strategy:
