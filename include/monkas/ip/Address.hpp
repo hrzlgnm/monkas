@@ -7,7 +7,6 @@
 #include <fmt/ostream.h>
 #include <iosfwd>
 #include <optional>
-#include <span>
 #include <string>
 
 namespace monkas::ip

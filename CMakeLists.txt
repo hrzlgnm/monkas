@@ -18,8 +18,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include(GNUInstallDirs)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(libmnl REQUIRED IMPORTED_TARGET libmnl)
-pkg_check_modules(gflags REQUIRED IMPORTED_TARGET gflags)
-
 if(NOT TARGET spdlog)
     find_package(spdlog REQUIRED)
 endif()
@@ -30,6 +28,7 @@ if(BUILD_TESTS)
 endif()
 
 if(BUILD_EXAMPLES)
+    pkg_check_modules(gflags REQUIRED IMPORTED_TARGET gflags)
     add_subdirectory(examples)
 endif()
 
