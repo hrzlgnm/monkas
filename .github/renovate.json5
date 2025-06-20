@@ -25,7 +25,7 @@
             ],
             matchStringsStrategy: 'any',
             matchStrings: [
-                'pip\\s+install(\\s+--[\\s])+?\\s+(?<depName>[^\\s]+?)==(?<currentValue>.+?)\\s'
+                'pip\\s+install(\\s+--[\\s]+)+?\\s+(?<depName>[^\\s]+?)==(?<currentValue>.+?)\\s'
             ],
             datasourceTemplate: 'pypi'
         }
