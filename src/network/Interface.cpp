@@ -12,7 +12,7 @@ Interface::Interface(uint32_t index, std::string name)
 
 auto operator<<(std::ostream &os, const Interface &iface) -> std::ostream &
 {
-    return os << iface.index() << ": " << iface.name();
+    return os << iface.index() << ": " << iface.name() << ":";
 }
 
 } // namespace monkas::network
