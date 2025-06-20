@@ -474,14 +474,21 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg 
     uint32_t flags = ifa->ifa_flags; // will be overwritten if IFA_FLAGS is present
     ip::Address address;
     ip::Address broadcast;
+    uint8_t prot = IFAPROT_UNSPEC; // will be overwritten if IFA_PROTO is present
 
     auto &cacheEntry = ensureNameCurrent(ifa->ifa_index, attributes.getString(IFA_LABEL));
-
     const auto flagsOpt = attributes.getU32(IFA_FLAGS);
     if (flagsOpt.has_value())
     {
         flags = flagsOpt.value();
     }
+
+    const auto protoOpt = attributes.getU8(IFA_PROTO);
+    if (protoOpt.has_value())
+    {
+        prot = protoOpt.value();
+    }
+
     const auto broadcastOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(IFA_BROADCAST);
     if (broadcastOpt.has_value())
     {
@@ -497,8 +504,8 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg 
     {
         address = ip::Address::fromBytes(addressOpt->data(), addressOpt->size());
     }
-    const network::Address networkAddress{address, broadcast, ifa->ifa_prefixlen,
-                                          network::fromRtnlScope(ifa->ifa_scope), flags};
+    const network::Address networkAddress{
+        address, broadcast, ifa->ifa_prefixlen, network::fromRtnlScope(ifa->ifa_scope), flags, prot};
     if (nlhdr->nlmsg_type == RTM_NEWADDR)
     {
         cacheEntry.addNetworkAddress(networkAddress);

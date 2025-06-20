@@ -20,8 +20,8 @@ TEST_SUITE("[network::Address]")
     const auto someV4 = ip::Address::fromBytes(some_ipv4);
     const auto someBcastV4 = ip::Address::fromBytes(some_bcast);
     const auto someV6 = ip::Address::fromString("2001:db8::1");
-    const Address addrV6{someV6, someBcastV4, 24, scope, 5};
-    const Address addrV4{someV4, someBcastV4, 24, scope, 10};
+    const Address addrV6{someV6, someBcastV4, 24, scope, 5, 0};
+    const Address addrV4{someV4, someBcastV4, 24, scope, 10, 1};
     const Address defaultAddress{};
 
     TEST_CASE("operator bool")

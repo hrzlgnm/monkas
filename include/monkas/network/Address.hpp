@@ -24,7 +24,8 @@ class Address
 {
   public:
     Address() = default;
-    Address(const ip::Address &address, const ip::Address &broadcast, uint8_t prefixLen, Scope scope, uint32_t flags);
+    Address(const ip::Address &address, const ip::Address &broadcast, uint8_t prefixLen, Scope scope, uint32_t flags,
+            uint8_t proto);
     /**
      * @returns true if AddressFamily is not Unspecified
      */
@@ -42,6 +43,7 @@ class Address
     [[nodiscard]] auto prefixLength() const -> uint8_t;
     [[nodiscard]] auto scope() const -> Scope;
     [[nodiscard]] auto flags() const -> uint32_t;
+    [[nodiscard]] auto proto() const -> uint8_t;
 
     [[nodiscard]] auto operator<=>(const Address &other) const -> std::strong_ordering;
     [[nodiscard]] auto operator==(const Address &other) const -> bool = default;
@@ -52,6 +54,7 @@ class Address
     uint8_t m_prefixlen{};
     Scope m_scope{Scope::Nowhere};
     uint32_t m_flags{};
+    uint8_t m_prot{0};
 };
 
 auto operator<<(std::ostream &o, const Address &a) -> std::ostream &;

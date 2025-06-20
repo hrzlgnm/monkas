@@ -1,3 +1,4 @@
+#include <linux/if_addr.h>
 #include <linux/rtnetlink.h>
 #include <network/Address.hpp>
 #include <ostream>
@@ -6,12 +7,13 @@ namespace monkas::network
 {
 
 Address::Address(const ip::Address &address, const ip::Address &broadcast, uint8_t prefixLen, Scope scope,
-                 uint32_t flags)
+                 uint32_t flags, uint8_t proto)
     : m_ip{address}
     , m_brd{broadcast}
     , m_prefixlen{prefixLen}
     , m_scope{scope}
     , m_flags{flags}
+    , m_prot{proto}
 {
 }
 
@@ -70,6 +72,11 @@ auto Address::flags() const -> uint32_t
     return m_flags;
 }
 
+auto Address::proto() const -> uint8_t
+{
+    return m_prot;
+}
+
 auto Address::operator<=>(const Address &other) const -> std::strong_ordering
 {
     if (auto cmp = m_ip <=> other.m_ip; cmp != 0)
@@ -88,7 +95,11 @@ auto Address::operator<=>(const Address &other) const -> std::strong_ordering
     {
         return cmp;
     }
-    return m_flags <=> other.m_flags;
+    if (auto cmp = m_flags <=> other.m_flags; cmp != 0)
+    {
+        return cmp;
+    }
+    return m_prot <=> other.m_prot;
 }
 
 auto fromRtnlScope(uint8_t rtnlScope) -> Scope
@@ -144,8 +155,26 @@ auto operator<<(std::ostream &o, const Address &a) -> std::ostream &
     // TODO: to readable
     if (a.flags() != 0U)
     {
-        o << " f " << std::hex << a.flags() << std::dec;
+        o << " f 0x" << std::hex << a.flags() << std::dec;
     }
+    switch (a.proto())
+    {
+    case IFAPROT_UNSPEC:
+        break;
+    case IFAPROT_KERNEL_LO:
+        o << " kernel_lo";
+        break;
+    case IFAPROT_KERNEL_RA:
+        o << " kernel_ra";
+        break;
+    case IFAPROT_KERNEL_LL:
+        o << " kernel_ll";
+        break;
+    default:
+        o << " prot unknown: " << static_cast<int>(a.proto());
+        break;
+    }
+
     return o;
 }
 
