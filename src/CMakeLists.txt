@@ -37,7 +37,6 @@ target_sources(
 target_link_libraries(
     ${TARGET_NAME}
     PRIVATE
-        PkgConfig::gflags
         PkgConfig::libmnl
         spdlog::spdlog
 )
