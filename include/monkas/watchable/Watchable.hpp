@@ -6,47 +6,44 @@
 #include <functional>
 #include <iterator>
 #include <list>
-#include <spdlog/spdlog.h>
 #include <utility>
+
+#include <spdlog/spdlog.h>
 
 namespace monkas
 {
 /** NOT thread-safe; only call from one thread */
-template <typename... Args> class Watchable
+template<typename... Args>
+class Watchable
 {
   public:
     Watchable() = default;
     ~Watchable() = default;
-    Watchable(const Watchable &) = delete;
-    auto operator=(const Watchable &) -> Watchable & = delete;
-    auto operator=(Watchable &&) -> Watchable & = delete;
-    Watchable(Watchable &&) = delete;
+    Watchable(const Watchable&) = delete;
+    auto operator=(const Watchable&) -> Watchable& = delete;
+    auto operator=(Watchable&&) -> Watchable& = delete;
+    Watchable(Watchable&&) = delete;
 
     using Watcher = std::function<void(Args...)>;
     using Watchers = std::list<Watcher>;
     using Token = typename Watchers::const_iterator;
 
-    [[nodiscard]] auto addWatcher(const Watcher &watcher) -> Token
+    [[nodiscard]] auto addWatcher(const Watcher& watcher) -> Token
     {
         return m_watchers.insert(m_watchers.end(), watcher);
     }
 
-    void removeWatcher(const Token &token)
+    void removeWatcher(const Token& token)
     {
-        if (!tokenIsValid(token))
-        {
+        if (!tokenIsValid(token)) {
             spdlog::error("Attempted to remove a watcher with an invalid token");
             return;
         }
-        if (m_notifying)
-        {
+        if (m_notifying) {
             spdlog::debug("Attempted to remove a watcher while notifying, will be removed after notifying");
-            if (!toBeRemoved(token))
-            {
+            if (!toBeRemoved(token)) {
                 m_tokensToRemove.push_front(token);
-            }
-            else
-            {
+            } else {
                 spdlog::debug("Watcher with token {} is already marked for removal, skipping",
                               std::distance(m_watchers.cbegin(), token));
             }
@@ -55,62 +52,46 @@ template <typename... Args> class Watchable
         m_watchers.erase(token);
     }
 
-    [[nodiscard]] auto hasWatchers() const -> bool
-    {
-        return !m_watchers.empty();
-    }
+    [[nodiscard]] auto hasWatchers() const -> bool { return !m_watchers.empty(); }
 
     void notify(Args... args)
     {
         {
             struct Guard
             {
-                bool &flag;
+                bool& flag;
 
-                Guard(const Guard &) = delete;
-                Guard(Guard &&) = delete;
-                auto operator=(const Guard &) -> Guard & = delete;
-                auto operator=(Guard &&) -> Guard & = delete;
+                Guard(const Guard&) = delete;
+                Guard(Guard&&) = delete;
+                auto operator=(const Guard&) -> Guard& = delete;
+                auto operator=(Guard&&) -> Guard& = delete;
 
-                explicit Guard(bool &f)
+                explicit Guard(bool& f)
                     : flag(f)
                 {
                     flag = true;
                 }
 
-                ~Guard()
-                {
-                    flag = false;
-                }
+                ~Guard() { flag = false; }
             } guard(m_notifying);
 
-            for (auto itr{std::cbegin(m_watchers)}; itr != std::cend(m_watchers); ++itr)
-            {
-                if (!toBeRemoved(itr))
-                {
-                    try
-                    {
+            for (auto itr {std::cbegin(m_watchers)}; itr != std::cend(m_watchers); ++itr) {
+                if (!toBeRemoved(itr)) {
+                    try {
                         spdlog::trace("Calling watcher with token: {}", std::distance(m_watchers.cbegin(), itr));
                         (*itr)(std::forward<Args>(args)...);
-                    }
-                    catch (const std::exception &e)
-                    {
+                    } catch (const std::exception& e) {
                         spdlog::error("Caught an unexpected exception from watcher: {}", e.what());
-                    }
-                    catch (...)
-                    {
+                    } catch (...) {
                         spdlog::error("Caught an unexpected and unknown exception from watcher");
                     }
-                }
-                else
-                {
+                } else {
                     spdlog::trace("Skipping watcher with token: {} as it is marked for removal",
                                   std::distance(m_watchers.cbegin(), itr));
                 }
             }
         }
-        for (const auto token : m_tokensToRemove)
-        {
+        for (const auto token : m_tokensToRemove) {
             spdlog::trace("Removing watcher with token: {}", std::distance(m_watchers.cbegin(), token));
             removeWatcher(token);
         }
@@ -118,20 +99,20 @@ template <typename... Args> class Watchable
     }
 
   private:
-    auto toBeRemoved(const Token &token) const -> bool
+    auto toBeRemoved(const Token& token) const -> bool
     {
-        return std::find(std::cbegin(m_tokensToRemove), std::cend(m_tokensToRemove), token) !=
-               std::cend(m_tokensToRemove);
+        return std::find(std::cbegin(m_tokensToRemove), std::cend(m_tokensToRemove), token)
+            != std::cend(m_tokensToRemove);
     }
 
-    auto tokenIsValid(const Token &token) const -> bool
+    auto tokenIsValid(const Token& token) const -> bool
     {
-        return token != m_watchers.end() &&
-               std::any_of(m_watchers.cbegin(), m_watchers.cend(), [&](const auto &w) { return &w == &(*token); });
+        return token != m_watchers.end()
+            && std::any_of(m_watchers.cbegin(), m_watchers.cend(), [&](const auto& w) { return &w == &(*token); });
     }
 
     Watchers m_watchers;
     std::forward_list<Token> m_tokensToRemove;
-    bool m_notifying{false};
+    bool m_notifying {false};
 };
-} // namespace monkas
+}  // namespace monkas
