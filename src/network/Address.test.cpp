@@ -22,6 +22,7 @@ TEST_SUITE("[network::Address]")
     const auto someV6 = ip::Address::fromString("2001:db8::1");
     const Address addrV6{someV6, someBcastV4, 24, scope, 5, 0};
     const Address addrV4{someV4, someBcastV4, 24, scope, 10, 1};
+    const Address defaultAddress{};
 
     TEST_CASE("proto")
     {
@@ -29,7 +30,6 @@ TEST_SUITE("[network::Address]")
         CHECK(addrV6.proto() == 0);
         CHECK(defaultAddress.proto() == 0);
     }
-    const Address defaultAddress{};
 
     TEST_CASE("operator bool")
     {
