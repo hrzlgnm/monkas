@@ -35,11 +35,11 @@ jobs:
   Non-Default-Build-Config:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:e53c157d3aabd78259a3653790e68e839e8033907c224239f9933db647e34868
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:0beb294e4c876250329059365a0b76372e8dfd65a360aa96fef4e8b9e0910eb6
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Run sccache-action
-        uses: mozilla-actions/sccache-action@7d986dd989559c6ecdb630a3fd2557667be217ad
+        uses: mozilla-actions/sccache-action@4097539ece2ebbb6fd759bb45e5f0321071ac87d
 
       - name: Configure
         run: cmake -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF -S . -B ../build
@@ -117,7 +117,7 @@ jobs:
             }
     runs-on: ${{ matrix.toolchain.runs_on }}
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:e53c157d3aabd78259a3653790e68e839e8033907c224239f9933db647e34868
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:0beb294e4c876250329059365a0b76372e8dfd65a360aa96fef4e8b9e0910eb6
     env:
       ASAN_OPTIONS: ${{ matrix.toolchain.ASAN_OPTIONS }}
       CMAKE_BUILD_TYPE: ${{ matrix.toolchain.CMAKE_BUILD_TYPE }}
