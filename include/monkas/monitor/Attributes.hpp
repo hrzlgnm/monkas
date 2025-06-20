@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <ethernet/Address.hpp>
+#include <ip/Address.hpp>
 #include <libmnl/libmnl.h>
 #include <optional>
 #include <spdlog/spdlog.h>
@@ -27,6 +29,9 @@ class Attributes
     [[nodiscard]] auto getU16(uint16_t type) const -> std::optional<uint16_t>;
     [[nodiscard]] auto getU32(uint16_t type) const -> std::optional<uint32_t>;
     [[nodiscard]] auto getU64(uint16_t type) const -> std::optional<uint64_t>;
+    [[nodiscard]] auto getEthernetAddress(uint16_t type) const -> std::optional<ethernet::Address>;
+    [[nodiscard]] auto getIpV4Address(uint16_t type) const -> std::optional<ip::Address>;
+    [[nodiscard]] auto getIpV6Address(uint16_t type) const -> std::optional<ip::Address>;
 
     template <std::size_t N> [[nodiscard]] auto getPayload(uint16_t type) const -> std::optional<std::array<uint8_t, N>>
     {
