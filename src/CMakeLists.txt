@@ -42,7 +42,7 @@ target_link_libraries(
 )
 
 if(BUILD_TESTS)
-    add_library(${TARGET_NAME}_tests STATIC)
+    add_library(${TARGET_NAME}_tests OBJECT)
     add_library(${TARGET_NAME}::tests ALIAS ${TARGET_NAME}_tests)
     target_sources(
         ${TARGET_NAME}_tests

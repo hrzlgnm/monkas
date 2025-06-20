@@ -18,7 +18,7 @@ TEST_SUITE("[ethernet::Address]")
 
     TEST_CASE("toString")
     {
-        CHECK(defaultAddress.toString() == "00:00:00:00:00:00");
+        CHECK(defaultAddress.toString() == "Invalid");
         CHECK(nullAddress.toString() == "00:00:00:00:00:00");
         CHECK(someAddress.toString() == "01:02:03:04:05:1a");
     }
@@ -26,24 +26,26 @@ TEST_SUITE("[ethernet::Address]")
     TEST_CASE("operator bool")
     {
         CHECK(!defaultAddress);
-        CHECK(!nullAddress);
+        CHECK(nullAddress);
         CHECK(someAddress);
     }
 
     TEST_CASE("operator ==")
     {
-        CHECK(defaultAddress == nullAddress);
+        CHECK_FALSE(defaultAddress == nullAddress);
         CHECK(someAddress == someAddress);
     }
 
     TEST_CASE("operator !=")
     {
+        CHECK(defaultAddress != nullAddress);
         CHECK(defaultAddress != someAddress);
         CHECK(nullAddress != someAddress);
     }
 
     TEST_CASE("operator <")
     {
+        CHECK(defaultAddress < nullAddress);
         CHECK(defaultAddress < someAddress);
         CHECK(nullAddress < someAddress);
     }
