@@ -72,4 +72,19 @@ auto Attributes::getU64(uint16_t type) const -> std::optional<uint64_t>
     return getTypedAttribute<uint64_t>(type, MNL_TYPE_U64, mnl_attr_get_u64);
 }
 
+auto Attributes::getEthernetAddress(uint16_t type) const -> std::optional<ethernet::Address>
+{
+    return getPayload<ethernet::ADDR_LEN>(type).transform(
+        [](const auto &arr) { return ethernet::Address::fromBytes(arr); });
+}
+
+auto Attributes::getIpV6Address(uint16_t type) const -> std::optional<ip::Address>
+{
+    return getPayload<ip::IPV6_ADDR_LEN>(type).transform([](const auto &arr) { return ip::Address::fromBytes(arr); });
+}
+
+auto Attributes::getIpV4Address(uint16_t type) const -> std::optional<ip::Address>
+{
+    return getPayload<ip::IPV4_ADDR_LEN>(type).transform([](const auto &arr) { return ip::Address::fromBytes(arr); });
+}
 } // namespace monkas::monitor

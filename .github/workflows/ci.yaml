@@ -162,4 +162,4 @@ jobs:
 
       - name: CLI example nerdstats/dumppackets
         run: |
-          ../build/examples/cli/monka --log-level=trace --nerdstats --dumppackets --exit-after-enumeration
+          ../build/examples/cli/monka --log-level=trace --nerdstats --dumppackets --include_non_ieee802 --exit-after-enumeration

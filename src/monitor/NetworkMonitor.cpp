@@ -426,22 +426,20 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr *nlhdr, const ifinfomsg *if
         cacheEntry.setOperationalState(static_cast<OperationalState>(operationalStateOpt.value()));
     }
 
-    const auto macAddressOpt = attributes.getPayload<ethernet::ADDR_LEN>(IFLA_ADDRESS);
+    const auto macAddressOpt = attributes.getEthernetAddress(IFLA_ADDRESS);
     if (macAddressOpt.has_value())
     {
-        const auto mac = ethernet::Address::fromBytes(macAddressOpt->data(), macAddressOpt->size());
-        cacheEntry.setMacAddress(mac);
+        cacheEntry.setMacAddress(macAddressOpt.value());
     }
     else
     {
         spdlog::warn("Interface {}: {} has no MAC address", ifi->ifi_index, cacheEntry.name());
     }
 
-    const auto broadcastAddressOpt = attributes.getPayload<ethernet::ADDR_LEN>(IFLA_BROADCAST);
+    const auto broadcastAddressOpt = attributes.getEthernetAddress(IFLA_BROADCAST);
     if (broadcastAddressOpt.has_value())
     {
-        const auto broadcast = ethernet::Address::fromBytes(broadcastAddressOpt->data(), broadcastAddressOpt->size());
-        cacheEntry.setBroadcastAddress(broadcast);
+        cacheEntry.setBroadcastAddress(broadcastAddressOpt.value());
     }
     else
     {
@@ -482,27 +480,25 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr *nlhdr, const ifaddrmsg 
     {
         flags = flagsOpt.value();
     }
-
     const auto protoOpt = attributes.getU8(IFA_PROTO);
     if (protoOpt.has_value())
     {
         prot = protoOpt.value();
     }
-
-    const auto broadcastOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(IFA_BROADCAST);
-    if (broadcastOpt.has_value())
+    const auto broadcastV4Opt = attributes.getIpV4Address(IFA_BROADCAST);
+    if (broadcastV4Opt.has_value())
     {
-        broadcast = ip::Address::fromBytes(broadcastOpt->data(), broadcastOpt->size());
+        broadcast = broadcastV4Opt.value();
     }
-    const auto localOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(IFA_LOCAL);
-    if (localOpt.has_value())
+    const auto localV4Opt = attributes.getIpV4Address(IFA_LOCAL);
+    if (localV4Opt.has_value())
     {
-        address = ip::Address::fromBytes(localOpt->data(), localOpt->size());
+        address = localV4Opt.value();
     }
-    const auto addressOpt = attributes.getPayload<ip::IPV6_ADDR_LEN>(IFA_ADDRESS);
-    if (addressOpt.has_value())
+    const auto addressV6Opt = attributes.getIpV6Address(IFA_ADDRESS);
+    if (addressV6Opt.has_value())
     {
-        address = ip::Address::fromBytes(addressOpt->data(), addressOpt->size());
+        address = addressV6Opt.value();
     }
     const network::Address networkAddress{
         address, broadcast, ifa->ifa_prefixlen, network::fromRtnlScope(ifa->ifa_scope), flags, prot};
@@ -532,7 +528,7 @@ void NetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
 
     const auto attributes = Attributes::parse(nlhdr, sizeof(*rtm), RTA_MAX, m_stats.seenAttributes);
     auto ifIndexOpt = attributes.getU32(RTA_OIF);
-    auto gatewayOpt = attributes.getPayload<ip::IPV4_ADDR_LEN>(RTA_GATEWAY);
+    auto gatewayV4Opt = attributes.getIpV4Address(RTA_GATEWAY);
 
     if (nlhdr->nlmsg_type == RTM_DELROUTE)
     {
@@ -547,7 +543,7 @@ void NetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
                 }
                 return;
             }
-            if (gatewayOpt.has_value())
+            if (gatewayV4Opt.has_value())
             {
                 auto itr = m_trackers.find(ifIndexOpt.value());
                 if (itr != m_trackers.end())
@@ -559,12 +555,12 @@ void NetworkMonitor::parseRouteMessage(const nlmsghdr *nlhdr, const rtmsg *rtm)
         return;
     }
 
-    if (ifIndexOpt.has_value() && gatewayOpt.has_value())
+    if (ifIndexOpt.has_value() && gatewayV4Opt.has_value())
     {
         const auto itr = m_trackers.find(ifIndexOpt.value());
         if (itr != m_trackers.end())
         {
-            itr->second.setGatewayAddress(ip::Address::fromBytes(gatewayOpt->data(), gatewayOpt->size()));
+            itr->second.setGatewayAddress(gatewayV4Opt.value());
         }
     }
 }
