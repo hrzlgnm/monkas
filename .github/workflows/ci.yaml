@@ -36,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SCCACHE_GHA_ENABLED: true
+      CMAKE_C_COMPILER_LAUNCHER: sccache
+      CMAKE_CXX_COMPILER_LAUNCHER: sccache
     container:
       image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:1c484f72754e77c7b250005e26e468aa1c7c7765487e3f2e9a2fc6edcf19e82d
     steps:
