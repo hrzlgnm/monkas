@@ -1,4 +1,3 @@
-#include "ethernet/Address.hpp"
 #include <libmnl/libmnl.h>
 #include <monitor/Attributes.hpp>
 #include <spdlog/spdlog.h>
