@@ -127,6 +127,7 @@ class NetworkMonitor
 
     /* @note: only one such request can be in progress until the reply is received */
     void sendDumpRequest(uint16_t msgType);
+    void retryLastDumpRequest();
 
     auto ensureNameCurrent(uint32_t ifIndex, const std::optional<std::string>& name) -> NetworkInterfaceStatusTracker&;
 
@@ -155,7 +156,8 @@ class NetworkMonitor
     [[nodiscard]] auto getInterfacesSnapshot() const -> Interfaces;
 
     std::unique_ptr<mnl_socket, int (*)(mnl_socket*)> m_mnlSocket;
-    std::vector<uint8_t> m_buffer;
+    std::vector<uint8_t> m_receiveBuffer;
+    std::vector<uint8_t> m_sendBuffer;
     bool m_running {false};
     uint32_t m_portid {};
     uint32_t m_sequenceNumber {};
