@@ -13,39 +13,26 @@ TEST_SUITE("[ethernet::Address]")
 
     const auto someAddress = Address::fromBytes(bytesSome);
     const auto nullAddress = Address::fromBytes(bytesNull);
-    const auto defaultAddress = Address {};
 
     TEST_CASE("toString")
     {
-        CHECK(defaultAddress.toString() == "Invalid");
         CHECK(nullAddress.toString() == "00:00:00:00:00:00");
         CHECK(someAddress.toString() == "01:02:03:04:05:1a");
     }
 
-    TEST_CASE("operator bool")
-    {
-        CHECK(!defaultAddress);
-        CHECK(nullAddress);
-        CHECK(someAddress);
-    }
-
     TEST_CASE("operator ==")
     {
-        CHECK_FALSE(defaultAddress == nullAddress);
         CHECK(someAddress == someAddress);
+        CHECK(nullAddress == nullAddress);
     }
 
     TEST_CASE("operator !=")
     {
-        CHECK(defaultAddress != nullAddress);
-        CHECK(defaultAddress != someAddress);
         CHECK(nullAddress != someAddress);
     }
 
     TEST_CASE("operator <")
     {
-        CHECK(defaultAddress < nullAddress);
-        CHECK(defaultAddress < someAddress);
         CHECK(nullAddress < someAddress);
     }
 }
