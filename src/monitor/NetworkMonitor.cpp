@@ -1,3 +1,4 @@
+#include <cerrno>
 #include <cstddef>
 
 #include <fmt/std.h>
@@ -39,7 +40,8 @@ auto toRtnlGroupFlag(rtnetlink_groups group) -> unsigned
     return (1U << (group - 1U));
 }
 
-inline constexpr size_t SOCKET_BUFFER_SIZE = static_cast<const size_t>(32U * 1024U);
+inline constexpr size_t RECEIVE_SOCKET_BUFFER_SIZE = static_cast<const size_t>(32U * 1024U);
+inline constexpr size_t SEND_SOCKET_BUFFER_SIZE = static_cast<const size_t>(4U * 1024U);
 
 auto ensureMnlSocket(bool nonBlocking) -> mnl_socket*
 {
@@ -54,7 +56,8 @@ auto ensureMnlSocket(bool nonBlocking) -> mnl_socket*
 NetworkMonitor::NetworkMonitor(const RuntimeOptions& options)
     : m_mnlSocket {ensureMnlSocket(options.test(NonBlocking)), mnl_socket_close}
     , m_portid {mnl_socket_get_portid(m_mnlSocket.get())}
-    , m_buffer(SOCKET_BUFFER_SIZE)
+    , m_receiveBuffer(RECEIVE_SOCKET_BUFFER_SIZE)
+    , m_sendBuffer(SEND_SOCKET_BUFFER_SIZE)
     , m_runtimeOptions(options)
 {
     m_stats.startTime = std::chrono::steady_clock::now();
@@ -235,7 +238,7 @@ void NetworkMonitor::receiveAndProcess()
         return;
     }
     spdlog::trace("Receiving messages from mnl socket");
-    auto receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), m_buffer.data(), m_buffer.size());
+    auto receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), m_receiveBuffer.data(), m_receiveBuffer.size());
     spdlog::trace("Received {} bytes", receiveResult);
     while (receiveResult > 0) {
         m_stats.packetsReceived++;
@@ -243,13 +246,24 @@ void NetworkMonitor::receiveAndProcess()
         if (m_runtimeOptions.test(RuntimeFlag::DumpPackets)) {
             std::ignore = fflush(stderr);
             std::ignore = fflush(stdout);
-            mnl_nlmsg_fprintf(stdout, m_buffer.data(), receiveResult, 0);
+            mnl_nlmsg_fprintf(stdout, m_receiveBuffer.data(), receiveResult, 0);
         }
         const auto seqNo = isEnumerating() ? m_sequenceNumber : 0;
-        const auto callbackResult = mnl_cb_run(
-            m_buffer.data(), receiveResult, seqNo, m_portid, &NetworkMonitor::dispatchMnMessageCallbackToSelf, this);
+        const auto callbackResult = mnl_cb_run(m_receiveBuffer.data(),
+                                               receiveResult,
+                                               seqNo,
+                                               m_portid,
+                                               &NetworkMonitor::dispatchMnMessageCallbackToSelf,
+                                               this);
         if (callbackResult == MNL_CB_ERROR) {
-            pwarn("mnl_cb_run");
+            if (errno == EPROTO) {
+                if (isEnumerating()) {
+                    spdlog::debug("Received EPROTO while enumerating, retrying");
+                    retryLastDumpRequest();
+                } else {
+                    pwarn("mnl_cb_run");
+                }
+            }
             break;
         }
         if (callbackResult == MNL_CB_STOP) {
@@ -283,7 +297,7 @@ void NetworkMonitor::receiveAndProcess()
         notifyChanges();
         // someone may call stop() while we are notifying watchers
         if (m_mnlSocket) {
-            receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), m_buffer.data(), m_buffer.size());
+            receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), m_receiveBuffer.data(), m_receiveBuffer.size());
         }
     }
 }
@@ -292,7 +306,7 @@ void NetworkMonitor::receiveAndProcess()
 
 void NetworkMonitor::sendDumpRequest(uint16_t msgType)
 {
-    nlmsghdr* nlh = mnl_nlmsg_put_header(m_buffer.data());
+    nlmsghdr* nlh = mnl_nlmsg_put_header(m_sendBuffer.data());
     nlh->nlmsg_type = msgType;
     nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
     nlh->nlmsg_seq = ++m_sequenceNumber;
@@ -300,6 +314,18 @@ void NetworkMonitor::sendDumpRequest(uint16_t msgType)
     gen->rtgen_family = AF_UNSPEC;
     mnl_attr_put_u32(nlh, IFLA_EXT_MASK, RTEXT_FILTER_SKIP_STATS);
     auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
+    if (ret < 0) {
+        pfatal("mnl_socket_sendto");
+    }
+    m_stats.packetsSent++;
+    m_stats.bytesSent += ret;
+}
+
+void NetworkMonitor::retryLastDumpRequest()
+{
+    spdlog::debug("Retrying last dump request with sequence number {}", m_sequenceNumber);
+    const auto* nlh = std::bit_cast<const nlmsghdr*>(m_sendBuffer.data());
+    const auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0) {
         pfatal("mnl_socket_sendto");
     }
