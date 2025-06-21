@@ -310,12 +310,8 @@ auto operator<<(std::ostream& o, const DirtyFlags& d) -> std::ostream&
 auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std::ostream&
 {
     o << s.name();
-    if (s.m_macAddress) {
-        o << " mac " << s.m_macAddress;
-    }
-    if (s.m_broadcastAddress) {
-        o << " brd " << s.m_broadcastAddress;
-    }
+    o << " mac " << s.m_macAddress;
+    o << " brd " << s.m_broadcastAddress;
     if (!s.m_networkAddresses.empty()) {
         o << " [";
         bool first = true;

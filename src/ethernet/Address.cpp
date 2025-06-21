@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cstdio>
 #include <ostream>
 
 #include <ethernet/Address.hpp>
@@ -19,7 +18,6 @@ auto Address::fromBytes(const uint8_t* bytes, size_type len) -> Address
     }
     Address r;
     std::copy_n(bytes, len, r.begin());
-    r.m_isValid = true;
     return r;
 }
 
@@ -30,9 +28,6 @@ auto Address::fromBytes(const std::array<uint8_t, ADDR_LEN>& bytes) -> Address
 
 auto Address::toString() const -> std::string
 {
-    if (!m_isValid) {
-        return {"Invalid"};
-    }
     constexpr auto LEN = 17;  // 6*2 hex digits + 5 colons
     std::array<char, LEN> buf {};
     int idx = 0;
@@ -48,33 +43,6 @@ auto Address::toString() const -> std::string
         i++;
     }
     return {buf.data(), buf.size()};
-}
-
-Address::operator bool() const
-{
-    return m_isValid;
-}
-
-auto Address::operator<=>(const Address& other) const -> std::strong_ordering
-{
-    if (!m_isValid && !other.m_isValid) {
-        return std::strong_ordering::equal;
-    }
-    if (!m_isValid) {
-        return std::strong_ordering::less;
-    }
-    if (!other.m_isValid) {
-        return std::strong_ordering::greater;
-    }
-    return std::lexicographical_compare_three_way(begin(), end(), other.begin(), other.end());
-}
-
-auto Address::operator==(const Address& other) const -> bool
-{
-    if (!m_isValid || !other.m_isValid) {
-        return false;
-    }
-    return std::equal(begin(), end(), other.begin());
 }
 
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
