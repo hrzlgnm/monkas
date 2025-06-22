@@ -54,7 +54,8 @@ jobs:
   Build-And-Test:
     name: ${{ matrix.toolchain.name }}
     permissions:
-      pull-requests: write # to be able to annotate junit results to pr
+      pull-requests: write # retain for PR operations
+      checks: write        # required for action-junit-report annotations
     strategy:
       fail-fast: false
       matrix:
