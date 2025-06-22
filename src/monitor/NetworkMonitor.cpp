@@ -382,6 +382,7 @@ auto NetworkMonitor::ensureNameCurrent(uint32_t ifIndex, const std::optional<std
 
 void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* ifi)
 {
+    spdlog::trace("Parsing link message for interface index {}", ifi->ifi_index);
     m_stats.linkMessagesSeen++;
     const auto attributes = Attributes::parse(nlhdr, sizeof(*ifi), IFLA_MAX, m_stats.seenAttributes);
     const auto itfName = attributes.getString(IFLA_IFNAME);
@@ -425,6 +426,7 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
 
 void NetworkMonitor::parseAddressMessage(const nlmsghdr* nlhdr, const ifaddrmsg* ifa)
 {
+    spdlog::trace("Parsing address message for interface index {}", ifa->ifa_index);
     m_stats.addressMessagesSeen++;
     if (m_trackers.find(ifa->ifa_index) == m_trackers.cend()) {
         m_stats.msgsDiscarded++;
@@ -479,6 +481,7 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr* nlhdr, const ifaddrmsg*
 
 void NetworkMonitor::parseRouteMessage(const nlmsghdr* nlhdr, const rtmsg* rtm)
 {
+    spdlog::trace("Parsing route message");
     m_stats.routeMessagesSeen++;
     if (rtm->rtm_family != AF_INET) {
         m_stats.msgsDiscarded++;
