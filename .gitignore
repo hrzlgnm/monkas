@@ -22,3 +22,6 @@ build*/
 # IDE configuration
 .vscode/*
 
+
+# test results 
+junit.xml
