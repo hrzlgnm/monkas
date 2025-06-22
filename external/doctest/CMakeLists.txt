@@ -30,7 +30,7 @@ target_compile_features(doctest_exe PRIVATE cxx_std_20)
 add_test(
     NAME doctest
     COMMAND
-        $<TARGET_FILE:doctest_exe> --no-version --reporters=junit --no-breaks --no-colors --out=junit.xml
+        $<TARGET_FILE:doctest_exe> --reporters=junit --out=junit.xml
 )
 
 # HACK(hrzgnm): disable analyzer checks on doctest targets
