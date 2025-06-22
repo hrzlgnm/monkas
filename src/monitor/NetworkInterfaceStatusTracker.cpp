@@ -24,8 +24,6 @@ void logTrace(const T& t, NetworkInterfaceStatusTracker* that, const std::string
 
 NetworkInterfaceStatusTracker::NetworkInterfaceStatusTracker()
     : m_lastChanged(std::chrono::steady_clock::now())
-    , m_macAddress {}
-    , m_broadcastAddress {}
 {
 }
 
