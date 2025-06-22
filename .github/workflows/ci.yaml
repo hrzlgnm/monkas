@@ -55,7 +55,7 @@ jobs:
     name: ${{ matrix.toolchain.name }}
     permissions:
       pull-requests: write # retain for PR operations
-      checks: write        # required for action-junit-report annotations
+      checks: write # required for action-junit-report annotations
     strategy:
       fail-fast: false
       matrix:
@@ -175,3 +175,4 @@ jobs:
           fail_on_parse_error: true
           require_tests: true
           include_passed: true
+          check_name: "${{ matrix.toolchain.name }} JUnit Report"
