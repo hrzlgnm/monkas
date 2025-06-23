@@ -26,6 +26,9 @@ auto operator<<(std::ostream& o, Family a) -> std::ostream&;
 constexpr auto IPV6_ADDR_LEN = 16;
 constexpr auto IPV4_ADDR_LEN = 4;
 
+using IpV4Bytes = std::array<uint8_t, IPV4_ADDR_LEN>;
+using IpV6Bytes = std::array<uint8_t, IPV6_ADDR_LEN>;
+
 class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
 {
   public:
@@ -68,9 +71,8 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     [[nodiscard]] auto family() const -> Family;
     [[nodiscard]] auto addressLength() const -> size_type;
 
-    static auto fromBytes(const uint8_t* bytes, size_type len) -> Address;
-    static auto fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN>& bytes) -> Address;
-    static auto fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN>& bytes) -> Address;
+    static auto fromBytes(const IpV4Bytes& bytes) -> Address;
+    static auto fromBytes(const IpV6Bytes& bytes) -> Address;
 
     // overload the one from std::array<uint8_t, IPV6_ADDR_LEN>
     [[nodiscard]] auto operator<=>(const Address& rhs) const noexcept -> std::strong_ordering;
@@ -78,6 +80,7 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     [[nodiscard]] auto operator==(const Address& rhs) const noexcept -> bool;
 
   private:
+    static auto fromBytes(const uint8_t* bytes, size_type len) -> Address;
     [[nodiscard]] auto ipv4() const -> uint32_t;
 
     Family m_family {Family::Unspecified};

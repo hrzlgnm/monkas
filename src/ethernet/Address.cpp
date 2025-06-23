@@ -13,15 +13,12 @@ Address::Address()
 
 auto Address::fromBytes(const uint8_t* bytes, size_type len) -> Address
 {
-    if (bytes == nullptr || len != ADDR_LEN) {
-        return {};
-    }
     Address r;
     std::copy_n(bytes, len, r.begin());
     return r;
 }
 
-auto Address::fromBytes(const std::array<uint8_t, ADDR_LEN>& bytes) -> Address
+auto Address::fromBytes(const EthernetBytes& bytes) -> Address
 {
     return fromBytes(bytes.data(), bytes.size());
 }
