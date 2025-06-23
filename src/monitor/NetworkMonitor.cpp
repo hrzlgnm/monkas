@@ -384,7 +384,8 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
 {
     spdlog::trace("Parsing link message for interface index {}", ifi->ifi_index);
     m_stats.linkMessagesSeen++;
-    const auto attributes = Attributes::parse(nlhdr, sizeof(*ifi), IFLA_MAX, m_stats.seenAttributes);
+    const auto attributes =
+        Attributes::parse(nlhdr, sizeof(*ifi), IFLA_MAX, m_stats.seenAttributes, m_stats.unknownAttributes);
     const auto itfName = attributes.getString(IFLA_IFNAME);
     if (ifi->ifi_type != ARPHRD_ETHER && ifi->ifi_type != ARPHRD_IEEE80211) {
         if (!m_runtimeOptions.test(RuntimeFlag::IncludeNonIeee802)) {
@@ -442,7 +443,8 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr* nlhdr, const ifaddrmsg*
         return;
     }
 
-    const auto attributes = Attributes::parse(nlhdr, sizeof(*ifa), IFA_MAX, m_stats.seenAttributes);
+    const auto attributes =
+        Attributes::parse(nlhdr, sizeof(*ifa), IFA_MAX, m_stats.seenAttributes, m_stats.unknownAttributes);
 
     uint32_t flags = ifa->ifa_flags;  // will be overwritten if IFA_FLAGS is present
     ip::Address address;
@@ -492,7 +494,8 @@ void NetworkMonitor::parseRouteMessage(const nlmsghdr* nlhdr, const rtmsg* rtm)
         return;
     }
 
-    const auto attributes = Attributes::parse(nlhdr, sizeof(*rtm), RTA_MAX, m_stats.seenAttributes);
+    const auto attributes =
+        Attributes::parse(nlhdr, sizeof(*rtm), RTA_MAX, m_stats.seenAttributes, m_stats.unknownAttributes);
     auto ifIndexOpt = attributes.getU32(RTA_OIF);
     auto gatewayV4Opt = attributes.getIpV4Address(RTA_GATEWAY);
 
@@ -528,7 +531,7 @@ void NetworkMonitor::printStatsForNerdsIfEnabled()
     if (isEnumerating() || !m_runtimeOptions.test(RuntimeFlag::StatsForNerds)) {
         return;
     }
-    spdlog::info("--------------- Stats for nerds -----------------");
+    spdlog::info("{:=^48}", "Stats for nerds");
     spdlog::info(
         "uptime    {}ms",
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_stats.startTime)
@@ -539,15 +542,17 @@ void NetworkMonitor::printStatsForNerdsIfEnabled()
     spdlog::info("discarded {} rtnl messages", m_stats.msgsDiscarded);
     spdlog::info("* seen");
     spdlog::info("          {} attribute entries", m_stats.seenAttributes);
+    spdlog::info("          {} attributes unknown", m_stats.unknownAttributes);
     spdlog::info("          {} link messages", m_stats.linkMessagesSeen);
     spdlog::info("          {} address messages", m_stats.addressMessagesSeen);
     spdlog::info("          {} route messages", m_stats.routeMessagesSeen);
 
-    spdlog::info("----------- Interface details in cache ----------");
+    spdlog::info("{:=^48}", "Interface details in cache");
     for (const auto& c : m_trackers) {
         spdlog::info(c.second);
+        c.second.logNerdstats();
     }
-    spdlog::info("-------------------------------------------------");
+    spdlog::info("{:=^48}", "=");
 }
 
 auto NetworkMonitor::dispatchMnMessageCallbackToSelf(const nlmsghdr* n, void* self) -> int

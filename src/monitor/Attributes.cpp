@@ -1,3 +1,5 @@
+#include <cstdint>
+
 #include <libmnl/libmnl.h>
 #include <monitor/Attributes.hpp>
 #include <spdlog/spdlog.h>
@@ -6,10 +8,11 @@
 namespace monkas::monitor
 {
 
-auto Attributes::parse(const nlmsghdr* n, size_t offset, uint16_t maxType, u_int64_t& counter) -> Attributes
+auto Attributes::parse(
+    const nlmsghdr* n, size_t offset, uint16_t maxType, uint64_t& seenCounter, uint64_t& unknownCounter) -> Attributes
 {
     Attributes attributes {maxType + 1U};
-    CallbackArgs arg {.attrs = &attributes, .counter = &counter};
+    CallbackArgs arg {.attrs = &attributes, .seenCounter = &seenCounter, .unknownCounter = &unknownCounter};
     mnl_attr_parse(n, offset, &Attributes::dispatchMnlAttributeCallback, &arg);
     return attributes;
 }
@@ -19,13 +22,14 @@ Attributes::Attributes(std::size_t toAlloc)
 {
 }
 
-void Attributes::parseAttribute(const nlattr* a, uint64_t& counter)
+void Attributes::parseAttribute(const nlattr* a, uint64_t& seenCounter, uint64_t& unknownCounter)
 {
     const auto type = mnl_attr_get_type(a);
     if (mnl_attr_type_valid(a, m_attributes.size() - 1) > 0) {
-        counter++;
+        seenCounter++;
         m_attributes[type] = a;
     } else {
+        unknownCounter++;
         spdlog::warn("ignoring unexpected nlattr type {}", type);
     }
 }
@@ -33,7 +37,7 @@ void Attributes::parseAttribute(const nlattr* a, uint64_t& counter)
 auto Attributes::dispatchMnlAttributeCallback(const nlattr* attr, void* args) -> int
 {
     auto* cb = static_cast<CallbackArgs*>(args);
-    cb->attrs->parseAttribute(attr, *cb->counter);
+    cb->attrs->parseAttribute(attr, *cb->seenCounter, *cb->unknownCounter);
     return MNL_CB_OK;
 }
 

@@ -182,6 +182,7 @@ class NetworkMonitor
         uint64_t msgsReceived {};
         uint64_t msgsDiscarded {};
         uint64_t seenAttributes {};
+        uint64_t unknownAttributes {};
         uint64_t addressMessagesSeen {};
         uint64_t linkMessagesSeen {};
         uint64_t routeMessagesSeen {};
