@@ -245,12 +245,12 @@ auto Address::fromBytes(const uint8_t* bytes, size_type len) -> Address
     return {};
 }
 
-auto Address::fromBytes(const std::array<uint8_t, IPV4_ADDR_LEN>& bytes) -> Address
+auto Address::fromBytes(const IpV4Bytes& bytes) -> Address
 {
     return fromBytes(bytes.data(), bytes.size());
 }
 
-auto Address::fromBytes(const std::array<uint8_t, IPV6_ADDR_LEN>& bytes) -> Address
+auto Address::fromBytes(const IpV6Bytes& bytes) -> Address
 {
     return fromBytes(bytes.data(), bytes.size());
 }
