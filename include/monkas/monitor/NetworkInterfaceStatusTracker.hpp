@@ -16,7 +16,6 @@ namespace monkas::monitor
 using Duration = std::chrono::duration<int64_t, std::milli>;
 using Addresses = std::set<network::Address>;
 
-// TODO: stats for nerds per interface descriptor
 class NetworkInterfaceStatusTracker
 {
   public:
@@ -83,6 +82,8 @@ class NetworkInterfaceStatusTracker
     [[nodiscard]] auto dirtyFlags() const -> DirtyFlags;
     void clearFlag(DirtyFlag flag);
 
+    void logNerdstats() const;
+
   private:
     void touch(DirtyFlag flag);
 
@@ -96,6 +97,23 @@ class NetworkInterfaceStatusTracker
     ip::Address m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
     DirtyFlags m_dirtyFlags;
+
+    // mutable for tracking const getters
+    mutable struct Nerdstats
+    {
+        uint64_t nameChanges {0};
+        uint64_t operationalStateChanges {0};
+        uint64_t macAddressChanges {0};
+        uint64_t broadcastAddressChanges {0};
+        uint64_t gatewayAddressChanges {0};
+        uint64_t gatewayAddressClears {0};
+        uint64_t networkAddressesNoChangeUpdates {0};
+        uint64_t networkAddressesAdded {0};
+        uint64_t networkAddressesRemoved {0};
+        uint64_t dirtyFlagChanges {0};
+        uint64_t dirtyFlagChecks {0};
+        uint64_t dirtyFlagClears {0};
+    } m_nerdstats;
 };
 
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;

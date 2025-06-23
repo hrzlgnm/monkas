@@ -16,7 +16,11 @@ namespace monkas::monitor
 class Attributes
 {
   public:
-    static auto parse(const nlmsghdr* n, size_t offset, uint16_t maxType, uint64_t& counter) -> Attributes;
+    static auto parse(const nlmsghdr* n,
+                      size_t offset,
+                      uint16_t maxType,
+                      uint64_t& seenCounter,
+                      uint64_t& unknownCounter) -> Attributes;
 
     ~Attributes() = default;
     Attributes(const Attributes&) = default;
@@ -72,10 +76,11 @@ class Attributes
     struct CallbackArgs
     {
         Attributes* attrs;
-        uint64_t* counter;
+        uint64_t* seenCounter;
+        uint64_t* unknownCounter;
     };
 
-    void parseAttribute(const nlattr* a, uint64_t& counter);
+    void parseAttribute(const nlattr* a, uint64_t& seenCounter, uint64_t& unknownCounter);
     static auto dispatchMnlAttributeCallback(const nlattr* attr, void* args) -> int;
 
     std::vector<const nlattr*> m_attributes;

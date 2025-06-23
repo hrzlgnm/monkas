@@ -43,6 +43,7 @@ void NetworkInterfaceStatusTracker::touch(DirtyFlag flag)
     if (!m_dirtyFlags.test(idx)) {
         m_lastChanged = std::chrono::steady_clock::now();
         m_dirtyFlags.set(idx);
+        m_nerdstats.dirtyFlagChanges++;
         logTrace(flag, this, "dirty flag set");
     } else {
         logTrace(flag, this, "dirty flag already set");
@@ -60,6 +61,7 @@ void NetworkInterfaceStatusTracker::setName(const std::string& name)
         m_name = name;
         touch(DirtyFlag::NameChanged);
         logTrace(name, this, "name changed to");
+        m_nerdstats.nameChanges++;
     }
 }
 
@@ -75,6 +77,7 @@ void NetworkInterfaceStatusTracker::setOperationalState(OperationalState opersta
         m_operState = operstate;
         touch(DirtyFlag::OperationalStateChanged);
         logTrace(operstate, this, "operational state changed to");
+        m_nerdstats.operationalStateChanges++;
     }
 }
 
@@ -94,6 +97,7 @@ void NetworkInterfaceStatusTracker::setMacAddress(const ethernet::Address& addre
         m_macAddress = address;
         touch(DirtyFlag::MacAddressChanged);
         logTrace(address, this, "mac address changed to");
+        m_nerdstats.macAddressChanges++;
     }
 }
 
@@ -103,6 +107,7 @@ void NetworkInterfaceStatusTracker::setBroadcastAddress(const ethernet::Address&
         m_broadcastAddress = address;
         touch(DirtyFlag::BroadcastAddressChanged);
         logTrace(address, this, "broadcast address changed to");
+        m_nerdstats.broadcastAddressChanges++;
     }
 }
 
@@ -117,6 +122,7 @@ void NetworkInterfaceStatusTracker::setGatewayAddress(const ip::Address& gateway
         m_gateway = gateway;
         touch(DirtyFlag::GatewayAddressChanged);
         logTrace(gateway, this, "gateway address changed to");
+        m_nerdstats.gatewayAddressChanges++;
     }
 }
 
@@ -126,6 +132,7 @@ void NetworkInterfaceStatusTracker::clearGatewayAddress(GatewayClearReason r)
         m_gateway = ip::Address();
         touch(DirtyFlag::GatewayAddressChanged);
         logTrace(r, this, "gateway cleared due to");
+        m_nerdstats.gatewayAddressClears++;
     }
 }
 
@@ -142,10 +149,12 @@ void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address& ad
             m_networkAddresses.insert(address);
             touch(DirtyFlag::NetworkAddressesChanged);
             logTrace(address, this, "address added");
+            m_nerdstats.networkAddressesAdded++;
         } else {
             // No material change – keep ordering stable, skip dirty-flag spam
             m_networkAddresses.insert(address);
             logTrace(address, this, "address unchanged");
+            m_nerdstats.networkAddressesNoChangeUpdates++;
         }
     }
 }
@@ -153,6 +162,7 @@ void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address& ad
 void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::Address& address)
 {
     auto res = m_networkAddresses.erase(address);
+    m_nerdstats.networkAddressesRemoved += res;
     if (res > 0) {
         logTrace(address, this, "address removed");
         touch(DirtyFlag::NetworkAddressesChanged);
@@ -175,6 +185,7 @@ auto NetworkInterfaceStatusTracker::age() const -> Duration
 
 auto NetworkInterfaceStatusTracker::isDirty() const -> bool
 {
+    m_nerdstats.dirtyFlagChecks++;
     return m_dirtyFlags.any();
 }
 
@@ -185,6 +196,7 @@ auto NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const -> bool
         spdlog::error("Invalid dirty flag index: {}, returning false", idx);
         return false;
     }
+    m_nerdstats.dirtyFlagChecks++;
     return m_dirtyFlags.test(idx);
 }
 
@@ -203,10 +215,29 @@ void NetworkInterfaceStatusTracker::clearFlag(DirtyFlag flag)
     }
     if (m_dirtyFlags.test(idx)) {
         m_dirtyFlags.reset(idx);
+        m_nerdstats.dirtyFlagClears++;
         logTrace(flag, this, "dirty flag cleared");
     } else {
         logTrace(flag, this, "dirty flag already cleared");
     }
+}
+
+void NetworkInterfaceStatusTracker::logNerdstats() const
+{
+    spdlog::info("{:-^38}", m_name);
+    spdlog::info("name changes                         {}", m_nerdstats.nameChanges);
+    spdlog::info("operationalState changes             {}", m_nerdstats.operationalStateChanges);
+    spdlog::info("macAddress changes                   {}", m_nerdstats.macAddressChanges);
+    spdlog::info("broadcastAddress changes             {}", m_nerdstats.broadcastAddressChanges);
+    spdlog::info("gatewayAddress changes               {}", m_nerdstats.gatewayAddressChanges);
+    spdlog::info("gatewayAddress clears                {}", m_nerdstats.gatewayAddressClears);
+    spdlog::info("networkAddresses no change updates   {}", m_nerdstats.networkAddressesNoChangeUpdates);
+    spdlog::info("networkAddresses added               {}", m_nerdstats.networkAddressesAdded);
+    spdlog::info("networkAddresses removed             {}", m_nerdstats.networkAddressesRemoved);
+    spdlog::info("dirtyFlag changes                    {}", m_nerdstats.dirtyFlagChanges);
+    spdlog::info("dirtyFlag checks                     {}", m_nerdstats.dirtyFlagChecks);
+    spdlog::info("dirtyFlag clears                     {}", m_nerdstats.dirtyFlagClears);
+    spdlog::info("{:-^38}", "-");
 }
 
 namespace
@@ -231,6 +262,27 @@ auto toString(NetworkInterfaceStatusTracker::OperationalState o) -> std::string
         default:
             return "Unknown";
     }
+}
+
+auto dirtyFlagsToString(const DirtyFlags& flags) -> std::string
+{
+    if (flags.none()) {
+        return "None";
+    }
+
+    std::ostringstream result;
+    bool empty = true;
+    for (size_t pos = flags._Find_first(); pos < flags.size(); pos = flags._Find_next(pos)) {
+        if (flags.test(pos)) {
+            if (!empty) {
+                result << "|";
+            }
+            result << static_cast<DirtyFlag>(pos);
+            empty = false;
+        }
+    }
+
+    return result.str();
 }
 }  // namespace
 
@@ -276,30 +328,6 @@ auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&
     }
 }
 
-namespace
-{
-auto dirtyFlagsToString(const DirtyFlags& flags) -> std::string
-{
-    if (flags.none()) {
-        return "None";
-    }
-
-    std::ostringstream result;
-    bool empty = true;
-    for (size_t pos = flags._Find_first(); pos < flags.size(); pos = flags._Find_next(pos)) {
-        if (flags.test(pos)) {
-            if (!empty) {
-                result << "|";
-            }
-            result << static_cast<DirtyFlag>(pos);
-            empty = false;
-        }
-    }
-
-    return result.str();
-}
-}  // namespace
-
 auto operator<<(std::ostream& o, const DirtyFlags& d) -> std::ostream&
 {
     return o << dirtyFlagsToString(d);
@@ -330,4 +358,5 @@ auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std:
     o << " dirty " << dirtyFlagsToString(s.dirtyFlags());
     return o;
 }
+
 }  // namespace monkas::monitor
