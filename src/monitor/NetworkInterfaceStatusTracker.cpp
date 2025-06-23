@@ -34,8 +34,7 @@ auto NetworkInterfaceStatusTracker::hasName() const -> bool
 
 void NetworkInterfaceStatusTracker::touch(DirtyFlag flag)
 {
-    // TODO: use std::to_underlying with c++23
-    const auto idx = fmt::underlying(flag);
+    const auto idx = std::to_underlying(flag);
     if (idx >= m_dirtyFlags.size()) {
         spdlog::error("Invalid dirty flag index: {}", idx);
         return;
@@ -191,7 +190,7 @@ auto NetworkInterfaceStatusTracker::isDirty() const -> bool
 
 auto NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const -> bool
 {
-    const auto idx = fmt::underlying(flag);
+    const auto idx = std::to_underlying(flag);
     if (idx >= m_dirtyFlags.size()) {
         spdlog::error("Invalid dirty flag index: {}, returning false", idx);
         return false;
@@ -207,8 +206,7 @@ auto NetworkInterfaceStatusTracker::dirtyFlags() const -> DirtyFlags
 
 void NetworkInterfaceStatusTracker::clearFlag(DirtyFlag flag)
 {
-    // TODO: use std::to_underlying with c++23
-    const auto idx = fmt::underlying(flag);
+    const auto idx = std::to_underlying(flag);
     if (idx >= m_dirtyFlags.size()) {
         spdlog::error("Invalid dirty flag index: {}", idx);
         return;
