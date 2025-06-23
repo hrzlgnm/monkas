@@ -32,7 +32,7 @@ TEST_SUITE("[ip::Address]")
     const auto countDownV4 = Address::fromBytes(bytesV4CountDown);
     const auto countUpV6 = Address::fromBytes(bytesV6CountUp);
     const auto countDownV6 = Address::fromBytes(bytesV6CountDown);
-    const auto unspec = Address {};
+    const auto unspecified = Address {};
 
     TEST_CASE("toString")
     {
@@ -44,7 +44,7 @@ TEST_SUITE("[ip::Address]")
     {
         CHECK(Address::fromString("127.0.0.1").toString() == "127.0.0.1");
         CHECK(Address::fromString("::1").toString() == "::1");
-        CHECK(Address::fromString("ungabunga").toString() == "Unspecified");
+        CHECK(Address::fromString("garbage").toString() == "Unspecified");
     }
 
     TEST_CASE("addressFamily")
@@ -90,7 +90,7 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("isUnspecified")
     {
-        CHECK(unspec.isUnspecified());
+        CHECK(unspecified.isUnspecified());
         CHECK(!localhost4.isUnspecified());
         CHECK(!localHost6.isUnspecified());
         CHECK(!localhostV4mapped.isUnspecified());
@@ -104,7 +104,7 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromString("ff02::2").isMulticast());
         CHECK(Address::fromString("ff02::3").isMulticast());
         CHECK(Address::fromString("ff02::4").isMulticast());
-        CHECK(!unspec.isMulticast());
+        CHECK(!unspecified.isMulticast());
         CHECK(!localhost4.isMulticast());
         CHECK(!localHost6.isMulticast());
         CHECK(!localhostV4mapped.isMulticast());
@@ -119,7 +119,7 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromString("fe80::1").isLinkLocal());
         CHECK(Address::fromString("fe80::2").isLinkLocal());
         CHECK(Address::fromString("fe80::3").isLinkLocal());
-        CHECK(!unspec.isLinkLocal());
+        CHECK(!unspecified.isLinkLocal());
         CHECK(!localhost4.isLinkLocal());
         CHECK(!localHost6.isLinkLocal());
         CHECK(!localhostV4mapped.isLinkLocal());
@@ -132,7 +132,7 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromString("fc00::1").isUniqueLocal());
         CHECK(Address::fromString("fd00::1").isUniqueLocal());
         CHECK(Address::fromString("fc00:1234:5678:9abc:def0:1234:5678:9abc").isUniqueLocal());
-        CHECK(!unspec.isUniqueLocal());
+        CHECK(!unspecified.isUniqueLocal());
         CHECK(!localhost4.isUniqueLocal());
         CHECK(!localHost6.isUniqueLocal());
         CHECK(!localhostV4mapped.isUniqueLocal());
@@ -175,7 +175,7 @@ TEST_SUITE("[ip::Address]")
     }
     TEST_CASE("operator bool")
     {
-        CHECK(!unspec);
+        CHECK(!unspecified);
         CHECK(localhost4);
         CHECK(localHost6);
         CHECK(localhostV4mapped);
@@ -197,18 +197,18 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("operator !=")
     {
-        CHECK(unspec != any4);
-        CHECK(unspec != any6);
+        CHECK(unspecified != any4);
+        CHECK(unspecified != any6);
         CHECK(any6 != any4);
         CHECK(localhost4 != localHost6);
-        CHECK(unspec != localhost4);
-        CHECK(unspec != localHost6);
+        CHECK(unspecified != localhost4);
+        CHECK(unspecified != localHost6);
         CHECK_FALSE(localhostV4mapped != localhost4);
     }
 
     TEST_CASE("operator <")
     {
-        CHECK(unspec < localhost4);
+        CHECK(unspecified < localhost4);
         CHECK(countUpV4 < countDownV4);
         CHECK(countUpV6 < countDownV6);
         CHECK(localhost4 < localhost4OtherSubnet);
@@ -217,8 +217,8 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("operator <=")
     {
-        CHECK(unspec <= unspec);
-        CHECK(unspec <= localhost4);
+        CHECK(unspecified <= unspecified);
+        CHECK(unspecified <= localhost4);
         CHECK(countUpV6 <= countDownV6);
         CHECK(countUpV4 <= countDownV4);
         CHECK(localhost4 <= localhost4);
@@ -231,8 +231,8 @@ TEST_SUITE("[ip::Address]")
     {
         CHECK(countDownV4 > countUpV4);
         CHECK(countDownV6 > countUpV6);
-        CHECK(localHost6 > unspec);
-        CHECK(localhost4 > unspec);
+        CHECK(localHost6 > unspecified);
+        CHECK(localhost4 > unspecified);
         CHECK(localhost4OtherSubnet > localhost4);
         CHECK(localHost6 > localhost4);
     }
@@ -241,8 +241,8 @@ TEST_SUITE("[ip::Address]")
     {
         CHECK(countDownV4 >= countUpV4);
         CHECK(countDownV6 >= countUpV6);
-        CHECK(localHost6 >= unspec);
-        CHECK(localhost4 >= unspec);
+        CHECK(localHost6 >= unspecified);
+        CHECK(localhost4 >= unspecified);
         CHECK(localhost4OtherSubnet >= localhost4);
         CHECK(localHost6 >= localhost4);
         CHECK(localhostV4mapped >= localhost4);

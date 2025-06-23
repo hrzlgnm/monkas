@@ -65,8 +65,6 @@ class Address : public std::array<uint8_t, IPV6_ADDR_LEN>
     [[nodiscard]] auto ip() const -> const Address&;
     [[nodiscard]] auto broadcast() const -> const Address&;
     [[nodiscard]] auto prefixLength() const -> uint8_t;
-    [[nodiscard]] auto scope() const -> uint8_t;  // TODO: use Scope enum
-    [[nodiscard]] auto flags() const -> uint32_t;
 
     [[nodiscard]] auto family() const -> Family;
     [[nodiscard]] auto addressLength() const -> size_type;
