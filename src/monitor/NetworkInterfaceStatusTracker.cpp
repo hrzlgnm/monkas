@@ -289,7 +289,7 @@ auto operator<<(std::ostream& o, const OperationalState op) -> std::ostream&
 
 auto operator<<(std::ostream& o, const GatewayClearReason r) -> std::ostream&
 {
-    using enum GatewayClearReason;
+    using enum NetworkInterfaceStatusTracker::GatewayClearReason;
     switch (r) {
         case LinkDown:
             o << "LinkDown";
@@ -306,7 +306,7 @@ auto operator<<(std::ostream& o, const GatewayClearReason r) -> std::ostream&
 
 auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&
 {
-    using enum DirtyFlag;
+    using enum NetworkInterfaceStatusTracker::DirtyFlag;
     switch (d) {
         case NameChanged:
             return o << "NameChanged";
