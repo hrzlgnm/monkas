@@ -15,7 +15,7 @@ DEFINE_bool(include_non_ieee802, false, "Include non IEEE 802.X interfaces in th
 
 DEFINE_uint32(family, 0, "Preferred address family <0|4|6>");
 DEFINE_validator(family,
-                 [](const char* /*flagname*/, uint32_t value) { return value == 0 || value == 4 || value == 6; });
+                 [](const char* /*flagname*/, const uint32_t value) { return value == 0 || value == 4 || value == 6; });
 
 DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, critical, off");
 

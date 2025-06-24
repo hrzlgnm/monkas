@@ -8,8 +8,11 @@
 namespace monkas::monitor
 {
 
-auto Attributes::parse(
-    const nlmsghdr* n, size_t offset, uint16_t maxType, uint64_t& seenCounter, uint64_t& unknownCounter) -> Attributes
+auto Attributes::parse(const nlmsghdr* n,
+                       const size_t offset,
+                       const uint16_t maxType,
+                       uint64_t& seenCounter,
+                       uint64_t& unknownCounter) -> Attributes
 {
     Attributes attributes {maxType + 1U};
     CallbackArgs arg {.attrs = &attributes, .seenCounter = &seenCounter, .unknownCounter = &unknownCounter};
@@ -17,7 +20,7 @@ auto Attributes::parse(
     return attributes;
 }
 
-Attributes::Attributes(std::size_t toAlloc)
+Attributes::Attributes(const std::size_t toAlloc)
     : m_attributes(toAlloc, nullptr)
 {
 }
@@ -36,53 +39,53 @@ void Attributes::parseAttribute(const nlattr* a, uint64_t& seenCounter, uint64_t
 
 auto Attributes::dispatchMnlAttributeCallback(const nlattr* attr, void* args) -> int
 {
-    auto* cb = static_cast<CallbackArgs*>(args);
+    const auto* cb = static_cast<CallbackArgs*>(args);
     cb->attrs->parseAttribute(attr, *cb->seenCounter, *cb->unknownCounter);
     return MNL_CB_OK;
 }
 
-auto Attributes::has(uint16_t type) const -> bool
+auto Attributes::has(const uint16_t type) const -> bool
 {
     return type < m_attributes.size() && m_attributes[type] != nullptr;
 }
 
-auto Attributes::getString(uint16_t type) const -> std::optional<std::string>
+auto Attributes::getString(const uint16_t type) const -> std::optional<std::string>
 {
     return getTypedAttribute<const char*>(type, MNL_TYPE_STRING, mnl_attr_get_str)
         .transform([](const char* str) { return std::string(str); });
 }
 
-auto Attributes::getU8(uint16_t type) const -> std::optional<uint8_t>
+auto Attributes::getU8(const uint16_t type) const -> std::optional<uint8_t>
 {
     return getTypedAttribute<uint8_t>(type, MNL_TYPE_U8, mnl_attr_get_u8);
 }
 
-auto Attributes::getU16(uint16_t type) const -> std::optional<uint16_t>
+auto Attributes::getU16(const uint16_t type) const -> std::optional<uint16_t>
 {
     return getTypedAttribute<uint16_t>(type, MNL_TYPE_U16, mnl_attr_get_u16);
 }
 
-auto Attributes::getU32(uint16_t type) const -> std::optional<uint32_t>
+auto Attributes::getU32(const uint16_t type) const -> std::optional<uint32_t>
 {
     return getTypedAttribute<uint32_t>(type, MNL_TYPE_U32, mnl_attr_get_u32);
 }
 
-auto Attributes::getU64(uint16_t type) const -> std::optional<uint64_t>
+auto Attributes::getU64(const uint16_t type) const -> std::optional<uint64_t>
 {
     return getTypedAttribute<uint64_t>(type, MNL_TYPE_U64, mnl_attr_get_u64);
 }
 
-auto Attributes::getEthernetAddress(uint16_t type) const -> std::optional<ethernet::Address>
+auto Attributes::getEthernetAddress(const uint16_t type) const -> std::optional<ethernet::Address>
 {
     return getPayload<ethernet::ADDR_LEN>(type).transform([](const auto& arr) { return ethernet::Address(arr); });
 }
 
-auto Attributes::getIpV6Address(uint16_t type) const -> std::optional<ip::Address>
+auto Attributes::getIpV6Address(const uint16_t type) const -> std::optional<ip::Address>
 {
     return getPayload<ip::IPV6_ADDR_LEN>(type).transform([](const auto& arr) { return ip::Address(arr); });
 }
 
-auto Attributes::getIpV4Address(uint16_t type) const -> std::optional<ip::Address>
+auto Attributes::getIpV4Address(const uint16_t type) const -> std::optional<ip::Address>
 {
     return getPayload<ip::IPV4_ADDR_LEN>(type).transform([](const auto& arr) { return ip::Address(arr); });
 }

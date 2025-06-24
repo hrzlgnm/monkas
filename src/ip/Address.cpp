@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstring>
 #include <ostream>
+#include <utility>
 #include <variant>
 
 #include <arpa/inet.h>
@@ -9,29 +10,31 @@
 
 namespace monkas::ip
 {
-auto asLinuxAf(Family f) -> int
+auto asLinuxAf(const Family f) -> int
 {
+    using enum Family;
     switch (f) {
-        case Family::IPv4:
+        case IPv4:
             return AF_INET;
-        case Family::IPv6:
+        case IPv6:
             return AF_INET6;
-        case Family::Unspecified:
+        case Unspecified:
         default:
             return AF_UNSPEC;
     }
 }
 
-auto operator<<(std::ostream& o, Family a) -> std::ostream&
+auto operator<<(std::ostream& o, const Family f) -> std::ostream&
 {
-    switch (a) {
-        case Family::IPv4:
+    using enum Family;
+    switch (f) {
+        case IPv4:
             o << "inet";
             break;
-        case Family::IPv6:
+        case IPv6:
             o << "inet6";
             break;
-        case Family::Unspecified:
+        case Unspecified:
             o << "unspec";
             break;
     }
@@ -149,7 +152,7 @@ auto Address::isBroadcast() const -> bool
     }
     auto bytes = std::get<IpV4Bytes>(m_bytes);
     constexpr uint8_t IPV4_BROADCAST_BYTE = 0xFF;
-    return std::all_of(bytes.cbegin(), bytes.cend(), [](uint8_t byte) { return byte == IPV4_BROADCAST_BYTE; });
+    return std::ranges::all_of(std::as_const(bytes), [](const uint8_t byte) { return byte == IPV4_BROADCAST_BYTE; });
 }
 
 auto Address::family() const -> Family

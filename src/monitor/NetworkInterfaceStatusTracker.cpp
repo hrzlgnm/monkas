@@ -70,7 +70,7 @@ auto NetworkInterfaceStatusTracker::operationalState() const -> OperationalState
     return m_operState;
 }
 
-void NetworkInterfaceStatusTracker::setOperationalState(OperationalState operstate)
+void NetworkInterfaceStatusTracker::setOperationalState(const OperationalState operstate)
 {
     if (m_operState != operstate) {
         m_operState = operstate;
@@ -143,8 +143,7 @@ auto NetworkInterfaceStatusTracker::networkAddresses() const -> const Addresses&
 void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address& address)
 {
     if (address.ip()) {
-        const bool isNew = m_networkAddresses.erase(address) == 0;
-        if (isNew) {
+        if (const bool isNew = m_networkAddresses.erase(address) == 0) {
             m_networkAddresses.insert(address);
             touch(DirtyFlag::NetworkAddressesChanged);
             logTrace(address, this, "address added");
@@ -160,14 +159,13 @@ void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address& ad
 
 void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::Address& address)
 {
-    auto res = m_networkAddresses.erase(address);
+    const auto res = m_networkAddresses.erase(address);
     m_nerdstats.networkAddressesRemoved += res;
     if (res > 0) {
         logTrace(address, this, "address removed");
         touch(DirtyFlag::NetworkAddressesChanged);
-        if (std::count_if(std::begin(m_networkAddresses),
-                          std::end(m_networkAddresses),
-                          [](const network::Address& a) -> bool { return a.family() == ip::Family::IPv4; })
+        if (std::ranges::count_if(m_networkAddresses,
+                                  [](const network::Address& a) -> bool { return a.family() == ip::Family::IPv4; })
             == 0)
         {
             clearGatewayAddress(GatewayClearReason::AllIPv4AddressesRemoved);
@@ -240,23 +238,23 @@ void NetworkInterfaceStatusTracker::logNerdstats() const
 
 namespace
 {
-auto toString(NetworkInterfaceStatusTracker::OperationalState o) -> std::string
+auto toString(const NetworkInterfaceStatusTracker::OperationalState o) -> std::string
 {
-    using OperState = NetworkInterfaceStatusTracker::OperationalState;
+    using enum NetworkInterfaceStatusTracker::OperationalState;
     switch (o) {
-        case OperState::NotPresent:
+        case NotPresent:
             return "NotPresent";
-        case OperState::Down:
+        case Down:
             return "Down";
-        case OperState::LowerLayerDown:
+        case LowerLayerDown:
             return "LowerLayerDown";
-        case OperState::Testing:
+        case Testing:
             return "Testing";
-        case OperState::Dormant:
+        case Dormant:
             return "Dormant";
-        case OperState::Up:
+        case Up:
             return "Up";
-        case OperState::Unknown:
+        case Unknown:
         default:
             return "Unknown";
     }
@@ -284,21 +282,22 @@ auto dirtyFlagsToString(const DirtyFlags& flags) -> std::string
 }
 }  // namespace
 
-auto operator<<(std::ostream& o, OperationalState op) -> std::ostream&
+auto operator<<(std::ostream& o, const OperationalState op) -> std::ostream&
 {
     return o << toString(op);
 }
 
-auto operator<<(std::ostream& o, GatewayClearReason r) -> std::ostream&
+auto operator<<(std::ostream& o, const GatewayClearReason r) -> std::ostream&
 {
+    using enum NetworkInterfaceStatusTracker::GatewayClearReason;
     switch (r) {
-        case GatewayClearReason::LinkDown:
+        case LinkDown:
             o << "LinkDown";
             break;
-        case GatewayClearReason::RouteDeleted:
+        case RouteDeleted:
             o << "RouteDeleted";
             break;
-        case GatewayClearReason::AllIPv4AddressesRemoved:
+        case AllIPv4AddressesRemoved:
             o << "AllIPv4AddressesRemoved";
             break;
     }
@@ -307,20 +306,21 @@ auto operator<<(std::ostream& o, GatewayClearReason r) -> std::ostream&
 
 auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&
 {
+    using enum NetworkInterfaceStatusTracker::DirtyFlag;
     switch (d) {
-        case NetworkInterfaceStatusTracker::DirtyFlag::NameChanged:
+        case NameChanged:
             return o << "NameChanged";
-        case NetworkInterfaceStatusTracker::DirtyFlag::OperationalStateChanged:
+        case OperationalStateChanged:
             return o << "OperationalStateChanged";
-        case NetworkInterfaceStatusTracker::DirtyFlag::MacAddressChanged:
+        case MacAddressChanged:
             return o << "MacAddressChanged";
-        case NetworkInterfaceStatusTracker::DirtyFlag::BroadcastAddressChanged:
+        case BroadcastAddressChanged:
             return o << "BroadcastAddressChanged";
-        case NetworkInterfaceStatusTracker::DirtyFlag::GatewayAddressChanged:
+        case GatewayAddressChanged:
             return o << "GatewayAddressChanged";
-        case NetworkInterfaceStatusTracker::DirtyFlag::NetworkAddressesChanged:
+        case NetworkAddressesChanged:
             return o << "NetworkAddressesChanged";
-        case NetworkInterfaceStatusTracker::DirtyFlag::FlagsCount:
+        case FlagsCount:
         default:
             return o << "UnknownDirtyFlag: 0x" << std::hex << static_cast<uint8_t>(d);
     }
