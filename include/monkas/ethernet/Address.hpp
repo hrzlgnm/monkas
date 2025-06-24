@@ -2,7 +2,6 @@
 
 #include <array>
 #include <compare>
-#include <cstdint>
 #include <iosfwd>
 
 #include <fmt/ostream.h>
