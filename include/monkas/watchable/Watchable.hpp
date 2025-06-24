@@ -33,10 +33,16 @@ class Watchable
         return m_watchers.insert(m_watchers.end(), watcher);
     }
 
+    /**
+     * @brief Removes a watcher identified by the given token.
+     *
+     * If called during notification, the removal is deferred until after notification completes. If the token is
+     * invalid or the watcher is already marked for removal, the operation is ignored.
+     */
     void removeWatcher(const Token& token)
     {
         if (!tokenIsValid(token)) {
-            spdlog::error("Attempted to remove a watcher with an invalid token");
+            spdlog::error("Attempted to remove a watcher with an invalid token, ignoring");
             return;
         }
         if (m_notifying) {
@@ -44,8 +50,8 @@ class Watchable
             if (!toBeRemoved(token)) {
                 m_tokensToRemove.push_front(token);
             } else {
-                spdlog::debug("Watcher with token {} is already marked for removal, skipping",
-                              std::distance(m_watchers.cbegin(), token));
+                spdlog::warn("Watcher with token {} is already marked for removal, ignoring",
+                             std::distance(m_watchers.cbegin(), token));
             }
             return;
         }
@@ -54,6 +60,13 @@ class Watchable
 
     [[nodiscard]] auto hasWatchers() const -> bool { return !m_watchers.empty(); }
 
+    /**
+     * @brief Notifies all registered watchers with the provided arguments.
+     *
+     * Calls each watcher callback with the given arguments. Watchers marked for removal are skipped. Any exceptions
+     * thrown by watcher callbacks are caught and logged without interrupting the notification process. Deferred
+     * removals are processed after all notifications are complete.
+     */
     void notify(Args... args)
     {
         {
@@ -76,23 +89,24 @@ class Watchable
             } guard(m_notifying);
 
             for (auto itr {std::cbegin(m_watchers)}; itr != std::cend(m_watchers); ++itr) {
-                if (!toBeRemoved(itr)) {
-                    try {
-                        spdlog::trace("Calling watcher with token: {}", std::distance(m_watchers.cbegin(), itr));
-                        (*itr)(std::forward<Args>(args)...);
-                    } catch (const std::exception& e) {
-                        spdlog::error("Caught an unexpected exception from watcher: {}", e.what());
-                    } catch (...) {
-                        spdlog::error("Caught an unexpected and unknown exception from watcher");
-                    }
-                } else {
+                if (toBeRemoved(itr)) {
                     spdlog::trace("Skipping watcher with token: {} as it is marked for removal",
                                   std::distance(m_watchers.cbegin(), itr));
+                    continue;
+                }
+                try {
+                    spdlog::trace("Calling watcher with token: {}", std::distance(m_watchers.cbegin(), itr));
+                    (*itr)(std::forward<Args>(args)...);
+                } catch (const std::exception& e) {
+                    spdlog::error("Caught an unexpected exception from watcher: {}", e.what());
+                } catch (...) {
+                    spdlog::error("Caught an unexpected and unknown exception from watcher");
                 }
             }
         }
         for (const auto token : m_tokensToRemove) {
-            spdlog::trace("Removing watcher with token: {}", std::distance(m_watchers.cbegin(), token));
+            spdlog::trace("Removing marked for removal watcher with token: {}",
+                          std::distance(m_watchers.cbegin(), token));
             removeWatcher(token);
         }
         m_tokensToRemove.clear();
