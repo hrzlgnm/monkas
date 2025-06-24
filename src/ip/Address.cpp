@@ -2,6 +2,7 @@
 #include <cstring>
 #include <expected>
 #include <ostream>
+#include <stdexcept>
 #include <utility>
 #include <variant>
 
@@ -166,7 +167,7 @@ auto Address::toString() const -> std::string
                       m_bytes);
 }
 
-auto Address::fromString(const std::string& address) -> std::expected<Address, std::string>
+auto Address::fromString(const std::string& address) noexcept(false) -> Address
 {
     {
         IpV4Bytes addr {};
@@ -180,7 +181,8 @@ auto Address::fromString(const std::string& address) -> std::expected<Address, s
             return Address(addr);
         }
     }
-    return std::unexpected("Failed to parse address '" + address + "': Invalid format or unsupported address family");
+    throw std::invalid_argument("Failed to parse address '" + address
+                                + "': Invalid format or unsupported address family");
 }
 
 auto Address::operator<=>(const Address& rhs) const noexcept -> std::strong_ordering

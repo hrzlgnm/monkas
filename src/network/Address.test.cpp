@@ -17,7 +17,7 @@ TEST_SUITE("[network::Address]")
 
     const auto someV4 = ip::Address(someIpV4);
     const auto someBroadcastV4 = ip::Address(someBroadcast);
-    const auto someV6 = ip::Address::fromString("2001:db8::1").value();
+    const auto someV6 = ip::Address::fromString("2001:db8::1");
     const Address addrV6 {someV6, std::nullopt, 24, scope, 5, 0};
     const Address addrV4 {someV4, someBroadcastV4, 24, scope, 10, 1};
     const Address defaultAddress {};

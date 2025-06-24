@@ -3,7 +3,6 @@
 #include <array>
 #include <compare>
 #include <cstdint>
-#include <expected>
 #include <iosfwd>
 #include <string>
 #include <variant>
@@ -39,7 +38,7 @@ class Address
 
     [[nodiscard]] auto toString() const -> std::string;
 
-    static auto fromString(const std::string& address) -> std::expected<Address, std::string>;
+    static auto fromString(const std::string& address) noexcept(false) -> Address;
 
     [[nodiscard]] auto isV4() const -> bool;
 

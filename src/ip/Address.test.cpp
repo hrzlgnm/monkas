@@ -39,9 +39,9 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("fromString")
     {
-        CHECK(Address::fromString("127.0.0.1").value().toString() == "127.0.0.1");
-        CHECK(Address::fromString("::1").value().toString() == "::1");
-        CHECK(!Address::fromString("garbage").has_value());
+        CHECK(Address::fromString("127.0.0.1").toString() == "127.0.0.1");
+        CHECK(Address::fromString("::1").toString() == "::1");
+        CHECK_THROWS_AS(Address::fromString("garbage"), std::invalid_argument);
     }
 
     TEST_CASE("addressFamily")
@@ -63,12 +63,12 @@ TEST_SUITE("[ip::Address]")
     }
     TEST_CASE("isMulticast")
     {
-        CHECK(Address::fromString("224.0.0.1").value().isMulticast());
-        CHECK(Address::fromString("239.255.255.253").value().isMulticast());
-        CHECK(Address::fromString("ff02::1").value().isMulticast());
-        CHECK(Address::fromString("ff02::2").value().isMulticast());
-        CHECK(Address::fromString("ff02::3").value().isMulticast());
-        CHECK(Address::fromString("ff02::4").value().isMulticast());
+        CHECK(Address::fromString("224.0.0.1").isMulticast());
+        CHECK(Address::fromString("239.255.255.253").isMulticast());
+        CHECK(Address::fromString("ff02::1").isMulticast());
+        CHECK(Address::fromString("ff02::2").isMulticast());
+        CHECK(Address::fromString("ff02::3").isMulticast());
+        CHECK(Address::fromString("ff02::4").isMulticast());
         CHECK(!defaultCtor.isMulticast());
         CHECK(!localhost4.isMulticast());
         CHECK(!localHost6.isMulticast());
@@ -78,11 +78,11 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("isLinkLocal")
     {
-        CHECK(Address::fromString("169.254.0.1").value().isLinkLocal());
-        CHECK(Address::fromString("169.254.255.255").value().isLinkLocal());
-        CHECK(Address::fromString("fe80::1").value().isLinkLocal());
-        CHECK(Address::fromString("fe80::2").value().isLinkLocal());
-        CHECK(Address::fromString("fe80::3").value().isLinkLocal());
+        CHECK(Address::fromString("169.254.0.1").isLinkLocal());
+        CHECK(Address::fromString("169.254.255.255").isLinkLocal());
+        CHECK(Address::fromString("fe80::1").isLinkLocal());
+        CHECK(Address::fromString("fe80::2").isLinkLocal());
+        CHECK(Address::fromString("fe80::3").isLinkLocal());
         CHECK(!defaultCtor.isLinkLocal());
         CHECK(!localhost4.isLinkLocal());
         CHECK(!localHost6.isLinkLocal());
@@ -92,9 +92,9 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("isUniqueLocal")
     {
-        CHECK(Address::fromString("fc00::1").value().isUniqueLocal());
-        CHECK(Address::fromString("fd00::1").value().isUniqueLocal());
-        CHECK(Address::fromString("fc00:1234:5678:9abc:def0:1234:5678:9abc").value().isUniqueLocal());
+        CHECK(Address::fromString("fc00::1").isUniqueLocal());
+        CHECK(Address::fromString("fd00::1").isUniqueLocal());
+        CHECK(Address::fromString("fc00:1234:5678:9abc:def0:1234:5678:9abc").isUniqueLocal());
         CHECK(!defaultCtor.isUniqueLocal());
         CHECK(!localhost4.isUniqueLocal());
         CHECK(!localHost6.isUniqueLocal());
@@ -104,8 +104,8 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("isBroadcast")
     {
-        CHECK(Address::fromString("255.255.255.255").value().isBroadcast());
-        CHECK(!Address::fromString("192.168.1.1").value().isBroadcast());
+        CHECK(Address::fromString("255.255.255.255").isBroadcast());
+        CHECK(!Address::fromString("192.168.1.1").isBroadcast());
         CHECK(!localhost4.isBroadcast());
         CHECK(!localHost6.isBroadcast());
         CHECK(!any4.isBroadcast());
@@ -116,7 +116,7 @@ TEST_SUITE("[ip::Address]")
     {
         CHECK(localhost4.isLoopback());
         CHECK(localHost6.isLoopback());
-        CHECK(Address::fromString("127.253.253.123").value().isLoopback());
+        CHECK(Address::fromString("127.253.253.123").isLoopback());
     }
 
     TEST_CASE("operator ==")
