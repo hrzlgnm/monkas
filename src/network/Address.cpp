@@ -7,6 +7,16 @@
 namespace monkas::network
 {
 
+/**
+ * @brief Constructs an Address object with the specified IP address, optional broadcast address, prefix length, scope, flags, and protocol.
+ *
+ * @param address The primary IP address.
+ * @param broadcast Optional broadcast address associated with the IP address.
+ * @param prefixLen The prefix length of the network.
+ * @param scope The scope of the address (e.g., global, link, host).
+ * @param flags Address-specific flags.
+ * @param proto Protocol identifier for the address.
+ */
 Address::Address(const ip::Address& address,
                  std::optional<ip::Address> broadcast,
                  uint8_t prefixLen,
@@ -22,6 +32,11 @@ Address::Address(const ip::Address& address,
 {
 }
 
+/**
+ * @brief Returns the address family of the underlying IP address.
+ *
+ * @return Family The address family (e.g., IPv4 or IPv6).
+ */
 auto Address::family() const -> Family
 {
     return m_ip.family();
@@ -32,16 +47,31 @@ auto Address::isV4() const -> bool
     return m_ip.isV4();
 }
 
+/**
+ * @brief Checks if the address is an IPv6 address.
+ *
+ * @return true if the stored IP address is IPv6, false otherwise.
+ */
 auto Address::isV6() const -> bool
 {
     return m_ip.isV6();
 }
 
+/**
+ * @brief Returns the underlying IP address associated with this network address.
+ *
+ * @return Reference to the stored IP address.
+ */
 auto Address::ip() const -> const ip::Address&
 {
     return m_ip;
 }
 
+/**
+ * @brief Returns the broadcast address associated with this network address, if present.
+ *
+ * @return std::optional<ip::Address> The broadcast address, or std::nullopt if not set.
+ */
 auto Address::broadcast() const -> std::optional<ip::Address>
 {
     return m_brd;
@@ -127,6 +157,15 @@ auto operator<<(std::ostream& o, Scope a) -> std::ostream&
     return o;
 }
 
+/**
+ * @brief Outputs a human-readable representation of an Address to a stream.
+ *
+ * The output includes the address family, IP address, prefix length, scope, optional broadcast address, flags (if present), and protocol description.
+ *
+ * @param o Output stream to write to.
+ * @param a Address object to represent.
+ * @return Reference to the output stream.
+ */
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
 {
     o << a.family() << " " << a.ip() << "/" << static_cast<int>(a.prefixLength());

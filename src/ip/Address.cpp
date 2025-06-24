@@ -11,6 +11,12 @@
 
 namespace monkas::ip
 {
+/**
+ * @brief Converts an address family enum to the corresponding Linux address family constant.
+ *
+ * @param f The address family (IPv4 or IPv6).
+ * @return int The Linux address family constant (`AF_INET`, `AF_INET6`, or `AF_UNSPEC`).
+ */
 auto asLinuxAf(const Family f) -> int
 {
     using enum Family;
@@ -24,6 +30,13 @@ auto asLinuxAf(const Family f) -> int
     }
 }
 
+/**
+ * @brief Outputs a string representation of the IP address family to a stream.
+ *
+ * Writes "inet" for IPv4, "inet6" for IPv6, and "unspec" for any other value.
+ *
+ * @return Reference to the output stream.
+ */
 auto operator<<(std::ostream& o, const Family f) -> std::ostream&
 {
     using enum Family;
@@ -48,21 +61,41 @@ Address::Address(const IpV4Bytes& bytes)
 {
 }
 
+/**
+ * @brief Constructs an Address from an IPv6 byte array.
+ *
+ * Initializes the Address to represent the specified IPv6 address.
+ */
 Address::Address(const IpV6Bytes& bytes)
     : m_bytes(bytes)
 {
 }
 
+/**
+ * @brief Checks if the address is an IPv4 address.
+ *
+ * @return true if the address is stored as IPv4, false otherwise.
+ */
 auto Address::isV4() const -> bool
 {
     return std::holds_alternative<IpV4Bytes>(m_bytes);
 }
 
+/**
+ * @brief Checks if the address is an IPv6 address.
+ *
+ * @return true if the address is stored as IPv6, false otherwise.
+ */
 auto Address::isV6() const -> bool
 {
     return std::holds_alternative<IpV6Bytes>(m_bytes);
 }
 
+/**
+ * @brief Determines if the address is a multicast address.
+ *
+ * @return true if the address is multicast (IPv4: 224.0.0.0–239.255.255.255, IPv6: addresses starting with 0xff); false otherwise.
+ */
 auto Address::isMulticast() const -> bool
 {
     return std::visit(Overloaded {[](const IpV4Bytes& addr)
@@ -82,6 +115,14 @@ auto Address::isMulticast() const -> bool
                       m_bytes);
 }
 
+/**
+ * @brief Determines if the address is a link-local address.
+ *
+ * For IPv4, returns true if the address is in the 169.254.0.0/16 range.  
+ * For IPv6, returns true if the address is in the fe80::/10 range.
+ *
+ * @return true if the address is link-local, false otherwise.
+ */
 auto Address::isLinkLocal() const -> bool
 {
     return std::visit(Overloaded {[](const IpV4Bytes& addr)
@@ -114,6 +155,13 @@ auto Address::isUniqueLocal() const -> bool
     return (bytes[0] & V6_UL_MASK) == V6_UL_PREFIX;
 }
 
+/**
+ * @brief Determines if the address is a loopback address.
+ *
+ * Returns true if the address is the IPv4 loopback (127.0.0.0/8) or the IPv6 loopback (::1).
+ *
+ * @return true if the address is a loopback address, false otherwise.
+ */
 auto Address::isLoopback() const -> bool
 {
     return std::visit(Overloaded {[](const IpV4Bytes& addr)
@@ -142,6 +190,11 @@ auto Address::isBroadcast() const -> bool
     return std::ranges::all_of(std::as_const(bytes), [](const uint8_t byte) { return byte == IPV4_BROADCAST_BYTE; });
 }
 
+/**
+ * @brief Returns the address family (IPv4 or IPv6) of the stored address.
+ *
+ * @return Family The address family corresponding to the stored address type.
+ */
 auto Address::family() const -> Family
 {
     return std::visit(
@@ -149,6 +202,12 @@ auto Address::family() const -> Family
         m_bytes);
 }
 
+/**
+ * @brief Returns the standard string representation of the IP address.
+ *
+ * Converts the stored IPv4 or IPv6 address to its textual form using the appropriate format.
+ * @return String representation of the address (e.g., "192.168.1.1" or "2001:db8::1").
+ */
 auto Address::toString() const -> std::string
 {
     return std::visit(Overloaded {[](const IpV4Bytes& addr)
@@ -166,6 +225,15 @@ auto Address::toString() const -> std::string
                       m_bytes);
 }
 
+/**
+ * @brief Parses a string as an IPv4 or IPv6 address.
+ *
+ * Attempts to interpret the input string as either an IPv4 or IPv6 address. Returns an Address object on success.
+ *
+ * @param address The string representation of the IP address.
+ * @return Address The parsed address.
+ * @throws std::invalid_argument If the string cannot be parsed as a valid IPv4 or IPv6 address.
+ */
 auto Address::fromString(const std::string& address) noexcept(false) -> Address
 {
     {
@@ -184,6 +252,14 @@ auto Address::fromString(const std::string& address) noexcept(false) -> Address
                                 + "': Invalid format or unsupported address family");
 }
 
+/**
+ * @brief Compares two IP addresses for ordering.
+ *
+ * Performs a lexicographical comparison of the underlying byte arrays of the addresses.
+ *
+ * @param rhs The address to compare with.
+ * @return std::strong_ordering Result of the comparison.
+ */
 auto Address::operator<=>(const Address& rhs) const noexcept -> std::strong_ordering
 {
     return m_bytes <=> rhs.m_bytes;

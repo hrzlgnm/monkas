@@ -25,7 +25,10 @@ auto fromRtnlScope(uint8_t rtnlScope) -> Scope;
 class Address
 {
   public:
-    Address() = default;
+    /**
+ * @brief Constructs an empty Address instance with default values.
+ */
+Address() = default;
     Address(const ip::Address& address,
             std::optional<ip::Address> broadcast,
             uint8_t prefixLen,

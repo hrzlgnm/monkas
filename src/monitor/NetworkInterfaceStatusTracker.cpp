@@ -100,6 +100,11 @@ void NetworkInterfaceStatusTracker::setMacAddress(const ethernet::Address& addre
     }
 }
 
+/**
+ * @brief Updates the broadcast address of the network interface if it has changed.
+ *
+ * If the new broadcast address differs from the current one, updates the address, marks the broadcast address as changed, logs the update, and increments the change counter.
+ */
 void NetworkInterfaceStatusTracker::setBroadcastAddress(const ethernet::Address& address)
 {
     if (m_broadcastAddress != address) {
@@ -110,6 +115,11 @@ void NetworkInterfaceStatusTracker::setBroadcastAddress(const ethernet::Address&
     }
 }
 
+/**
+ * @brief Returns the current gateway IP address, if set.
+ *
+ * @return An optional containing the gateway IP address, or `std::nullopt` if no gateway is configured.
+ */
 auto NetworkInterfaceStatusTracker::gatewayAddress() const -> std::optional<ip::Address>
 {
     return m_gateway;
@@ -140,6 +150,11 @@ auto NetworkInterfaceStatusTracker::networkAddresses() const -> const Addresses&
     return m_networkAddresses;
 }
 
+/**
+ * @brief Adds a network address to the interface, updating change tracking if new.
+ *
+ * If the address is not already present, it is inserted, the network addresses dirty flag is set, and statistics are updated. If the address already exists, it is reinserted to maintain ordering, but no dirty flag is set.
+ */
 void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address& address)
 {
     if (const bool isNew = m_networkAddresses.erase(address) == 0) {
@@ -329,6 +344,15 @@ auto operator<<(std::ostream& o, const DirtyFlags& d) -> std::ostream&
     return o << dirtyFlagsToString(d);
 }
 
+/**
+ * @brief Outputs a human-readable summary of the network interface status to a stream.
+ *
+ * The summary includes the interface name, MAC address, broadcast address, network addresses, gateway (if present), operational state, age in milliseconds, and dirty flags.
+ *
+ * @param o Output stream to write to.
+ * @param s NetworkInterfaceStatusTracker instance to describe.
+ * @return std::ostream& Reference to the output stream.
+ */
 auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std::ostream&
 {
     o << s.name();
