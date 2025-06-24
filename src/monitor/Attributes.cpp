@@ -74,17 +74,16 @@ auto Attributes::getU64(uint16_t type) const -> std::optional<uint64_t>
 
 auto Attributes::getEthernetAddress(uint16_t type) const -> std::optional<ethernet::Address>
 {
-    return getPayload<ethernet::ADDR_LEN>(type).transform([](const auto& arr)
-                                                          { return ethernet::Address::fromBytes(arr); });
+    return getPayload<ethernet::ADDR_LEN>(type).transform([](const auto& arr) { return ethernet::Address(arr); });
 }
 
 auto Attributes::getIpV6Address(uint16_t type) const -> std::optional<ip::Address>
 {
-    return getPayload<ip::IPV6_ADDR_LEN>(type).transform([](const auto& arr) { return ip::Address::fromBytes(arr); });
+    return getPayload<ip::IPV6_ADDR_LEN>(type).transform([](const auto& arr) { return ip::Address(arr); });
 }
 
 auto Attributes::getIpV4Address(uint16_t type) const -> std::optional<ip::Address>
 {
-    return getPayload<ip::IPV4_ADDR_LEN>(type).transform([](const auto& arr) { return ip::Address::fromBytes(arr); });
+    return getPayload<ip::IPV4_ADDR_LEN>(type).transform([](const auto& arr) { return ip::Address(arr); });
 }
 }  // namespace monkas::monitor

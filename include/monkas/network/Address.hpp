@@ -41,7 +41,6 @@ class Address
     [[nodiscard]] auto isV4() const -> bool;
     [[nodiscard]] auto isV6() const -> bool;
     [[nodiscard]] auto isUnspecified() const -> bool;
-    [[nodiscard]] auto isMappedV4() const -> bool;
 
     [[nodiscard]] auto ip() const -> const ip::Address&;
     [[nodiscard]] auto broadcast() const -> const ip::Address&;

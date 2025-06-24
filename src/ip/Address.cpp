@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstring>
 #include <ostream>
+#include <variant>
 
 #include <arpa/inet.h>
 #include <ip/Address.hpp>
@@ -9,12 +10,15 @@ namespace monkas::ip
 {
 namespace
 {
-constexpr auto V4_MAPPED_PREFIX = std::array<uint8_t, 12> {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff};
-
-auto v4MappedCompare(const Address& v6, const Address& v4) noexcept -> int
+// helper type for std::visit
+template<typename... T>
+struct Overloaded : T...
 {
-    return std::memcmp(v6.data() + V4_MAPPED_PREFIX.size(), v4.data(), v4.addressLength());
-}
+    using T::operator()...;
+};
+template<class... T>
+Overloaded(T...) -> Overloaded<T...>;
+
 }  // namespace
 
 auto asLinuxAf(Family f) -> int
@@ -46,86 +50,118 @@ auto operator<<(std::ostream& o, Family a) -> std::ostream&
     return o;
 }
 
-Address::Address()
-    : std::array<uint8_t, IPV6_ADDR_LEN> {}
+Address::Address() = default;
+
+Address::Address(const IpV4Bytes& bytes)
+    : m_bytes(bytes)
+{
+}
+
+Address::Address(const IpV6Bytes& bytes)
+    : m_bytes(bytes)
 {
 }
 
 Address::operator bool() const
 {
-    return m_family != Family::Unspecified;
+    return !isUnspecified();
+}
+
+auto Address::isV4() const -> bool
+{
+    return std::holds_alternative<IpV4Bytes>(m_bytes);
+}
+
+auto Address::isV6() const -> bool
+{
+    return std::holds_alternative<IpV6Bytes>(m_bytes);
+}
+
+auto Address::isUnspecified() const -> bool
+{
+    return std::holds_alternative<std::monostate>(m_bytes);
 }
 
 auto Address::isMulticast() const -> bool
 {
-    if (isV4() || isMappedV4()) {
-        // IPv4 multicast addresses are in the range
-        constexpr auto V4_MCAST_START = 224;
-        constexpr auto V4_MCAST_END = 239;
-        const auto upperOctetd = operator[](isMappedV4() ? V4_MAPPED_PREFIX.size()
-                                                         : 0);  // Ensure the address is not empty
-        return upperOctetd >= V4_MCAST_START && upperOctetd <= V4_MCAST_END;
-    }
-    if (isV6()) {
-        constexpr auto V6_MCAST_PREFIX = 0xffU;
-        return data()[0] == V6_MCAST_PREFIX;
-    }
-    return false;
+    return std::visit(Overloaded {[](const std::monostate&) { return false; },
+                                  [](const IpV4Bytes& addr)
+                                  {
+                                      // IPv4 multicast addresses are in the range
+                                      constexpr auto V4_MCAST_START = 224;
+                                      constexpr auto V4_MCAST_END = 239;
+                                      const auto upperOctetd = addr[0];
+                                      return upperOctetd >= V4_MCAST_START && upperOctetd <= V4_MCAST_END;
+                                  },
+                                  [](const IpV6Bytes& addr)
+                                  {
+                                      // IPv6 multicast addresses start with 0xff
+                                      constexpr auto V6_MCAST_PREFIX = 0xffU;
+                                      return addr[0] == V6_MCAST_PREFIX;
+                                  }},
+                      m_bytes);
 }
 
 auto Address::isLinkLocal() const -> bool
 {
-    if (m_family == Family::IPv4) {
-        constexpr auto LINK_LOCAL_START = 169;
-        constexpr auto LINK_LOCAL_END = 254;
-        return data()[0] == LINK_LOCAL_START && data()[1] == LINK_LOCAL_END;
-    }
-    if (m_family == Family::IPv6) {
-        constexpr auto V6_LL_PREFIX = 0xfeU;
-        constexpr auto V6_LL_MASK = 0xc0U;
-        constexpr auto V6_LL_BITS = 0x80U;
-        return data()[0] == V6_LL_PREFIX && (data()[1] & V6_LL_MASK) == V6_LL_BITS;
-    }
-    return false;
+    return std::visit(Overloaded {[](const std::monostate&) { return false; },
+                                  [](const IpV4Bytes& addr)
+                                  {
+                                      constexpr auto LINK_LOCAL_START = 169;
+                                      constexpr auto LINK_LOCAL_END = 254;
+                                      return addr[0] == LINK_LOCAL_START && addr[1] == LINK_LOCAL_END;
+                                  },
+                                  [](const IpV6Bytes& addr)
+                                  {
+                                      constexpr auto V6_LL_PREFIX = 0xfeU;
+                                      constexpr auto V6_LL_MASK = 0xc0U;
+                                      constexpr auto V6_LL_BITS = 0x80U;
+                                      return addr[0] == V6_LL_PREFIX && (addr[1] & V6_LL_MASK) == V6_LL_BITS;
+                                  }},
+                      m_bytes);
 }
 
 auto Address::isUniqueLocal() const -> bool
 {
-    if (m_family == Family::IPv6) {
-        // Unique local IPv6 addresses are in fc00::/7 (first 7 bits are 1111 110)
-        // So, check if the first byte & 0xFE == 0xFC
-        constexpr auto V6_UL_PREFIX = 0xFCU;
-        constexpr auto V6_UL_MASK = 0xFEU;
-        return (data()[0] & V6_UL_MASK) == V6_UL_PREFIX;
+    if (!isV6()) {
+        return false;
     }
-    return false;
+    const auto bytes = std::get<IpV6Bytes>(m_bytes);
+
+    // Unique local IPv6 addresses are in fc00::/7 (first 7 bits are 1111 110)
+    // So, check if the first byte & 0xFE == 0xFC
+    constexpr auto V6_UL_PREFIX = 0xFCU;
+    constexpr auto V6_UL_MASK = 0xFEU;
+    return (bytes[0] & V6_UL_MASK) == V6_UL_PREFIX;
 }
 
 auto Address::isLoopback() const -> bool
 {
-    // Loopback address in IPv4 is
-    constexpr uint8_t LOOPBACK_FIRST_OCTET = 127;
-    if (isV4()) {
-        return data()[0] == LOOPBACK_FIRST_OCTET;
-    }
-    if (isMappedV4()) {
-        return data()[V4_MAPPED_PREFIX.size()] == LOOPBACK_FIRST_OCTET;
-    }
-    if (isV6()) {
-        // Loopback address in IPv6 is ::1
-        return std::all_of(cbegin(), cend() - 1, [](uint8_t b) { return b == 0; }) && data()[IPV6_ADDR_LEN - 1] == 1;
-    }
-    return false;
+    return std::visit(Overloaded {[](const std::monostate&) { return false; },
+                                  [](const IpV4Bytes& addr)
+                                  {
+                                      // Loopback address in IPv4 is
+                                      constexpr uint8_t LOOPBACK_FIRST_OCTET = 127;
+                                      return addr[0] == LOOPBACK_FIRST_OCTET;
+                                  },
+                                  [](const IpV6Bytes& addr)
+                                  {
+                                      // Loopback address in IPv6 is ::1
+                                      return std::all_of(
+                                                 addr.cbegin(), addr.cend() - 1, [](uint8_t b) { return b == 0; })
+                                          && addr[IPV6_ADDR_LEN - 1] == 1;
+                                  }},
+                      m_bytes);
 }
 
 auto Address::isBroadcast() const -> bool
 {
-    if (m_family == Family::IPv4) {
-        constexpr uint8_t IPV4_BROADCAST_BYTE = 0xFF;
-        return std::all_of(
-            cbegin(), cbegin() + addressLength(), [](uint8_t byte) { return byte == IPV4_BROADCAST_BYTE; });
+    if (!isV4()) {
+        return false;
     }
-    return false;
+    auto bytes = std::get<IpV4Bytes>(m_bytes);
+    constexpr uint8_t IPV4_BROADCAST_BYTE = 0xFF;
+    return std::all_of(bytes.cbegin(), bytes.cend(), [](uint8_t byte) { return byte == IPV4_BROADCAST_BYTE; });
 }
 
 auto Address::isPrivate() const -> bool
@@ -141,7 +177,7 @@ auto Address::isPrivate() const -> bool
     constexpr uint32_t IPV4_192_168_0_0 = 0xC0A80000;  // 192.168.0.0
     constexpr uint32_t IPV4_192_168_255_255 = 0xC0A8FFFF;  // 192.168.255.255
 
-    if (isV4() || isMappedV4()) {
+    if (isV4()) {
         const auto addr = ipv4();
         if ((addr >= IPV4_10_0_0_0 && addr <= IPV4_10_255_255_255) ||  // 10.0.0.0/8
             (addr >= IPV4_172_16_0_0 && addr <= IPV4_172_31_255_255) ||  // 172.16.0.0/12
@@ -158,7 +194,7 @@ auto Address::isPrivate() const -> bool
 
 auto Address::isDocumentation() const -> bool
 {
-    if (!isV4() && !isMappedV4()) {
+    if (!isV4()) {
         return false;  // Only IPv4 addresses can be documentation addresses
     }
 
@@ -178,132 +214,66 @@ auto Address::isDocumentation() const -> bool
 
 auto Address::family() const -> Family
 {
-    return m_family;
-}
-
-auto Address::addressLength() const -> Address::size_type
-{
-    if (m_family == Family::IPv4) {
-        return IPV4_ADDR_LEN;
-    }
-    if (m_family == Family::IPv6) {
-        return IPV6_ADDR_LEN;
-    }
-    return 0;
-}
-
-auto Address::isMappedV4() const -> bool
-{
-    if (m_family == Family::IPv6) {
-        return std::memcmp(data(), V4_MAPPED_PREFIX.data(), V4_MAPPED_PREFIX.size()) == 0;
-    }
-    return false;
-}
-
-auto Address::toMappedV4() const -> std::optional<Address>
-{
-    if (isV4()) {
-        Address v6;
-        // Set the IPv4-mapped IPv6 prefix: ::ffff:0:0/96
-        std::copy(V4_MAPPED_PREFIX.begin(), V4_MAPPED_PREFIX.end(), v6.begin());
-        std::copy_n(data(), IPV4_ADDR_LEN, v6.begin() + V4_MAPPED_PREFIX.size());
-        v6.m_family = Family::IPv6;
-        return v6;
-    }
-    return std::nullopt;
+    return std::visit(Overloaded {[](const std::monostate&) { return Family::Unspecified; },
+                                  [](const IpV4Bytes&) { return Family::IPv4; },
+                                  [](const IpV6Bytes&) { return Family::IPv6; }},
+                      m_bytes);
 }
 
 auto Address::toString() const -> std::string
 {
-    std::array<char, INET6_ADDRSTRLEN> out {};
-    if (inet_ntop(asLinuxAf(m_family), data(), out.data(), out.size()) != nullptr) {
-        return {out.data()};
-    }
-    return {"Unspecified"};
+    return std::visit(Overloaded {[](const std::monostate&) { return std::string("Unspecified"); },
+                                  [](const IpV4Bytes& addr)
+                                  {
+                                      std::array<char, INET_ADDRSTRLEN> buffer {};
+                                      inet_ntop(AF_INET, addr.data(), buffer.data(), buffer.size());
+                                      return std::string(buffer.data());
+                                  },
+                                  [](const IpV6Bytes& addr)
+                                  {
+                                      std::array<char, INET6_ADDRSTRLEN> buffer {};
+                                      inet_ntop(AF_INET6, addr.data(), buffer.data(), buffer.size());
+                                      return std::string(buffer.data());
+                                  }},
+                      m_bytes);
 }
 
 auto Address::fromString(const std::string& address) -> Address
 {
-    std::array<uint8_t, IPV6_ADDR_LEN> addr {};
-    if (inet_pton(AF_INET, address.data(), addr.data()) == 1) {
-        return Address::fromBytes(addr.data(), IPV4_ADDR_LEN);
+    {
+        IpV4Bytes addr {};
+        if (inet_pton(AF_INET, address.data(), addr.data()) == 1) {
+            return Address(addr);
+        }
     }
-    if (inet_pton(AF_INET6, address.data(), addr.data()) == 1) {
-        return Address::fromBytes(addr.data(), IPV6_ADDR_LEN);
-    }
-    return {};
-}
-
-auto Address::fromBytes(const uint8_t* bytes, size_type len) -> Address
-{
-    if (len == IPV6_ADDR_LEN || len == IPV4_ADDR_LEN) {
-        Address a;
-        std::copy_n(bytes, len, a.begin());
-        a.m_family = (len == IPV6_ADDR_LEN ? Family::IPv6 : Family::IPv4);
-        return a;
+    {
+        IpV6Bytes addr {};
+        if (inet_pton(AF_INET6, address.data(), addr.data()) == 1) {
+            return Address(addr);
+        }
     }
     return {};
-}
-
-auto Address::fromBytes(const IpV4Bytes& bytes) -> Address
-{
-    return fromBytes(bytes.data(), bytes.size());
-}
-
-auto Address::fromBytes(const IpV6Bytes& bytes) -> Address
-{
-    return fromBytes(bytes.data(), bytes.size());
 }
 
 auto Address::operator<=>(const Address& rhs) const noexcept -> std::strong_ordering
 {
-    if (m_family == rhs.m_family) {
-        const auto len = addressLength();
-        if (len == 0) {
-            return std::strong_ordering::equal;
-        }
-        return std::memcmp(data(), rhs.data(), len) <=> 0;
-    }
-
-    if (isMappedV4() && rhs.isV4()) {
-        return v4MappedCompare(*this, rhs) <=> 0;
-    }
-
-    if (rhs.isMappedV4() && isV4()) {
-        return 0 <=> v4MappedCompare(rhs, *this);
-    }
-
-    return m_family <=> rhs.m_family;
+    return m_bytes <=> rhs.m_bytes;
 }
 
 auto Address::ipv4() const -> uint32_t
 {
-    if (!isV4() && !isMappedV4()) {
-        return 0;
+    if (!isV4()) {
+        return 0;  // Not an IPv4 address, return 0
     }
-    auto offset = 0U;
 
-    if (isMappedV4()) {
-        offset = V4_MAPPED_PREFIX.size();
-    }
-    return (static_cast<uint32_t>(data()[0 + offset]) << 24U) | (static_cast<uint32_t>(data()[1 + offset]) << 16U)
-        | (static_cast<uint32_t>(data()[2 + offset]) << 8U) | static_cast<uint32_t>(data()[3 + offset]);
-}
-
-auto Address::operator==(const Address& rhs) const noexcept -> bool
-{
-    return (*this <=> rhs) == std::strong_ordering::equal;
+    const auto bytes = std::get<IpV4Bytes>(m_bytes);
+    return (static_cast<uint32_t>(bytes[0]) << 24U) | (static_cast<uint32_t>(bytes[1]) << 16U)
+        | (static_cast<uint32_t>(bytes[2]) << 8U) | static_cast<uint32_t>(bytes[3]);
 }
 
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
 {
-    std::array<char, INET6_ADDRSTRLEN> buf {};
-    if (inet_ntop(asLinuxAf(a.family()), a.data(), buf.data(), buf.size()) != nullptr) {
-        o << buf.data();
-    } else {
-        o << "Unspecified";
-    }
-    return o;
+    return o << a.toString();
 }
 
 }  // namespace monkas::ip

@@ -47,11 +47,6 @@ auto Address::isUnspecified() const -> bool
     return m_ip.isUnspecified();
 }
 
-auto Address::isMappedV4() const -> bool
-{
-    return m_ip.isMappedV4();
-}
-
 auto Address::ip() const -> const ip::Address&
 {
     return m_ip;
