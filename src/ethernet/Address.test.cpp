@@ -11,8 +11,8 @@ TEST_SUITE("[ethernet::Address]")
     std::array<uint8_t, ADDR_LEN> bytesNull {0, 0, 0, 0, 0, 0};
     std::array<uint8_t, ADDR_LEN> bytesSome {1, 2, 3, 4, 5, 0x1A};
 
-    const auto someAddress = Address::fromBytes(bytesSome);
-    const auto nullAddress = Address::fromBytes(bytesNull);
+    const auto someAddress = Address {bytesSome};
+    const auto nullAddress = Address {bytesNull};
 
     TEST_CASE("toString")
     {

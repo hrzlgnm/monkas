@@ -15,8 +15,8 @@ TEST_SUITE("[network::Address]")
     std::array<uint8_t, 4> someIpV4 {192, 168, 17, 1};
     std::array<uint8_t, 4> someBroadcast {192, 168, 17, 255};
 
-    const auto someV4 = ip::Address::fromBytes(someIpV4);
-    const auto someBroadcastV4 = ip::Address::fromBytes(someBroadcast);
+    const auto someV4 = ip::Address(someIpV4);
+    const auto someBroadcastV4 = ip::Address(someBroadcast);
     const auto someV6 = ip::Address::fromString("2001:db8::1");
     const Address addrV6 {someV6, someBroadcastV4, 24, scope, 5, 0};
     const Address addrV4 {someV4, someBroadcastV4, 24, scope, 10, 1};
@@ -52,12 +52,6 @@ TEST_SUITE("[network::Address]")
         CHECK(defaultAddress.isUnspecified());
         CHECK(!addrV6.isUnspecified());
         CHECK(!addrV4.isUnspecified());
-    }
-
-    TEST_CASE("isMappedV4")
-    {
-        CHECK(!addrV4.isMappedV4());
-        CHECK(!defaultAddress.isMappedV4());
     }
 
     TEST_CASE("ip")

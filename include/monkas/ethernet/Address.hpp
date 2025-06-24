@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <compare>
 #include <cstdint>
 #include <iosfwd>
 
@@ -8,19 +9,23 @@
 
 namespace monkas::ethernet
 {
-constexpr auto ADDR_LEN = 6;
-using EthernetBytes = std::array<uint8_t, ADDR_LEN>;
 
-class Address : public std::array<uint8_t, ADDR_LEN>
+constexpr auto ADDR_LEN = 6;
+using Bytes = std::array<uint8_t, ADDR_LEN>;
+
+class Address
 {
   public:
     Address();
+    explicit Address(const Bytes& bytes);
+
     [[nodiscard]] auto toString() const -> std::string;
 
-    static auto fromBytes(const EthernetBytes& bytes) -> Address;
+    auto operator<=>(const Address& other) const -> std::strong_ordering;
+    auto operator==(const Address& other) const -> bool = default;
 
   private:
-    static auto fromBytes(const uint8_t* bytes, size_type len) -> Address;
+    Bytes m_bytes;
 };
 
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&;

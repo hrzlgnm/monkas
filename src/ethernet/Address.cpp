@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <ostream>
 
 #include <ethernet/Address.hpp>
@@ -7,20 +6,13 @@ namespace monkas::ethernet
 {
 
 Address::Address()
-    : std::array<uint8_t, ADDR_LEN> {}
+    : m_bytes {}
 {
 }
 
-auto Address::fromBytes(const uint8_t* bytes, size_type len) -> Address
+Address::Address(const Bytes& bytes)
+    : m_bytes {bytes}
 {
-    Address r;
-    std::copy_n(bytes, len, r.begin());
-    return r;
-}
-
-auto Address::fromBytes(const EthernetBytes& bytes) -> Address
-{
-    return fromBytes(bytes.data(), bytes.size());
 }
 
 auto Address::toString() const -> std::string
@@ -31,15 +23,20 @@ auto Address::toString() const -> std::string
     int i = 0;
     constexpr auto LOWER_NIBBLE_SHIFT = 0x4U;
     constexpr auto UPPER_NIBBLE_MASK = 0xFU;
-    for (const auto octet : *this) {
+    for (const auto octet : m_bytes) {
         buf[idx++] = "0123456789abcdef"[octet >> LOWER_NIBBLE_SHIFT];
         buf[idx++] = "0123456789abcdef"[octet & UPPER_NIBBLE_MASK];
-        if (i < size() - 1) {
+        if (i < ADDR_LEN - 1) {
             buf[idx++] = ':';
         }
         i++;
     }
     return {buf.data(), buf.size()};
+}
+
+auto Address::operator<=>(const Address& other) const -> std::strong_ordering
+{
+    return m_bytes <=> other.m_bytes;
 }
 
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
