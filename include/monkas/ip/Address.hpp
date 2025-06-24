@@ -4,7 +4,6 @@
 #include <compare>
 #include <cstdint>
 #include <iosfwd>
-#include <optional>
 #include <string>
 #include <variant>
 
