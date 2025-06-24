@@ -90,7 +90,8 @@ auto Address::isMulticast() const -> bool
                                       // IPv4 multicast addresses are in the range
                                       constexpr auto V4_MCAST_START = 224;
                                       constexpr auto V4_MCAST_END = 239;
-                                      const auto upperOctetd = addr[0];
+                                      const auto upperOctet = addr[0];
+                                      return upperOctet >= V4_MCAST_START && upperOctet <= V4_MCAST_END;
                                       return upperOctetd >= V4_MCAST_START && upperOctetd <= V4_MCAST_END;
                                   },
                                   [](const IpV6Bytes& addr)
