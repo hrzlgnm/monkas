@@ -341,8 +341,7 @@ auto NetworkMonitor::mnlMessageCallback(const nlmsghdr* n) -> int
         return MNL_CB_STOP;  // someone may call stop() while we are processing messages
     }
     m_stats.msgsReceived++;
-    const auto t = n->nlmsg_type;
-    switch (t) {
+    switch (const auto t = n->nlmsg_type) {
         case RTM_NEWLINK:
         case RTM_DELLINK: {
             const auto* ifi = static_cast<const ifinfomsg*>(mnl_nlmsg_get_payload(n));
