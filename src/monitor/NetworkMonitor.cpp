@@ -324,8 +324,13 @@ void NetworkMonitor::sendDumpRequest(uint16_t msgType)
 void NetworkMonitor::retryLastDumpRequest()
 {
     spdlog::debug("Retrying last dump request with sequence number {}", m_sequenceNumber);
-    const auto* buf = static_cast<const void*>(m_sendBuffer.data());
-    const auto* nlh = static_cast<const nlmsghdr*>(buf);
+ void NetworkMonitor::retryLastDumpRequest()
+ {
+     spdlog::debug("Retrying last dump request with sequence number {}", m_sequenceNumber);
++    static_assert(alignof(nlmsghdr) <= alignof(std::max_align_t), "nlmsghdr alignment requirements not met");
+     const auto* buf = static_cast<const void*>(m_sendBuffer.data());
+     const auto* nlh = static_cast<const nlmsghdr*>(buf);
+ }
     const auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0) {
         pfatal("mnl_socket_sendto");
