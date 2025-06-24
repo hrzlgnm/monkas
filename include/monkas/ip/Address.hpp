@@ -25,23 +25,22 @@ auto operator<<(std::ostream& o, Family f) -> std::ostream&;
 constexpr auto IPV6_ADDR_LEN = 16;
 constexpr auto IPV4_ADDR_LEN = 4;
 
-using IpV4Bytes = std::array<uint8_t, IPV4_ADDR_LEN>;
-using IpV6Bytes = std::array<uint8_t, IPV6_ADDR_LEN>;
-using Bytes = std::variant<IpV4Bytes, IpV6Bytes>;
+using V4Bytes = std::array<uint8_t, IPV4_ADDR_LEN>;
+using V6Bytes = std::array<uint8_t, IPV6_ADDR_LEN>;
+using Bytes = std::variant<V4Bytes, V6Bytes>;
 
 class Address
 {
   public:
     Address();
-    explicit Address(const IpV4Bytes& bytes);
-    explicit Address(const IpV6Bytes& bytes);
+    explicit Address(const V4Bytes& bytes);
+    explicit Address(const V6Bytes& bytes);
 
     [[nodiscard]] auto toString() const -> std::string;
 
     static auto fromString(const std::string& address) noexcept(false) -> Address;
 
     [[nodiscard]] auto isV4() const -> bool;
-
     [[nodiscard]] auto isV6() const -> bool;
 
     [[nodiscard]] auto isMulticast() const -> bool;
@@ -51,8 +50,6 @@ class Address
     [[nodiscard]] auto isBroadcast() const -> bool;
 
     [[nodiscard]] auto ip() const -> const Address&;
-    [[nodiscard]] auto broadcast() const -> const Address&;
-
     [[nodiscard]] auto family() const -> Family;
 
     [[nodiscard]] auto operator<=>(const Address& rhs) const noexcept -> std::strong_ordering;

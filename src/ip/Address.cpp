@@ -43,29 +43,29 @@ auto operator<<(std::ostream& o, const Family f) -> std::ostream&
 
 Address::Address() = default;
 
-Address::Address(const IpV4Bytes& bytes)
+Address::Address(const V4Bytes& bytes)
     : m_bytes(bytes)
 {
 }
 
-Address::Address(const IpV6Bytes& bytes)
+Address::Address(const V6Bytes& bytes)
     : m_bytes(bytes)
 {
 }
 
 auto Address::isV4() const -> bool
 {
-    return std::holds_alternative<IpV4Bytes>(m_bytes);
+    return std::holds_alternative<V4Bytes>(m_bytes);
 }
 
 auto Address::isV6() const -> bool
 {
-    return std::holds_alternative<IpV6Bytes>(m_bytes);
+    return std::holds_alternative<V6Bytes>(m_bytes);
 }
 
 auto Address::isMulticast() const -> bool
 {
-    return std::visit(Overloaded {[](const IpV4Bytes& addr)
+    return std::visit(Overloaded {[](const V4Bytes& addr)
                                   {
                                       // IPv4 multicast addresses are in the range
                                       constexpr auto V4_MCAST_START = 224;
@@ -73,7 +73,7 @@ auto Address::isMulticast() const -> bool
                                       const auto upperOctet = addr[0];
                                       return upperOctet >= V4_MCAST_START && upperOctet <= V4_MCAST_END;
                                   },
-                                  [](const IpV6Bytes& addr)
+                                  [](const V6Bytes& addr)
                                   {
                                       // IPv6 multicast addresses start with 0xff
                                       constexpr auto V6_MCAST_PREFIX = 0xffU;
@@ -84,13 +84,13 @@ auto Address::isMulticast() const -> bool
 
 auto Address::isLinkLocal() const -> bool
 {
-    return std::visit(Overloaded {[](const IpV4Bytes& addr)
+    return std::visit(Overloaded {[](const V4Bytes& addr)
                                   {
                                       constexpr auto LINK_LOCAL_START = 169;
                                       constexpr auto LINK_LOCAL_END = 254;
                                       return addr[0] == LINK_LOCAL_START && addr[1] == LINK_LOCAL_END;
                                   },
-                                  [](const IpV6Bytes& addr)
+                                  [](const V6Bytes& addr)
                                   {
                                       constexpr auto V6_LL_PREFIX = 0xfeU;
                                       constexpr auto V6_LL_MASK = 0xc0U;
@@ -105,7 +105,7 @@ auto Address::isUniqueLocal() const -> bool
     if (!isV6()) {
         return false;
     }
-    const auto bytes = std::get<IpV6Bytes>(m_bytes);
+    const auto bytes = std::get<V6Bytes>(m_bytes);
 
     // Unique local IPv6 addresses are in fc00::/7 (first 7 bits are 1111 110)
     // So, check if the first byte & 0xFE == 0xFC
@@ -116,13 +116,13 @@ auto Address::isUniqueLocal() const -> bool
 
 auto Address::isLoopback() const -> bool
 {
-    return std::visit(Overloaded {[](const IpV4Bytes& addr)
+    return std::visit(Overloaded {[](const V4Bytes& addr)
                                   {
                                       // Loopback address in IPv4 is
                                       constexpr uint8_t LOOPBACK_FIRST_OCTET = 127;
                                       return addr[0] == LOOPBACK_FIRST_OCTET;
                                   },
-                                  [](const IpV6Bytes& addr)
+                                  [](const V6Bytes& addr)
                                   {
                                       // Loopback address in IPv6 is ::1
                                       return std::all_of(
@@ -137,7 +137,7 @@ auto Address::isBroadcast() const -> bool
     if (!isV4()) {
         return false;
     }
-    auto bytes = std::get<IpV4Bytes>(m_bytes);
+    auto bytes = std::get<V4Bytes>(m_bytes);
     constexpr uint8_t IPV4_BROADCAST_BYTE = 0xFF;
     return std::ranges::all_of(std::as_const(bytes), [](const uint8_t byte) { return byte == IPV4_BROADCAST_BYTE; });
 }
@@ -145,19 +145,18 @@ auto Address::isBroadcast() const -> bool
 auto Address::family() const -> Family
 {
     return std::visit(
-        Overloaded {[](const IpV4Bytes&) { return Family::IPv4; }, [](const IpV6Bytes&) { return Family::IPv6; }},
-        m_bytes);
+        Overloaded {[](const V4Bytes&) { return Family::IPv4; }, [](const V6Bytes&) { return Family::IPv6; }}, m_bytes);
 }
 
 auto Address::toString() const -> std::string
 {
-    return std::visit(Overloaded {[](const IpV4Bytes& addr)
+    return std::visit(Overloaded {[](const V4Bytes& addr)
                                   {
                                       std::array<char, INET_ADDRSTRLEN> buffer {};
                                       inet_ntop(AF_INET, addr.data(), buffer.data(), buffer.size());
                                       return std::string(buffer.data());
                                   },
-                                  [](const IpV6Bytes& addr)
+                                  [](const V6Bytes& addr)
                                   {
                                       std::array<char, INET6_ADDRSTRLEN> buffer {};
                                       inet_ntop(AF_INET6, addr.data(), buffer.data(), buffer.size());
@@ -169,13 +168,13 @@ auto Address::toString() const -> std::string
 auto Address::fromString(const std::string& address) noexcept(false) -> Address
 {
     {
-        IpV4Bytes addr {};
+        V4Bytes addr {};
         if (inet_pton(AF_INET, address.data(), addr.data()) == 1) {
             return Address(addr);
         }
     }
     {
-        IpV6Bytes addr {};
+        V6Bytes addr {};
         if (inet_pton(AF_INET6, address.data(), addr.data()) == 1) {
             return Address(addr);
         }
