@@ -448,7 +448,7 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr* nlhdr, const ifaddrmsg*
 
     uint32_t flags = ifa->ifa_flags;  // will be overwritten if IFA_FLAGS is present
     ip::Address address;
-    std::optional<ip::Address> broadcast;
+    std::optional<ip::Address> broadcast = std::nullopt;  // will be overwritten if IFA_BROADCAST is present
     uint8_t prot = IFAPROT_UNSPEC;  // will be overwritten if IFA_PROTO is present
 
     auto& cacheEntry = ensureNameCurrent(ifa->ifa_index, attributes.getString(IFA_LABEL));
