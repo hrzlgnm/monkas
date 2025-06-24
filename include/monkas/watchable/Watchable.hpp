@@ -36,7 +36,8 @@ class Watchable
     /**
      * @brief Removes a watcher identified by the given token.
      *
-     * If called during notification, the removal is deferred until after notification completes. If the token is invalid or the watcher is already marked for removal, the operation is ignored.
+     * If called during notification, the removal is deferred until after notification completes. If the token is
+     * invalid or the watcher is already marked for removal, the operation is ignored.
      */
     void removeWatcher(const Token& token)
     {
@@ -62,7 +63,9 @@ class Watchable
     /**
      * @brief Notifies all registered watchers with the provided arguments.
      *
-     * Calls each watcher callback with the given arguments. Watchers marked for removal are skipped. Any exceptions thrown by watcher callbacks are caught and logged without interrupting the notification process. Deferred removals are processed after all notifications are complete.
+     * Calls each watcher callback with the given arguments. Watchers marked for removal are skipped. Any exceptions
+     * thrown by watcher callbacks are caught and logged without interrupting the notification process. Deferred
+     * removals are processed after all notifications are complete.
      */
     void notify(Args... args)
     {
