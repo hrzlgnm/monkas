@@ -165,54 +165,6 @@ auto Address::isBroadcast() const -> bool
     return std::all_of(bytes.cbegin(), bytes.cend(), [](uint8_t byte) { return byte == IPV4_BROADCAST_BYTE; });
 }
 
-auto Address::isPrivate() const -> bool
-{
-    // Private IPv4 ranges:
-    // 10.0.0.0/8:   10.0.0.0 - 10.255.255.255
-    // 172.16.0.0/12: 172.16.0.0 - 172.31.255.255
-    // 192.168.0.0/16: 192.168.0.0 - 192.168.255.255
-    constexpr uint32_t IPV4_10_0_0_0 = 0x0A000000;  // 10.0.0.0
-    constexpr uint32_t IPV4_10_255_255_255 = 0x0AFFFFFF;  // 10.255.255.255
-    constexpr uint32_t IPV4_172_16_0_0 = 0xAC100000;  // 172.16.0.0
-    constexpr uint32_t IPV4_172_31_255_255 = 0xAC1FFFFF;  // 172.31.255.255
-    constexpr uint32_t IPV4_192_168_0_0 = 0xC0A80000;  // 192.168.0.0
-    constexpr uint32_t IPV4_192_168_255_255 = 0xC0A8FFFF;  // 192.168.255.255
-
-    if (isV4()) {
-        const auto addr = ipv4();
-        if ((addr >= IPV4_10_0_0_0 && addr <= IPV4_10_255_255_255) ||  // 10.0.0.0/8
-            (addr >= IPV4_172_16_0_0 && addr <= IPV4_172_31_255_255) ||  // 172.16.0.0/12
-            (addr >= IPV4_192_168_0_0 && addr <= IPV4_192_168_255_255))  // 192.168.0.0/16
-        {
-            return true;
-        }
-    }
-    if (isV6()) {
-        return isUniqueLocal();  // Unique local addresses in IPv6 are considered private
-    }
-    return false;
-}
-
-auto Address::isDocumentation() const -> bool
-{
-    if (!isV4()) {
-        return false;  // Only IPv4 addresses can be documentation addresses
-    }
-
-    // Documentation IPv4 ranges according to RFC 5737:
-    // 192.0.2.0/24
-    // 198.51.100.0/24
-    // 203.0.113.0/24
-    static constexpr uint32_t DOC1_BASE = (192U << 24U) | (0U << 16U) | (2U << 8U);  // 192.0.2.0
-    static constexpr uint32_t DOC2_BASE = (198U << 24U) | (51U << 16U) | (100U << 8U);  // 198.51.100.0
-    static constexpr uint32_t DOC3_BASE = (203U << 24U) | (0U << 16U) | (113U << 8U);  // 203.0.113.0
-    static constexpr uint32_t DOC_MASK = 0xFFFFFF00;  // /24 mask
-
-    const auto addr = ipv4();
-    // Assume Address has a method to get IPv4 as uint32_t in host byte order
-    return ((addr & DOC_MASK) == DOC1_BASE) || ((addr & DOC_MASK) == DOC2_BASE) || ((addr & DOC_MASK) == DOC3_BASE);
-}
-
 auto Address::family() const -> Family
 {
     return std::visit(Overloaded {[](const std::monostate&) { return Family::Unspecified; },
@@ -259,17 +211,6 @@ auto Address::fromString(const std::string& address) -> Address
 auto Address::operator<=>(const Address& rhs) const noexcept -> std::strong_ordering
 {
     return m_bytes <=> rhs.m_bytes;
-}
-
-auto Address::ipv4() const -> uint32_t
-{
-    if (!isV4()) {
-        return 0;  // Not an IPv4 address, return 0
-    }
-
-    const auto bytes = std::get<IpV4Bytes>(m_bytes);
-    return (static_cast<uint32_t>(bytes[0]) << 24U) | (static_cast<uint32_t>(bytes[1]) << 16U)
-        | (static_cast<uint32_t>(bytes[2]) << 8U) | static_cast<uint32_t>(bytes[3]);
 }
 
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&

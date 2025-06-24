@@ -60,8 +60,6 @@ class Address
     [[nodiscard]] auto isUniqueLocal() const -> bool;
     [[nodiscard]] auto isLoopback() const -> bool;
     [[nodiscard]] auto isBroadcast() const -> bool;
-    [[nodiscard]] auto isPrivate() const -> bool;
-    [[nodiscard]] auto isDocumentation() const -> bool;
 
     [[nodiscard]] auto ip() const -> const Address&;
     [[nodiscard]] auto broadcast() const -> const Address&;
@@ -72,8 +70,6 @@ class Address
     [[nodiscard]] auto operator==(const Address& rhs) const noexcept -> bool = default;
 
   private:
-    [[nodiscard]] auto ipv4() const -> uint32_t;
-
     Bytes m_bytes;
 };
 

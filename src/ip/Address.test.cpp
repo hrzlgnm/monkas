@@ -127,20 +127,6 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromString("127.253.253.123").isLoopback());
     }
 
-    TEST_CASE("isPrivate")
-    {
-        CHECK(Address::fromString("192.168.0.1").isPrivate());
-        CHECK(Address::fromString("172.16.0.1").isPrivate());
-        CHECK(Address::fromString("10.0.0.1").isPrivate());
-    }
-
-    TEST_CASE("isDocumentation")
-    {
-        CHECK(Address::fromString("192.0.2.1").isDocumentation());
-        CHECK(Address::fromString("198.51.100.1").isDocumentation());
-        CHECK(Address::fromString("203.0.113.1").isDocumentation());
-    }
-
     TEST_CASE("operator bool")
     {
         CHECK(!unspecified);
