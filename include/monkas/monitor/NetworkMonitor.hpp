@@ -61,7 +61,7 @@ using NetworkAddressNotifier = Watchable<const network::Interface, const Address
 using NetworkAddressWatcher = NetworkAddressNotifier::Watcher;
 using NetworkAddressWatcherToken = NetworkAddressNotifier::Token;
 
-using GatewayAddressNotifier = Watchable<const network::Interface, std::optional<const ip::Address>>;
+using GatewayAddressNotifier = Watchable<const network::Interface, std::optional<ip::Address>>;
 using GatewayAddressWatcher = GatewayAddressNotifier::Watcher;
 using GatewayAddressWatcherToken = GatewayAddressNotifier::Token;
 
