@@ -2,6 +2,7 @@
 
 #include <array>
 #include <compare>
+#include <cstddef>
 #include <iosfwd>
 
 #include <fmt/ostream.h>
@@ -9,7 +10,7 @@
 namespace monkas::ethernet
 {
 
-constexpr auto ADDR_LEN = 6;
+constexpr std::size_t ADDR_LEN = 6;
 using Bytes = std::array<uint8_t, ADDR_LEN>;
 
 class Address

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <compare>
+#include <cstddef>
 #include <cstdint>
 #include <iosfwd>
 #include <string>
@@ -22,8 +23,8 @@ enum class Family : uint8_t
 auto asLinuxAf(Family f) -> int;
 auto operator<<(std::ostream& o, Family f) -> std::ostream&;
 
-constexpr auto IPV6_ADDR_LEN = 16;
-constexpr auto IPV4_ADDR_LEN = 4;
+constexpr std::size_t IPV6_ADDR_LEN = 16;
+constexpr std::size_t IPV4_ADDR_LEN = 4;
 
 using V4Bytes = std::array<uint8_t, IPV4_ADDR_LEN>;
 using V6Bytes = std::array<uint8_t, IPV6_ADDR_LEN>;

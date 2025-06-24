@@ -28,7 +28,6 @@ class Attributes
     auto operator=(const Attributes&) -> Attributes& = default;
     auto operator=(Attributes&&) -> Attributes& = default;
 
-    [[nodiscard]] auto has(uint16_t type) const -> bool;
     [[nodiscard]] auto getString(uint16_t type) const -> std::optional<std::string>;
     [[nodiscard]] auto getU8(uint16_t type) const -> std::optional<uint8_t>;
     [[nodiscard]] auto getU16(uint16_t type) const -> std::optional<uint16_t>;
@@ -40,38 +39,6 @@ class Attributes
 
   private:
     explicit Attributes(std::size_t toAlloc);
-
-    template<typename T>
-    auto getTypedAttribute(uint16_t type, mnl_attr_data_type mnlType, T (*getter)(const nlattr*)) const
-        -> std::optional<T>
-    {
-        if (!has(type)) {
-            return std::nullopt;
-        }
-        if (mnl_attr_validate(m_attributes[type], mnlType) < 0) {
-            spdlog::warn("attribute of type {} is invalid", type);
-            return std::nullopt;
-        }
-        return getter(m_attributes[type]);
-    }
-
-    template<std::size_t N>
-    [[nodiscard]] auto getPayload(uint16_t type) const -> std::optional<std::array<uint8_t, N>>
-    {
-        if (!has(type)) {
-            return std::nullopt;
-        }
-
-        if (mnl_attr_validate2(m_attributes[type], MNL_TYPE_UNSPEC, N) < 0) {
-            spdlog::trace("payload of type {} has len {} != {}", type, mnl_attr_get_payload_len(m_attributes[type]), N);
-            return std::nullopt;
-        }
-
-        const auto* payload = static_cast<const uint8_t*>(mnl_attr_get_payload(m_attributes[type]));
-        std::array<uint8_t, N> arr;
-        std::copy_n(payload, N, arr.data());
-        return arr;
-    }
 
     struct CallbackArgs
     {
