@@ -110,7 +110,7 @@ void NetworkInterfaceStatusTracker::setBroadcastAddress(const ethernet::Address&
     }
 }
 
-auto NetworkInterfaceStatusTracker::gatewayAddress() const -> const ip::Address&
+auto NetworkInterfaceStatusTracker::gatewayAddress() const -> std::optional<ip::Address>
 {
     return m_gateway;
 }
@@ -142,18 +142,16 @@ auto NetworkInterfaceStatusTracker::networkAddresses() const -> const Addresses&
 
 void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address& address)
 {
-    if (address.ip()) {
-        if (const bool isNew = m_networkAddresses.erase(address) == 0) {
-            m_networkAddresses.insert(address);
-            touch(DirtyFlag::NetworkAddressesChanged);
-            logTrace(address, this, "address added");
-            m_nerdstats.networkAddressesAdded++;
-        } else {
-            // No material change – keep ordering stable, skip dirty-flag spam
-            m_networkAddresses.insert(address);
-            logTrace(address, this, "address unchanged");
-            m_nerdstats.networkAddressesNoChangeUpdates++;
-        }
+    if (const bool isNew = m_networkAddresses.erase(address) == 0) {
+        m_networkAddresses.insert(address);
+        touch(DirtyFlag::NetworkAddressesChanged);
+        logTrace(address, this, "address added");
+        m_nerdstats.networkAddressesAdded++;
+    } else {
+        // No material change – keep ordering stable, skip dirty-flag spam
+        m_networkAddresses.insert(address);
+        logTrace(address, this, "address unchanged");
+        m_nerdstats.networkAddressesNoChangeUpdates++;
     }
 }
 
@@ -348,8 +346,8 @@ auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std:
         }
         o << "]";
     }
-    if (s.m_gateway) {
-        o << " default via " << s.m_gateway;
+    if (s.m_gateway.has_value()) {
+        o << " default via " << s.m_gateway.value();
     }
     o << " op " << toString(s.m_operState) << "(" << static_cast<int>(s.m_operState) << ")";
     o << " age " << s.age().count();

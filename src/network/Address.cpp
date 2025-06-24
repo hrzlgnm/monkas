@@ -8,7 +8,7 @@ namespace monkas::network
 {
 
 Address::Address(const ip::Address& address,
-                 const ip::Address& broadcast,
+                 std::optional<ip::Address> broadcast,
                  uint8_t prefixLen,
                  Scope scope,
                  uint32_t flags,
@@ -20,11 +20,6 @@ Address::Address(const ip::Address& address,
     , m_flags {flags}
     , m_prot {proto}
 {
-}
-
-Address::operator bool() const
-{
-    return m_ip.operator bool();
 }
 
 auto Address::family() const -> Family
@@ -42,17 +37,12 @@ auto Address::isV6() const -> bool
     return m_ip.isV6();
 }
 
-auto Address::isUnspecified() const -> bool
-{
-    return m_ip.isUnspecified();
-}
-
 auto Address::ip() const -> const ip::Address&
 {
     return m_ip;
 }
 
-auto Address::broadcast() const -> const ip::Address&
+auto Address::broadcast() const -> std::optional<ip::Address>
 {
     return m_brd;
 }
@@ -141,8 +131,8 @@ auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
 {
     o << a.family() << " " << a.ip() << "/" << static_cast<int>(a.prefixLength());
     o << " scope " << a.scope();
-    if (a.broadcast()) {
-        o << " brd " << a.broadcast();
+    if (a.broadcast().has_value()) {
+        o << " brd " << a.broadcast().value();
     }
     // TODO: to readable
     if (a.flags() != 0U) {

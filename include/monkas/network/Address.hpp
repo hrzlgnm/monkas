@@ -1,6 +1,7 @@
 #pragma once
 
 #include <compare>
+#include <optional>
 
 #include <fmt/ostream.h>
 #include <ip/Address.hpp>
@@ -26,24 +27,19 @@ class Address
   public:
     Address() = default;
     Address(const ip::Address& address,
-            const ip::Address& broadcast,
+            std::optional<ip::Address> broadcast,
             uint8_t prefixLen,
             Scope scope,
             uint32_t flags,
             uint8_t proto);
-    /**
-     * @returns true if AddressFamily is not Unspecified
-     */
-    explicit operator bool() const;
 
     [[nodiscard]] auto family() const -> Family;
 
     [[nodiscard]] auto isV4() const -> bool;
     [[nodiscard]] auto isV6() const -> bool;
-    [[nodiscard]] auto isUnspecified() const -> bool;
 
     [[nodiscard]] auto ip() const -> const ip::Address&;
-    [[nodiscard]] auto broadcast() const -> const ip::Address&;
+    [[nodiscard]] auto broadcast() const -> std::optional<ip::Address>;
     [[nodiscard]] auto prefixLength() const -> uint8_t;
     [[nodiscard]] auto scope() const -> Scope;
     [[nodiscard]] auto flags() const -> uint32_t;
@@ -54,7 +50,7 @@ class Address
 
   private:
     ip::Address m_ip;
-    ip::Address m_brd;
+    std::optional<ip::Address> m_brd;
     uint8_t m_prefixlen {};
     Scope m_scope {Scope::Nowhere};
     uint32_t m_flags {};

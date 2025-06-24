@@ -1,3 +1,4 @@
+#include <fmt/std.h>
 #include <gflags/gflags.h>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <monitor/NetworkMonitor.hpp>
@@ -80,9 +81,14 @@ auto main(int argc, char* argv[]) -> int
         mon.addNetworkAddressWatcher([](const Interface& iface, const Addresses& addresses)
                                      { spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", ")); },
                                      InitialSnapshotMode::InitialSnapshot);
-    std::ignore = mon.addGatewayAddressWatcher([](const Interface& iface, const ip::Address& gateway)
-                                               { spdlog::info("{} changed gateway address to {}", iface, gateway); },
-                                               InitialSnapshotMode::InitialSnapshot);
+    std::ignore = mon.addGatewayAddressWatcher(
+        [](const Interface& iface, const std::optional<ip::Address>& gateway)
+        {
+            spdlog::info("{} changed gateway address to {}",
+                         iface,
+                         gateway.transform([](const auto& a) { return a.toString(); }).value_or("None"));
+        },
+        InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addMacAddressWatcher([](const Interface& iface, const ethernet::Address& mac)
                                            { spdlog::info("{} changed MAC address to {}", iface, mac); },
                                            InitialSnapshotMode::InitialSnapshot);

@@ -29,7 +29,7 @@ TEST_SUITE("[ip::Address]")
     const auto countDownV4 = Address(bytesV4CountDown);
     const auto countUpV6 = Address(bytesV6CountUp);
     const auto countDownV6 = Address(bytesV6CountDown);
-    const auto unspecified = Address {};
+    const auto defaultCtor = Address {};
 
     TEST_CASE("toString")
     {
@@ -41,7 +41,7 @@ TEST_SUITE("[ip::Address]")
     {
         CHECK(Address::fromString("127.0.0.1").toString() == "127.0.0.1");
         CHECK(Address::fromString("::1").toString() == "::1");
-        CHECK(Address::fromString("garbage").toString() == "Unspecified");
+        CHECK_THROWS_AS(Address::fromString("garbage"), std::invalid_argument);
     }
 
     TEST_CASE("addressFamily")
@@ -61,14 +61,6 @@ TEST_SUITE("[ip::Address]")
         CHECK(!localhost4.isV6());
         CHECK(localHost6.isV6());
     }
-
-    TEST_CASE("isUnspecified")
-    {
-        CHECK(unspecified.isUnspecified());
-        CHECK(!localhost4.isUnspecified());
-        CHECK(!localHost6.isUnspecified());
-    }
-
     TEST_CASE("isMulticast")
     {
         CHECK(Address::fromString("224.0.0.1").isMulticast());
@@ -77,7 +69,7 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromString("ff02::2").isMulticast());
         CHECK(Address::fromString("ff02::3").isMulticast());
         CHECK(Address::fromString("ff02::4").isMulticast());
-        CHECK(!unspecified.isMulticast());
+        CHECK(!defaultCtor.isMulticast());
         CHECK(!localhost4.isMulticast());
         CHECK(!localHost6.isMulticast());
         CHECK(!any4.isMulticast());
@@ -91,7 +83,7 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromString("fe80::1").isLinkLocal());
         CHECK(Address::fromString("fe80::2").isLinkLocal());
         CHECK(Address::fromString("fe80::3").isLinkLocal());
-        CHECK(!unspecified.isLinkLocal());
+        CHECK(!defaultCtor.isLinkLocal());
         CHECK(!localhost4.isLinkLocal());
         CHECK(!localHost6.isLinkLocal());
         CHECK(!any4.isLinkLocal());
@@ -103,7 +95,7 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromString("fc00::1").isUniqueLocal());
         CHECK(Address::fromString("fd00::1").isUniqueLocal());
         CHECK(Address::fromString("fc00:1234:5678:9abc:def0:1234:5678:9abc").isUniqueLocal());
-        CHECK(!unspecified.isUniqueLocal());
+        CHECK(!defaultCtor.isUniqueLocal());
         CHECK(!localhost4.isUniqueLocal());
         CHECK(!localHost6.isUniqueLocal());
         CHECK(!any4.isUniqueLocal());
@@ -127,39 +119,26 @@ TEST_SUITE("[ip::Address]")
         CHECK(Address::fromString("127.253.253.123").isLoopback());
     }
 
-    TEST_CASE("operator bool")
-    {
-        CHECK(!unspecified);
-        CHECK(localhost4);
-        CHECK(localHost6);
-        CHECK(any4);
-        CHECK(any6);
-        CHECK(countUpV4);
-        CHECK(countDownV4);
-        CHECK(countUpV6);
-        CHECK(countDownV6);
-    }
-
     TEST_CASE("operator ==")
     {
-        CHECK(unspecified == unspecified);
+        CHECK(defaultCtor == any4);
+        CHECK(defaultCtor == defaultCtor);
         CHECK(localhost4 == localhost4);
         CHECK(localHost6 == localHost6);
     }
 
     TEST_CASE("operator !=")
     {
-        CHECK(unspecified != any4);
-        CHECK(unspecified != any6);
+        CHECK(defaultCtor != any6);
         CHECK(any6 != any4);
         CHECK(localhost4 != localHost6);
-        CHECK(unspecified != localhost4);
-        CHECK(unspecified != localHost6);
+        CHECK(defaultCtor != localhost4);
+        CHECK(defaultCtor != localHost6);
     }
 
     TEST_CASE("operator <")
     {
-        CHECK(unspecified < localhost4);
+        CHECK(defaultCtor < localhost4);
         CHECK(countUpV4 < countDownV4);
         CHECK(countUpV6 < countDownV6);
         CHECK(localhost4 < localhost4OtherSubnet);
@@ -168,8 +147,8 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("operator <=")
     {
-        CHECK(unspecified <= unspecified);
-        CHECK(unspecified <= localhost4);
+        CHECK(defaultCtor <= defaultCtor);
+        CHECK(defaultCtor <= localhost4);
         CHECK(countUpV6 <= countDownV6);
         CHECK(countUpV4 <= countDownV4);
         CHECK(localhost4 <= localhost4);
@@ -180,8 +159,8 @@ TEST_SUITE("[ip::Address]")
     {
         CHECK(countDownV4 > countUpV4);
         CHECK(countDownV6 > countUpV6);
-        CHECK(localHost6 > unspecified);
-        CHECK(localhost4 > unspecified);
+        CHECK(localHost6 > defaultCtor);
+        CHECK(localhost4 > defaultCtor);
         CHECK(localhost4OtherSubnet > localhost4);
         CHECK(localHost6 > localhost4);
     }
@@ -190,8 +169,8 @@ TEST_SUITE("[ip::Address]")
     {
         CHECK(countDownV4 >= countUpV4);
         CHECK(countDownV6 >= countUpV6);
-        CHECK(localHost6 >= unspecified);
-        CHECK(localhost4 >= unspecified);
+        CHECK(localHost6 >= defaultCtor);
+        CHECK(localhost4 >= defaultCtor);
         CHECK(localhost4OtherSubnet >= localhost4);
         CHECK(localHost6 >= localhost4);
     }

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <compare>
+#include <cstddef>
 #include <cstdint>
 #include <iosfwd>
 #include <string>
@@ -15,7 +16,6 @@ namespace monkas::ip
 
 enum class Family : uint8_t
 {
-    Unspecified,
     IPv4,
     IPv6,
 };
@@ -23,37 +23,26 @@ enum class Family : uint8_t
 auto asLinuxAf(Family f) -> int;
 auto operator<<(std::ostream& o, Family f) -> std::ostream&;
 
-constexpr auto IPV6_ADDR_LEN = 16;
-constexpr auto IPV4_ADDR_LEN = 4;
+constexpr std::size_t IPV6_ADDR_LEN = 16;
+constexpr std::size_t IPV4_ADDR_LEN = 4;
 
-using IpV4Bytes = std::array<uint8_t, IPV4_ADDR_LEN>;
-using IpV6Bytes = std::array<uint8_t, IPV6_ADDR_LEN>;
-using Bytes = std::variant<std::monostate, IpV4Bytes, IpV6Bytes>;
+using V4Bytes = std::array<uint8_t, IPV4_ADDR_LEN>;
+using V6Bytes = std::array<uint8_t, IPV6_ADDR_LEN>;
+using Bytes = std::variant<V4Bytes, V6Bytes>;
 
 class Address
 {
   public:
     Address();
-    explicit Address(const IpV4Bytes& bytes);
-    explicit Address(const IpV6Bytes& bytes);
+    explicit Address(const V4Bytes& bytes);
+    explicit Address(const V6Bytes& bytes);
 
     [[nodiscard]] auto toString() const -> std::string;
 
-    /**
-     * Creates an Address from a string representation.
-     * If the string is not a valid address, it returns an unspecified Address.
-     */
-    static auto fromString(const std::string& address) -> Address;
-    /**
-     * @returns true if address is not unspecified
-     */
-    explicit operator bool() const;
+    static auto fromString(const std::string& address) noexcept(false) -> Address;
 
     [[nodiscard]] auto isV4() const -> bool;
-
     [[nodiscard]] auto isV6() const -> bool;
-
-    [[nodiscard]] auto isUnspecified() const -> bool;
 
     [[nodiscard]] auto isMulticast() const -> bool;
     [[nodiscard]] auto isLinkLocal() const -> bool;
@@ -62,8 +51,6 @@ class Address
     [[nodiscard]] auto isBroadcast() const -> bool;
 
     [[nodiscard]] auto ip() const -> const Address&;
-    [[nodiscard]] auto broadcast() const -> const Address&;
-
     [[nodiscard]] auto family() const -> Family;
 
     [[nodiscard]] auto operator<=>(const Address& rhs) const noexcept -> std::strong_ordering;

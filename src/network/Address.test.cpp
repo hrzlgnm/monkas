@@ -18,26 +18,20 @@ TEST_SUITE("[network::Address]")
     const auto someV4 = ip::Address(someIpV4);
     const auto someBroadcastV4 = ip::Address(someBroadcast);
     const auto someV6 = ip::Address::fromString("2001:db8::1");
-    const Address addrV6 {someV6, someBroadcastV4, 24, scope, 5, 0};
+    const Address addrV6 {someV6, std::nullopt, 24, scope, 5, 0};
     const Address addrV4 {someV4, someBroadcastV4, 24, scope, 10, 1};
     const Address defaultAddress {};
-
-    TEST_CASE("operator bool")
-    {
-        CHECK(addrV4);
-        CHECK(!defaultAddress);
-    }
 
     TEST_CASE("family")
     {
         CHECK(addrV4.family() == someV4.family());
-        CHECK(defaultAddress.family() == network::Family::Unspecified);
+        CHECK(defaultAddress.family() == network::Family::IPv4);
     }
 
     TEST_CASE("isV4")
     {
         CHECK(addrV4.isV4());
-        CHECK(!defaultAddress.isV4());
+        CHECK(defaultAddress.isV4());
     }
 
     TEST_CASE("isV6")
@@ -45,13 +39,6 @@ TEST_SUITE("[network::Address]")
         CHECK(!addrV4.isV6());
         CHECK(addrV6.isV6());
         CHECK(!defaultAddress.isV6());
-    }
-
-    TEST_CASE("isUnspecified")
-    {
-        CHECK(defaultAddress.isUnspecified());
-        CHECK(!addrV6.isUnspecified());
-        CHECK(!addrV4.isUnspecified());
     }
 
     TEST_CASE("ip")
@@ -63,7 +50,7 @@ TEST_SUITE("[network::Address]")
     TEST_CASE("broadcast")
     {
         CHECK(addrV4.broadcast() == someBroadcastV4);
-        CHECK(defaultAddress.broadcast() == ip::Address {});
+        CHECK(defaultAddress.broadcast() == std::nullopt);
     }
 
     TEST_CASE("prefixLength")
