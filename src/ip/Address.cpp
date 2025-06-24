@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cstring>
-#include <expected>
 #include <ostream>
 #include <stdexcept>
 #include <utility>
