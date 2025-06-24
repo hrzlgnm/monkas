@@ -2,6 +2,7 @@
 
 #include <bitset>
 #include <chrono>
+#include <optional>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -64,7 +65,7 @@ class NetworkInterfaceStatusTracker
     [[nodiscard]] auto broadcastAddress() const -> const ethernet::Address&;
     void setBroadcastAddress(const ethernet::Address& address);
 
-    [[nodiscard]] auto gatewayAddress() const -> const ip::Address&;
+    [[nodiscard]] auto gatewayAddress() const -> std::optional<ip::Address>;
     void setGatewayAddress(const ip::Address& gateway);
     void clearGatewayAddress(GatewayClearReason r);
 
@@ -94,7 +95,7 @@ class NetworkInterfaceStatusTracker
     ethernet::Address m_broadcastAddress;
     OperationalState m_operState {OperationalState::Unknown};
     Addresses m_networkAddresses;
-    ip::Address m_gateway;
+    std::optional<ip::Address> m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
     DirtyFlags m_dirtyFlags;
 

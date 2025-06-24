@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstring>
+#include <expected>
 #include <ostream>
 #include <utility>
 #include <variant>
@@ -18,7 +19,6 @@ auto asLinuxAf(const Family f) -> int
             return AF_INET;
         case IPv6:
             return AF_INET6;
-        case Unspecified:
         default:
             return AF_UNSPEC;
     }
@@ -34,7 +34,7 @@ auto operator<<(std::ostream& o, const Family f) -> std::ostream&
         case IPv6:
             o << "inet6";
             break;
-        case Unspecified:
+        default:
             o << "unspec";
             break;
     }
@@ -53,11 +53,6 @@ Address::Address(const IpV6Bytes& bytes)
 {
 }
 
-Address::operator bool() const
-{
-    return !isUnspecified();
-}
-
 auto Address::isV4() const -> bool
 {
     return std::holds_alternative<IpV4Bytes>(m_bytes);
@@ -68,15 +63,9 @@ auto Address::isV6() const -> bool
     return std::holds_alternative<IpV6Bytes>(m_bytes);
 }
 
-auto Address::isUnspecified() const -> bool
-{
-    return std::holds_alternative<std::monostate>(m_bytes);
-}
-
 auto Address::isMulticast() const -> bool
 {
-    return std::visit(Overloaded {[](const std::monostate&) { return false; },
-                                  [](const IpV4Bytes& addr)
+    return std::visit(Overloaded {[](const IpV4Bytes& addr)
                                   {
                                       // IPv4 multicast addresses are in the range
                                       constexpr auto V4_MCAST_START = 224;
@@ -95,8 +84,7 @@ auto Address::isMulticast() const -> bool
 
 auto Address::isLinkLocal() const -> bool
 {
-    return std::visit(Overloaded {[](const std::monostate&) { return false; },
-                                  [](const IpV4Bytes& addr)
+    return std::visit(Overloaded {[](const IpV4Bytes& addr)
                                   {
                                       constexpr auto LINK_LOCAL_START = 169;
                                       constexpr auto LINK_LOCAL_END = 254;
@@ -128,8 +116,7 @@ auto Address::isUniqueLocal() const -> bool
 
 auto Address::isLoopback() const -> bool
 {
-    return std::visit(Overloaded {[](const std::monostate&) { return false; },
-                                  [](const IpV4Bytes& addr)
+    return std::visit(Overloaded {[](const IpV4Bytes& addr)
                                   {
                                       // Loopback address in IPv4 is
                                       constexpr uint8_t LOOPBACK_FIRST_OCTET = 127;
@@ -157,16 +144,14 @@ auto Address::isBroadcast() const -> bool
 
 auto Address::family() const -> Family
 {
-    return std::visit(Overloaded {[](const std::monostate&) { return Family::Unspecified; },
-                                  [](const IpV4Bytes&) { return Family::IPv4; },
-                                  [](const IpV6Bytes&) { return Family::IPv6; }},
-                      m_bytes);
+    return std::visit(
+        Overloaded {[](const IpV4Bytes&) { return Family::IPv4; }, [](const IpV6Bytes&) { return Family::IPv6; }},
+        m_bytes);
 }
 
 auto Address::toString() const -> std::string
 {
-    return std::visit(Overloaded {[](const std::monostate&) { return std::string("Unspecified"); },
-                                  [](const IpV4Bytes& addr)
+    return std::visit(Overloaded {[](const IpV4Bytes& addr)
                                   {
                                       std::array<char, INET_ADDRSTRLEN> buffer {};
                                       inet_ntop(AF_INET, addr.data(), buffer.data(), buffer.size());
@@ -181,7 +166,7 @@ auto Address::toString() const -> std::string
                       m_bytes);
 }
 
-auto Address::fromString(const std::string& address) -> Address
+auto Address::fromString(const std::string& address) -> std::expected<Address, std::string>
 {
     {
         IpV4Bytes addr {};
@@ -195,7 +180,7 @@ auto Address::fromString(const std::string& address) -> Address
             return Address(addr);
         }
     }
-    return {};
+    return std::unexpected("Failed to parse address '" + address + "': Invalid format or unsupported address family");
 }
 
 auto Address::operator<=>(const Address& rhs) const noexcept -> std::strong_ordering

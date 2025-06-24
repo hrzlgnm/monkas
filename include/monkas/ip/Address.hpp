@@ -3,6 +3,7 @@
 #include <array>
 #include <compare>
 #include <cstdint>
+#include <expected>
 #include <iosfwd>
 #include <string>
 #include <variant>
@@ -15,7 +16,6 @@ namespace monkas::ip
 
 enum class Family : uint8_t
 {
-    Unspecified,
     IPv4,
     IPv6,
 };
@@ -28,7 +28,7 @@ constexpr auto IPV4_ADDR_LEN = 4;
 
 using IpV4Bytes = std::array<uint8_t, IPV4_ADDR_LEN>;
 using IpV6Bytes = std::array<uint8_t, IPV6_ADDR_LEN>;
-using Bytes = std::variant<std::monostate, IpV4Bytes, IpV6Bytes>;
+using Bytes = std::variant<IpV4Bytes, IpV6Bytes>;
 
 class Address
 {
@@ -39,21 +39,11 @@ class Address
 
     [[nodiscard]] auto toString() const -> std::string;
 
-    /**
-     * Creates an Address from a string representation.
-     * If the string is not a valid address, it returns an unspecified Address.
-     */
-    static auto fromString(const std::string& address) -> Address;
-    /**
-     * @returns true if address is not unspecified
-     */
-    explicit operator bool() const;
+    static auto fromString(const std::string& address) -> std::expected<Address, std::string>;
 
     [[nodiscard]] auto isV4() const -> bool;
 
     [[nodiscard]] auto isV6() const -> bool;
-
-    [[nodiscard]] auto isUnspecified() const -> bool;
 
     [[nodiscard]] auto isMulticast() const -> bool;
     [[nodiscard]] auto isLinkLocal() const -> bool;
