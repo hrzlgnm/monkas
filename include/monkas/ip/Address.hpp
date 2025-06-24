@@ -21,7 +21,7 @@ enum class Family : uint8_t
 };
 
 auto asLinuxAf(Family f) -> int;
-auto operator<<(std::ostream& o, Family a) -> std::ostream&;
+auto operator<<(std::ostream& o, Family f) -> std::ostream&;
 
 constexpr auto IPV6_ADDR_LEN = 16;
 constexpr auto IPV4_ADDR_LEN = 4;

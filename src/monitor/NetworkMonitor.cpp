@@ -1,5 +1,6 @@
 #include <cerrno>
 #include <cstddef>
+#include <ranges>
 
 #include <fmt/std.h>
 #include <ip/Address.hpp>
@@ -406,20 +407,17 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
     }
 
     auto& cacheEntry = ensureNameCurrent(ifi->ifi_index, itfName);
-    const auto operationalStateOpt = attributes.getU8(IFLA_OPERSTATE);
-    if (operationalStateOpt.has_value()) {
+    if (const auto operationalStateOpt = attributes.getU8(IFLA_OPERSTATE); operationalStateOpt.has_value()) {
         cacheEntry.setOperationalState(static_cast<OperationalState>(operationalStateOpt.value()));
     }
 
-    const auto macAddressOpt = attributes.getEthernetAddress(IFLA_ADDRESS);
-    if (macAddressOpt.has_value()) {
+    if (const auto macAddressOpt = attributes.getEthernetAddress(IFLA_ADDRESS); macAddressOpt.has_value()) {
         cacheEntry.setMacAddress(macAddressOpt.value());
     } else {
         spdlog::warn("Interface {}: {} has no MAC address", ifi->ifi_index, cacheEntry.name());
     }
 
-    const auto broadcastAddressOpt = attributes.getEthernetAddress(IFLA_BROADCAST);
-    if (broadcastAddressOpt.has_value()) {
+    if (const auto broadcastAddressOpt = attributes.getEthernetAddress(IFLA_BROADCAST); broadcastAddressOpt.has_value()) {
         cacheEntry.setBroadcastAddress(broadcastAddressOpt.value());
     } else {
         spdlog::warn("Interface {}: {} has no broadcast address", ifi->ifi_index, cacheEntry.name());
@@ -453,24 +451,19 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr* nlhdr, const ifaddrmsg*
     uint8_t prot = IFAPROT_UNSPEC;  // will be overwritten if IFA_PROTO is present
 
     auto& cacheEntry = ensureNameCurrent(ifa->ifa_index, attributes.getString(IFA_LABEL));
-    const auto flagsOpt = attributes.getU32(IFA_FLAGS);
-    if (flagsOpt.has_value()) {
+    if (const auto flagsOpt = attributes.getU32(IFA_FLAGS); flagsOpt.has_value()) {
         flags = flagsOpt.value();
     }
-    const auto protoOpt = attributes.getU8(IFA_PROTO);
-    if (protoOpt.has_value()) {
+    if (const auto protoOpt = attributes.getU8(IFA_PROTO); protoOpt.has_value()) {
         prot = protoOpt.value();
     }
-    const auto broadcastV4Opt = attributes.getIpV4Address(IFA_BROADCAST);
-    if (broadcastV4Opt.has_value()) {
+    if (const auto broadcastV4Opt = attributes.getIpV4Address(IFA_BROADCAST); broadcastV4Opt.has_value()) {
         broadcast = broadcastV4Opt.value();
     }
-    const auto localV4Opt = attributes.getIpV4Address(IFA_LOCAL);
-    if (localV4Opt.has_value()) {
+    if (const auto localV4Opt = attributes.getIpV4Address(IFA_LOCAL); localV4Opt.has_value()) {
         address = localV4Opt.value();
     }
-    const auto addressV6Opt = attributes.getIpV6Address(IFA_ADDRESS);
-    if (addressV6Opt.has_value()) {
+    if (const auto addressV6Opt = attributes.getIpV6Address(IFA_ADDRESS); addressV6Opt.has_value()) {
         address = addressV6Opt.value();
     }
     const network::Address networkAddress {
@@ -497,21 +490,19 @@ void NetworkMonitor::parseRouteMessage(const nlmsghdr* nlhdr, const rtmsg* rtm)
 
     const auto attributes =
         Attributes::parse(nlhdr, sizeof(*rtm), RTA_MAX, m_stats.seenAttributes, m_stats.unknownAttributes);
-    auto ifIndexOpt = attributes.getU32(RTA_OIF);
-    auto gatewayV4Opt = attributes.getIpV4Address(RTA_GATEWAY);
+    const auto ifIndexOpt = attributes.getU32(RTA_OIF);
+    const auto gatewayV4Opt = attributes.getIpV4Address(RTA_GATEWAY);
 
     if (nlhdr->nlmsg_type == RTM_DELROUTE) {
         if (ifIndexOpt.has_value()) {
             if ((rtm->rtm_flags & RTNH_F_LINKDOWN) != 0U) {
-                auto itr = m_trackers.find(ifIndexOpt.value());
-                if (itr != m_trackers.end()) {
+                if (auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
                     itr->second.clearGatewayAddress(GatewayClearReason::LinkDown);
                 }
                 return;
             }
             if (gatewayV4Opt.has_value()) {
-                auto itr = m_trackers.find(ifIndexOpt.value());
-                if (itr != m_trackers.end()) {
+                if (auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
                     itr->second.clearGatewayAddress(GatewayClearReason::RouteDeleted);
                 }
             }
@@ -520,8 +511,7 @@ void NetworkMonitor::parseRouteMessage(const nlmsghdr* nlhdr, const rtmsg* rtm)
     }
 
     if (ifIndexOpt.has_value() && gatewayV4Opt.has_value()) {
-        const auto itr = m_trackers.find(ifIndexOpt.value());
-        if (itr != m_trackers.end()) {
+        if (const auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
             itr->second.setGatewayAddress(gatewayV4Opt.value());
         }
     }
@@ -549,9 +539,9 @@ void NetworkMonitor::printStatsForNerdsIfEnabled()
     spdlog::info("          {} route messages", m_stats.routeMessagesSeen);
 
     spdlog::info("{:=^48}", "Interface details in cache");
-    for (const auto& c : m_trackers) {
-        spdlog::info(c.second);
-        c.second.logNerdstats();
+    for (const auto& val : m_trackers | std::views::values) {
+        spdlog::info(val);
+        val.logNerdstats();
     }
     spdlog::info("{:=^48}", "=");
 }

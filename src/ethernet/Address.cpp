@@ -21,9 +21,9 @@ auto Address::toString() const -> std::string
     std::array<char, LEN> buf {};
     int idx = 0;
     int i = 0;
-    constexpr auto LOWER_NIBBLE_SHIFT = 0x4U;
-    constexpr auto UPPER_NIBBLE_MASK = 0xFU;
     for (const auto octet : m_bytes) {
+        constexpr auto UPPER_NIBBLE_MASK = 0xFU;
+        constexpr auto LOWER_NIBBLE_SHIFT = 0x4U;
         buf[idx++] = "0123456789abcdef"[octet >> LOWER_NIBBLE_SHIFT];
         buf[idx++] = "0123456789abcdef"[octet & UPPER_NIBBLE_MASK];
         if (i < ADDR_LEN - 1) {
