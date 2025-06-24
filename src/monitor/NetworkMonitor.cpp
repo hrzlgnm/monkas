@@ -324,7 +324,8 @@ void NetworkMonitor::sendDumpRequest(uint16_t msgType)
 void NetworkMonitor::retryLastDumpRequest()
 {
     spdlog::debug("Retrying last dump request with sequence number {}", m_sequenceNumber);
-    const auto* nlh = std::bit_cast<const nlmsghdr*>(m_sendBuffer.data());
+    const auto* buf = static_cast<const void*>(m_sendBuffer.data());
+    const auto* nlh = static_cast<const nlmsghdr*>(buf);
     const auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0) {
         pfatal("mnl_socket_sendto");
