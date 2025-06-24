@@ -19,7 +19,7 @@ target_compile_definitions(${TARGET_NAME} PUBLIC SPDLOG_FMT_EXTERNAL)
 
 target_compile_features(${TARGET_NAME} PUBLIC cxx_std_23)
 
-target_include_directories(${TARGET_NAME} PUBLIC ${PUBLIC_INCLUDE_DIR})
+target_include_directories(${TARGET_NAME} PUBLIC ${PUBLIC_INCLUDE_DIR} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 target_sources(
     ${TARGET_NAME}

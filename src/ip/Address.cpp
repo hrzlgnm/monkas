@@ -5,22 +5,10 @@
 
 #include <arpa/inet.h>
 #include <ip/Address.hpp>
+#include <overloaded/Overloaded.hpp>
 
 namespace monkas::ip
 {
-namespace
-{
-// helper type for std::visit
-template<typename... T>
-struct Overloaded : T...
-{
-    using T::operator()...;
-};
-template<class... T>
-Overloaded(T...) -> Overloaded<T...>;
-
-}  // namespace
-
 auto asLinuxAf(Family f) -> int
 {
     switch (f) {
@@ -92,7 +80,6 @@ auto Address::isMulticast() const -> bool
                                       constexpr auto V4_MCAST_END = 239;
                                       const auto upperOctet = addr[0];
                                       return upperOctet >= V4_MCAST_START && upperOctet <= V4_MCAST_END;
-                                      return upperOctetd >= V4_MCAST_START && upperOctetd <= V4_MCAST_END;
                                   },
                                   [](const IpV6Bytes& addr)
                                   {
