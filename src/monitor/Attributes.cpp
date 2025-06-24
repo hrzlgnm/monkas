@@ -8,10 +8,11 @@
 namespace monkas::monitor
 {
 
-auto Attributes::parse(
-    const nlmsghdr* n,
+auto Attributes::parse(const nlmsghdr* n,
                        const size_t offset,
-                       const uint16_t maxType, uint64_t& seenCounter, uint64_t& unknownCounter) -> Attributes
+                       const uint16_t maxType,
+                       uint64_t& seenCounter,
+                       uint64_t& unknownCounter) -> Attributes
 {
     Attributes attributes {maxType + 1U};
     CallbackArgs arg {.attrs = &attributes, .seenCounter = &seenCounter, .unknownCounter = &unknownCounter};

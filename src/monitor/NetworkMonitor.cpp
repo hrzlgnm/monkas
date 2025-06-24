@@ -417,7 +417,8 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
         spdlog::warn("Interface {}: {} has no MAC address", ifi->ifi_index, cacheEntry.name());
     }
 
-    if (const auto broadcastAddressOpt = attributes.getEthernetAddress(IFLA_BROADCAST); broadcastAddressOpt.has_value()) {
+    if (const auto broadcastAddressOpt = attributes.getEthernetAddress(IFLA_BROADCAST); broadcastAddressOpt.has_value())
+    {
         cacheEntry.setBroadcastAddress(broadcastAddressOpt.value());
     } else {
         spdlog::warn("Interface {}: {} has no broadcast address", ifi->ifi_index, cacheEntry.name());
