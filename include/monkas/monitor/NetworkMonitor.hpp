@@ -10,6 +10,7 @@
 #include <ip/Address.hpp>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <network/Interface.hpp>
+#include <sys/types.h>
 #include <watchable/Watchable.hpp>
 
 // TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what do we want
@@ -123,6 +124,9 @@ class NetworkMonitor
 
   private:
     void receiveAndProcess();
+    void updateStats(ssize_t receiveResult);
+    void dumpPacket(ssize_t receiveResult);
+    auto handleCallbackResult(int callbackResult) -> bool;
 
     /* @note: only one such request can be in progress until the reply is received */
     void sendDumpRequest(uint16_t msgType);
