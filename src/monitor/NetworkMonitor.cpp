@@ -5,12 +5,12 @@
 #include <fmt/std.h>
 #include <ip/Address.hpp>
 #include <libmnl/libmnl.h>
+#include <linux/if.h>
 #include <linux/if_link.h>
 #include <linux/rtnetlink.h>
 #include <memory.h>
 #include <monitor/Attributes.hpp>
 #include <monitor/NetworkMonitor.hpp>
-#include <net/if.h>
 #include <net/if_arp.h>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>

@@ -57,6 +57,9 @@ class NetworkInterfaceStatusTracker
         PortSet,
         AutoMedia,
         Dynamic,
+        LowerUp,
+        Dormant,
+        Echo,
         // NOTE: keep last
         FlagsCount,
     };

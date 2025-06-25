@@ -347,6 +347,12 @@ auto operator<<(std::ostream& o, NetworkInterfaceStatusTracker::LinkFlag l) -> s
             return o << "AutoMedia";
         case Dynamic:
             return o << "Dynamic";
+        case LowerUp:
+            return o << "LowerUp";
+        case Dormant:
+            return o << "Dormant";
+        case Echo:
+            return o << "Echo";
         case FlagsCount:
         default:
             return o << "UnknownLinkFlag: 0x" << std::hex << static_cast<uint8_t>(l);
