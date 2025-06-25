@@ -28,12 +28,13 @@ using namespace monkas::network;
 using namespace monkas;
 
 /**
- * @brief Entry point for the rtnetlink network monitor CLI application.
+ * @brief Runs the rtnetlink network monitor CLI application.
  *
- * Parses command-line flags to configure logging level, monitoring options, and preferred IP family, then initializes
- * and runs the network monitor. Returns the monitor's exit code.
+ * Parses command-line flags to configure logging, monitoring options, and IP family preferences, then initializes and
+ * runs the network monitor event loop. Registers watchers for interface and address changes, and optionally exits after
+ * initial enumeration.
  *
- * @return int Exit code from the network monitor.
+ * @return int Always returns EXIT_SUCCESS upon completion.
  */
 
 auto main(int argc, char* argv[]) -> int
@@ -106,5 +107,6 @@ auto main(int argc, char* argv[]) -> int
             }
         });
 
-    return mon.run();
+    mon.run();
+    return EXIT_SUCCESS;
 }

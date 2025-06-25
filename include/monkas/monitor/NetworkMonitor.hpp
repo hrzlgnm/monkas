@@ -82,7 +82,7 @@ class NetworkMonitor
   public:
     explicit NetworkMonitor(const RuntimeOptions& options);
     void enumerateInterfaces();
-    auto run() -> int;
+    void run();
     void stop();
 
     [[nodiscard]] auto addInterfacesWatcher(
