@@ -34,7 +34,7 @@ enum class AddressFlag : uint8_t
     Tentative,
     Permanent,
     ManagedTemporaryAddress,
-    NoPefixRoute,
+    NoPrefixRoute,
     MulticastAutoJoin,
     StablePrivacy,
     FlagsCount,

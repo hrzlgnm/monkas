@@ -149,7 +149,7 @@ auto operator<<(std::ostream& o, const AddressFlag a) -> std::ostream&
             return o << "Permanent";
         case ManagedTemporaryAddress:
             return o << "ManagedTemporaryAddress";
-        case NoPefixRoute:
+        case NoPrefixRoute:
             return o << "NoPrefixRoute";
         case MulticastAutoJoin:
             return o << "MulticastAutoJoin";
