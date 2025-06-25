@@ -21,7 +21,6 @@ struct nlmsghdr;
 struct ifinfomsg;
 struct ifaddrmsg;
 struct rtmsg;
-struct nlattr;
 
 namespace monkas::monitor
 {
