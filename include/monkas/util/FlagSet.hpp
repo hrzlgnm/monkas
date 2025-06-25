@@ -11,9 +11,8 @@ template<typename Enum>
 class FlagSet
 {
     static_assert(std::is_scoped_enum_v<Enum>, "Template parameter must be a scoped enum");
-    static_assert(
-        requires { Enum::FlagsCount; }, "Enum must define FlagsCount enumerator");
     static_assert(std::is_integral_v<std::underlying_type_t<Enum>>, "Enum must have an integral underlying type");
+    static_assert(requires { Enum::FlagsCount; }, "Enum must define FlagsCount enumerator");
     static_assert(std::to_underlying(Enum::FlagsCount) <= 32, "FlagsCount must not exceed 32");
     static constexpr size_t FLAG_COUNT = static_cast<size_t>(Enum::FlagsCount);
 
@@ -27,7 +26,7 @@ class FlagSet
     {
     }
 
-    [[nodiscard]] constexpr auto toU32() const -> uint64_t { return m_flags.to_ulong(); }
+    [[nodiscard]] constexpr auto toU32() const -> uint32_t { return m_flags.to_ulong(); }
 
     [[nodiscard]] constexpr auto size() const -> size_t { return FLAG_COUNT; }
 
@@ -64,7 +63,7 @@ class FlagSet
 
     [[nodiscard]] auto operator<=>(const FlagSet& other) const -> std::strong_ordering
     {
-        return m_flags.to_ullong() <=> other.m_flags.to_ullong();
+        return m_flags.to_ulong() <=> other.m_flags.to_ulong();
     }
 
     [[nodiscard]] auto operator==(const FlagSet& other) const -> bool = default;
