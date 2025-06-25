@@ -41,15 +41,15 @@ class FlagSet
     {
         std::ostringstream oss;
         bool first = true;
-        for (size_t i = m_flags._Find_first(); i < FLAG_COUNT; i = m_flags._Find_next(i)) {
-            if (m_flags.test(i)) {
-                if (!first) {
-                    oss << "|";
-                }
-                first = false;
-                oss << static_cast<Enum>(i);
+    for (size_t i = 0; i < FLAG_COUNT; ++i) {
+        if (m_flags.test(i)) {
+            if (!first) {
+                oss << "|";
             }
+            first = false;
+            oss << static_cast<Enum>(i);
         }
+    }
         if (first) {
             return "None";
         }
