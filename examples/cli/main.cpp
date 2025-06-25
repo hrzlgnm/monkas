@@ -30,7 +30,9 @@ using namespace monkas;
 /**
  * @brief Runs the rtnetlink network monitor CLI application.
  *
- * Parses command-line flags to configure logging, monitoring options, and IP family preferences, then initializes and runs the network monitor event loop. Registers watchers for interface and address changes, and optionally exits after initial enumeration.
+ * Parses command-line flags to configure logging, monitoring options, and IP family preferences, then initializes and
+ * runs the network monitor event loop. Registers watchers for interface and address changes, and optionally exits after
+ * initial enumeration.
  *
  * @return int Always returns EXIT_SUCCESS upon completion.
  */

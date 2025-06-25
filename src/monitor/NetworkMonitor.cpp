@@ -81,7 +81,8 @@ NetworkMonitor::NetworkMonitor(const RuntimeOptions& options)
 /**
  * @brief Initiates enumeration of network interfaces and waits for completion.
  *
- * Sends a netlink dump request to retrieve all network interfaces and processes messages until enumeration is complete. If enumeration has already been performed, the function returns immediately.
+ * Sends a netlink dump request to retrieve all network interfaces and processes messages until enumeration is complete.
+ * If enumeration has already been performed, the function returns immediately.
  */
 void NetworkMonitor::enumerateInterfaces()
 {
@@ -99,7 +100,8 @@ void NetworkMonitor::enumerateInterfaces()
 /**
  * @brief Starts monitoring network interfaces and processes netlink messages until stopped.
  *
- * Initiates interface enumeration and then enters a loop to receive and process netlink messages, continuing until monitoring is explicitly stopped.
+ * Initiates interface enumeration and then enters a loop to receive and process netlink messages, continuing until
+ * monitoring is explicitly stopped.
  */
 void NetworkMonitor::run()
 {
