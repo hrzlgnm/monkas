@@ -19,6 +19,8 @@ class Address
     Address();
     explicit Address(const Bytes& bytes);
 
+    [[nodiscard]] auto allZeroes() const -> bool;
+    [[nodiscard]] auto isBroadcast() const -> bool;
     [[nodiscard]] auto toString() const -> std::string;
 
     auto operator<=>(const Address& other) const -> std::strong_ordering;

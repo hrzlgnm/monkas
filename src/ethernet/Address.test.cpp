@@ -13,6 +13,24 @@ TEST_SUITE("[ethernet::Address]")
 
     const auto someAddress = Address {bytesSome};
     const auto nullAddress = Address {bytesNull};
+    const auto defaultAddress = Address {};
+
+    TEST_CASE("default constructor")
+    {
+        CHECK(defaultAddress.allZeroes());
+    }
+
+    TEST_CASE("constructor with bytes")
+    {
+        CHECK(!someAddress.allZeroes());
+    }
+
+    TEST_CASE("isBroadcast")
+    {
+        CHECK(!someAddress.isBroadcast());
+        CHECK(!nullAddress.isBroadcast());
+        CHECK(!defaultAddress.isBroadcast());
+    }
 
     TEST_CASE("toString")
     {
