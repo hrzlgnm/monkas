@@ -11,11 +11,8 @@
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <network/Interface.hpp>
 #include <sys/types.h>
+#include <util/FlagSet.hpp>
 #include <watchable/Watchable.hpp>
-
-// TODO: sometimes an enthernet interface comes up with Unknown operstate, ip link shows the same info, what do we want
-// to do in this case?
-// TODO: consider ENOBUFS errno from recv as resync point
 
 struct mnl_socket;
 struct nlmsghdr;
@@ -32,7 +29,7 @@ enum class InitialSnapshotMode : uint8_t
     InitialSnapshot = 1,
 };
 
-enum RuntimeFlag : uint8_t
+enum class RuntimeFlag : uint8_t
 {
     StatsForNerds,
     PreferredFamilyV4,
@@ -44,7 +41,7 @@ enum RuntimeFlag : uint8_t
     FlagsCount,
 };
 
-using RuntimeOptions = std::bitset<static_cast<size_t>(RuntimeFlag::FlagsCount)>;
+using RuntimeFlags = util::FlagSet<RuntimeFlag>;
 
 using Interfaces = std::set<network::Interface>;
 
@@ -85,7 +82,7 @@ using EnumerationDoneWatcherToken = EnumerationDoneNotifier::Token;
 class NetworkMonitor
 {
   public:
-    explicit NetworkMonitor(const RuntimeOptions& options);
+    explicit NetworkMonitor(const RuntimeFlags& options);
     void enumerateInterfaces();
     void run();
     void stop();
@@ -126,8 +123,8 @@ class NetworkMonitor
 
     void removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken& token);
 
-    // enumeration done watcher is called when enumeration is done, or immediately if enumeration is already done
-    // the optional return value is used to indicate that enumeration is already done
+    // enumeration done watcher is called when enumeration is done, or immediately if enumeration is
+    // already done the optional return value is used to indicate that enumeration is already done
     [[nodiscard]] auto addEnumerationDoneWatcher(const EnumerationDoneWatcher& watcher)
         -> std::optional<EnumerationDoneWatcherToken>;
     void removeEnumerationDoneWatcher(const EnumerationDoneWatcherToken& token);
@@ -201,7 +198,7 @@ class NetworkMonitor
         uint64_t routeMessagesSeen {};
     } m_stats;
 
-    RuntimeOptions m_runtimeOptions;
+    RuntimeFlags m_runtimeOptions;
     InterfacesNotifier m_interfacesNotifier;
     LinkFlagsNotifier m_linkFlagsNotifier;
     OperationalStateNotifier m_operationalStateNotifier;

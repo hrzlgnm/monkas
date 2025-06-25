@@ -55,8 +55,8 @@ auto ensureMnlSocket(bool nonBlocking) -> mnl_socket*
 }
 }  // namespace
 
-NetworkMonitor::NetworkMonitor(const RuntimeOptions& options)
-    : m_mnlSocket {ensureMnlSocket(options.test(NonBlocking)), mnl_socket_close}
+NetworkMonitor::NetworkMonitor(const RuntimeFlags& options)
+    : m_mnlSocket {ensureMnlSocket(options.test(RuntimeFlag::NonBlocking)), mnl_socket_close}
     , m_portid {mnl_socket_get_portid(m_mnlSocket.get())}
     , m_receiveBuffer(RECEIVE_SOCKET_BUFFER_SIZE)
     , m_sendBuffer(SEND_SOCKET_BUFFER_SIZE)
