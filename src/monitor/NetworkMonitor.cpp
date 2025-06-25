@@ -230,11 +230,8 @@ void NetworkMonitor::removeEnumerationDoneWatcher(const EnumerationDoneWatcherTo
     m_enumerationDoneNotifier.removeWatcher(token);
 }
 
-// NOLINTBEGIN(readability-function-cognitive-complexity)
-
 void NetworkMonitor::receiveAndProcess()
 {
-    // someone may call stop() while we are notifying watchers
     if (!m_mnlSocket) {
         return;
     }
@@ -242,12 +239,9 @@ void NetworkMonitor::receiveAndProcess()
     auto receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), m_receiveBuffer.data(), m_receiveBuffer.size());
     spdlog::trace("Received {} bytes", receiveResult);
     while (receiveResult > 0) {
-        m_stats.packetsReceived++;
-        m_stats.bytesReceived += receiveResult;
+        updateStats(receiveResult);
         if (m_runtimeOptions.test(RuntimeFlag::DumpPackets)) {
-            std::ignore = fflush(stderr);
-            std::ignore = fflush(stdout);
-            mnl_nlmsg_fprintf(stdout, m_receiveBuffer.data(), receiveResult, 0);
+            dumpPacket(receiveResult);
         }
         const auto seqNo = isEnumerating() ? m_sequenceNumber : 0;
         const auto callbackResult = mnl_cb_run(m_receiveBuffer.data(),
@@ -256,54 +250,71 @@ void NetworkMonitor::receiveAndProcess()
                                                m_portid,
                                                &NetworkMonitor::dispatchMnMessageCallbackToSelf,
                                                this);
-        if (callbackResult == MNL_CB_ERROR) {
-            if (errno == EPROTO) {
-                if (isEnumerating()) {
-                    spdlog::debug("Received EPROTO while enumerating, retrying");
-                    retryLastDumpRequest();
-                } else {
-                    pwarn("mnl_cb_run");
-                }
-            }
+        if (handleCallbackResult(callbackResult)) {
             break;
-        }
-        if (callbackResult == MNL_CB_STOP) {
-            if (isEnumeratingLinks()) {
-                m_cacheState = CacheState::EnumeratingAddresses;
-                spdlog::debug("Requesting RTM_GETADDR");
-                sendDumpRequest(RTM_GETADDR);
-            } else if (isEnumeratingAddresses()) {
-                m_cacheState = CacheState::EnumeratingRoutes;
-                spdlog::debug("Requesting RTM_GETROUTE");
-                sendDumpRequest(RTM_GETROUTE);
-            } else if (isEnumeratingRoutes()) {
-                m_cacheState = CacheState::WaitingForChanges;
-                spdlog::debug("Done with enumeration of initial information");
-                spdlog::debug("Tracking changes for {} interfaces", m_trackers.size());
-                if (m_enumerationDoneNotifier.hasWatchers()) {
-                    m_enumerationDoneNotifier.notify();
-                }
-                printStatsForNerdsIfEnabled();
-                // run() will restart this loop
-                break;
-            } else {
-                if (m_mnlSocket) {
-                    pwarn("Unexpected MNL_CB_STOP");
-                } else {
-                    break;  // someone may call stop() while we are notifying watchers
-                }
-            }
         }
         printStatsForNerdsIfEnabled();
         notifyChanges();
-        // someone may call stop() while we are notifying watchers
         if (m_mnlSocket) {
             receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), m_receiveBuffer.data(), m_receiveBuffer.size());
         }
     }
 }
 
-// NOLINTEND(readability-function-cognitive-complexity)
+void NetworkMonitor::updateStats(ssize_t receiveResult)
+{
+    m_stats.packetsReceived++;
+    m_stats.bytesReceived += receiveResult;
+}
+
+void NetworkMonitor::dumpPacket(ssize_t receiveResult)
+{
+    std::ignore = fflush(stderr);
+    std::ignore = fflush(stdout);
+    mnl_nlmsg_fprintf(stdout, m_receiveBuffer.data(), receiveResult, 0);
+}
+
+auto NetworkMonitor::handleCallbackResult(int callbackResult) -> bool
+{
+    if (callbackResult == MNL_CB_ERROR) {
+        if (errno == EPROTO) {
+            if (isEnumerating()) {
+                spdlog::debug("Received EPROTO while enumerating, retrying");
+                retryLastDumpRequest();
+            } else {
+                pwarn("mnl_cb_run");
+            }
+        }
+        return true;
+    }
+    if (callbackResult == MNL_CB_STOP) {
+        if (isEnumeratingLinks()) {
+            m_cacheState = CacheState::EnumeratingAddresses;
+            spdlog::debug("Requesting RTM_GETADDR");
+            sendDumpRequest(RTM_GETADDR);
+        } else if (isEnumeratingAddresses()) {
+            m_cacheState = CacheState::EnumeratingRoutes;
+            spdlog::debug("Requesting RTM_GETROUTE");
+            sendDumpRequest(RTM_GETROUTE);
+        } else if (isEnumeratingRoutes()) {
+            m_cacheState = CacheState::WaitingForChanges;
+            spdlog::debug("Done with enumeration of initial information");
+            spdlog::debug("Tracking changes for {} interfaces", m_trackers.size());
+            if (m_enumerationDoneNotifier.hasWatchers()) {
+                m_enumerationDoneNotifier.notify();
+            }
+            printStatsForNerdsIfEnabled();
+            return true;
+        } else {
+            if (m_mnlSocket) {
+                pwarn("Unexpected MNL_CB_STOP");
+            } else {
+                return true;  // someone may call stop() while we are notifying watchers
+            }
+        }
+    }
+    return false;
+}
 
 void NetworkMonitor::sendDumpRequest(uint16_t msgType)
 {
