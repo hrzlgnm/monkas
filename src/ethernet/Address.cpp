@@ -1,5 +1,5 @@
-#include <cstdint>
 #include <ostream>
+#include <algorithm>
 
 #include <ethernet/Address.hpp>
 
@@ -18,13 +18,13 @@ Address::Address(const Bytes& bytes)
 
 auto Address::allZeroes() const -> bool
 {
-    return std::all_of(m_bytes.begin(), m_bytes.end(), [](const uint8_t byte) { return byte == 0; });
+    return std::ranges::all_of(m_bytes, [](const uint8_t byte) { return byte == 0; });
 }
 
 auto Address::isBroadcast() const -> bool
 {
     constexpr uint8_t BROADCAST_BYTE = 0xFF;
-    return std::all_of(m_bytes.begin(), m_bytes.end(), [](const uint8_t byte) { return byte == BROADCAST_BYTE; });
+    return std::ranges::all_of(m_bytes, [](const uint8_t byte) { return byte == BROADCAST_BYTE; });
 }
 
 auto Address::toString() const -> std::string
