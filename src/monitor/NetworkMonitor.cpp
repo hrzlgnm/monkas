@@ -91,11 +91,11 @@ void NetworkMonitor::enumerateInterfaces()
     }
 }
 
-auto NetworkMonitor::run() -> int
+void NetworkMonitor::run()
 {
     // someone may call enumerateInterfaces() and stop() during enumerateInterfaces
     if (!m_mnlSocket) {
-        return 0;
+        return;
     }
     m_running = true;
     spdlog::trace("Starting NetworkMonitor");
@@ -106,7 +106,6 @@ auto NetworkMonitor::run() -> int
     while (m_running) {
         receiveAndProcess();
     }
-    return 0;
 }
 
 void NetworkMonitor::stop()

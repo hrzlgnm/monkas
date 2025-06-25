@@ -106,5 +106,6 @@ auto main(int argc, char* argv[]) -> int
             }
         });
 
-    return mon.run();
+    mon.run();
+    return EXIT_SUCCESS;
 }
