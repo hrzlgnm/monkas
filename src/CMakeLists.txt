@@ -7,7 +7,6 @@ set(PUBLIC_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/${TARGET_NAME})
 set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/ethernet/Address.hpp
     ${PUBLIC_INCLUDE_DIR}/ip/Address.hpp
-    ${PUBLIC_INCLUDE_DIR}/monitor/Attributes.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/NetworkInterfaceStatusTracker.hpp
     ${PUBLIC_INCLUDE_DIR}/monitor/NetworkMonitor.hpp
     ${PUBLIC_INCLUDE_DIR}/network/Address.hpp
@@ -28,6 +27,7 @@ target_sources(
         ethernet/Address.cpp
         ip/Address.cpp
         monitor/Attributes.cpp
+        monitor/Attributes.hpp
         monitor/NetworkInterfaceStatusTracker.cpp
         monitor/NetworkMonitor.cpp
         network/Address.cpp
