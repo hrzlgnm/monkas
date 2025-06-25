@@ -11,6 +11,7 @@ template<typename Enum>
 class FlagSet
 {
     static_assert(std::is_scoped_enum_v<Enum>, "Template parameter must be a scoped enum");
+    static_assert(requires { Enum::FlagsCount; }, "Enum must define FlagsCount enumerator");
     static constexpr size_t FLAG_COUNT = static_cast<size_t>(Enum::FlagsCount);
 
   public:
