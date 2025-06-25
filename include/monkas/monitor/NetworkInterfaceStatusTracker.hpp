@@ -10,6 +10,7 @@
 #include <ethernet/Address.hpp>
 #include <fmt/ostream.h>
 #include <network/Address.hpp>
+#include <util/FlagSet.hpp>
 
 namespace monkas::monitor
 {
@@ -30,6 +31,7 @@ class NetworkInterfaceStatusTracker
         Dormant,
         Up,
     };
+
     enum class GatewayClearReason : uint8_t
     {
         LinkDown,
@@ -37,9 +39,33 @@ class NetworkInterfaceStatusTracker
         AllIPv4AddressesRemoved,
     };
 
+    enum class LinkFlag : uint8_t
+    {
+        Up,
+        Broadcast,
+        Debug,
+        Loopback,
+        PointToPoint,
+        NoTrailers,
+        Running,
+        NoArp,
+        Promiscuous,
+        AllMulticast,
+        Master,
+        Slave,
+        Multicast,
+        PortSet,
+        AutoMedia,
+        Dynamic,
+        // NOTE: keep last
+        FlagsCount,
+    };
+    using LinkFlags = util::FlagSet<LinkFlag>;
+
     enum class DirtyFlag : uint8_t
     {
         NameChanged,
+        LinkFlagsChanged,
         OperationalStateChanged,
         MacAddressChanged,
         BroadcastAddressChanged,
@@ -48,8 +74,7 @@ class NetworkInterfaceStatusTracker
         // NOTE: keep last
         FlagsCount,
     };
-
-    using DirtyFlags = std::bitset<static_cast<std::underlying_type_t<DirtyFlag>>(DirtyFlag::FlagsCount)>;
+    using DirtyFlags = util::FlagSet<DirtyFlag>;
 
     NetworkInterfaceStatusTracker();
 
@@ -74,6 +99,9 @@ class NetworkInterfaceStatusTracker
     void addNetworkAddress(const network::Address& address);
     void removeNetworkAddress(const network::Address& address);
 
+    void updateLinkFlags(const LinkFlags& flags);
+    [[nodiscard]] auto linkFlags() const -> LinkFlags;
+
     [[nodiscard]] auto age() const -> Duration;
 
     [[nodiscard]] auto hasName() const -> bool;
@@ -81,8 +109,8 @@ class NetworkInterfaceStatusTracker
     [[nodiscard]] auto isDirty() const -> bool;
     [[nodiscard]] auto isDirty(DirtyFlag flag) const -> bool;
     [[nodiscard]] auto dirtyFlags() const -> DirtyFlags;
-    void clearFlag(DirtyFlag flag);
 
+    void clearFlag(DirtyFlag flag);
     void logNerdstats() const;
 
   private:
@@ -96,11 +124,13 @@ class NetworkInterfaceStatusTracker
     std::optional<ip::Address> m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
     DirtyFlags m_dirtyFlags;
+    LinkFlags m_linkFlags;
 
     // mutable for tracking const getters
     mutable struct Nerdstats
     {
         uint64_t nameChanges {0};
+        uint64_t linkFlagChanges {0};
         uint64_t operationalStateChanges {0};
         uint64_t macAddressChanges {0};
         uint64_t broadcastAddressChanges {0};
@@ -123,6 +153,12 @@ using DirtyFlag = NetworkInterfaceStatusTracker::DirtyFlag;
 using DirtyFlags = NetworkInterfaceStatusTracker::DirtyFlags;
 auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&;
 auto operator<<(std::ostream& o, const DirtyFlags& d) -> std::ostream&;
+using LinkFlag = NetworkInterfaceStatusTracker::LinkFlag;
+using LinkFlags = NetworkInterfaceStatusTracker::LinkFlags;
+
+auto operator<<(std::ostream& o, LinkFlag l) -> std::ostream&;
+auto operator<<(std::ostream& o, const LinkFlags& l) -> std::ostream&;
+
 auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std::ostream&;
 
 }  // namespace monkas::monitor
@@ -149,5 +185,15 @@ struct fmt::formatter<monkas::monitor::DirtyFlag> : fmt::ostream_formatter
 
 template<>
 struct fmt::formatter<monkas::monitor::DirtyFlags> : fmt::ostream_formatter
+{
+};
+
+template<>
+struct fmt::formatter<monkas::monitor::LinkFlag> : fmt::ostream_formatter
+{
+};
+
+template<>
+struct fmt::formatter<monkas::monitor::NetworkInterfaceStatusTracker::LinkFlags> : fmt::ostream_formatter
 {
 };

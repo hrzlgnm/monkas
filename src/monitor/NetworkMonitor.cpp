@@ -10,6 +10,7 @@
 #include <memory.h>
 #include <monitor/Attributes.hpp>
 #include <monitor/NetworkMonitor.hpp>
+#include <net/if.h>
 #include <net/if_arp.h>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
@@ -144,6 +145,23 @@ auto NetworkMonitor::addInterfacesWatcher(const InterfacesWatcher& watcher, Init
 void NetworkMonitor::removeInterfacesWatcher(const InterfacesWatcherToken& token)
 {
     m_interfacesNotifier.removeWatcher(token);
+}
+
+auto NetworkMonitor::addLinkFlagsWatcher(const LinkFlagsWatcher& watcher, InitialSnapshotMode initialSnapshot)
+    -> LinkFlagsWatcherToken
+{
+    if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
+        for (auto& [index, tracker] : m_trackers) {
+            watcher(network::Interface {index, tracker.name()}, tracker.linkFlags());
+            tracker.clearFlag(DirtyFlag::LinkFlagsChanged);
+        }
+    }
+    return m_linkFlagsNotifier.addWatcher(watcher);
+}
+
+void NetworkMonitor::removeLinkFlagsWatcher(const LinkFlagsWatcherToken& token)
+{
+    m_linkFlagsNotifier.removeWatcher(token);
 }
 
 auto NetworkMonitor::addOperationalStateWatcher(const OperationalStateWatcher& watcher,
@@ -434,6 +452,9 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
     }
 
     auto& cacheEntry = ensureNameCurrent(ifi->ifi_index, itfName);
+    NetworkInterfaceStatusTracker::LinkFlags linkFlags(ifi->ifi_flags);
+    cacheEntry.updateLinkFlags(linkFlags);
+
     if (const auto operationalStateOpt = attributes.getU8(IFLA_OPERSTATE); operationalStateOpt.has_value()) {
         cacheEntry.setOperationalState(static_cast<OperationalState>(operationalStateOpt.value()));
     }
@@ -602,6 +623,10 @@ void NetworkMonitor::notifyChanges()
         if (m_broadcastAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::BroadcastAddressChanged)) {
             m_broadcastAddressNotifier.notify(network::Interface {index, tracker.name()}, tracker.broadcastAddress());
             tracker.clearFlag(DirtyFlag::BroadcastAddressChanged);
+        }
+        if (m_linkFlagsNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::LinkFlagsChanged)) {
+            m_linkFlagsNotifier.notify(network::Interface {index, tracker.name()}, tracker.linkFlags());
+            tracker.clearFlag(DirtyFlag::LinkFlagsChanged);
         }
     }
 }

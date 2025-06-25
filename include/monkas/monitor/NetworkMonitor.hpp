@@ -52,6 +52,11 @@ using InterfacesNotifier = Watchable<const Interfaces>;
 using InterfacesWatcher = InterfacesNotifier::Watcher;
 using InterfacesWatcherToken = InterfacesNotifier::Token;
 
+using LinkFlags = NetworkInterfaceStatusTracker::LinkFlags;
+using LinkFlagsNotifier = Watchable<const network::Interface, const LinkFlags>;
+using LinkFlagsWatcher = LinkFlagsNotifier::Watcher;
+using LinkFlagsWatcherToken = LinkFlagsNotifier::Token;
+
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
 using OperationalStateNotifier = Watchable<const network::Interface, OperationalState>;
 using OperationalStateWatcher = OperationalStateNotifier::Watcher;
@@ -89,6 +94,11 @@ class NetworkMonitor
         const InterfacesWatcher& watcher, InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
         -> InterfacesWatcherToken;
     void removeInterfacesWatcher(const InterfacesWatcherToken& token);
+
+    [[nodiscard]] auto addLinkFlagsWatcher(const LinkFlagsWatcher& watcher,
+                                           InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
+        -> LinkFlagsWatcherToken;
+    void removeLinkFlagsWatcher(const LinkFlagsWatcherToken& token);
 
     [[nodiscard]] auto addOperationalStateWatcher(
         const OperationalStateWatcher& watcher,
@@ -193,6 +203,7 @@ class NetworkMonitor
 
     RuntimeOptions m_runtimeOptions;
     InterfacesNotifier m_interfacesNotifier;
+    LinkFlagsNotifier m_linkFlagsNotifier;
     OperationalStateNotifier m_operationalStateNotifier;
     NetworkAddressNotifier m_networkAddressNotifier;
     GatewayAddressNotifier m_gatewayAddressNotifier;

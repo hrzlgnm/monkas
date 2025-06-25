@@ -34,14 +34,9 @@ auto NetworkInterfaceStatusTracker::hasName() const -> bool
 
 void NetworkInterfaceStatusTracker::touch(DirtyFlag flag)
 {
-    const auto idx = std::to_underlying(flag);
-    if (idx >= m_dirtyFlags.size()) {
-        spdlog::error("Invalid dirty flag index: {}", idx);
-        return;
-    }
-    if (!m_dirtyFlags.test(idx)) {
+    if (!m_dirtyFlags.test(flag)) {
         m_lastChanged = std::chrono::steady_clock::now();
-        m_dirtyFlags.set(idx);
+        m_dirtyFlags.set(flag);
         m_nerdstats.dirtyFlagChanges++;
         logTrace(flag, this, "dirty flag set");
     } else {
@@ -172,6 +167,21 @@ void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::Address&
     }
 }
 
+void NetworkInterfaceStatusTracker::updateLinkFlags(const LinkFlags& flags)
+{
+    if (m_linkFlags != flags) {
+        m_linkFlags = flags;
+        touch(DirtyFlag::LinkFlagsChanged);
+        logTrace(flags, this, "link flags updated to");
+        m_nerdstats.linkFlagChanges++;
+    }
+}
+
+auto NetworkInterfaceStatusTracker::linkFlags() const -> LinkFlags
+{
+    return m_linkFlags;
+}
+
 auto NetworkInterfaceStatusTracker::age() const -> Duration
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_lastChanged);
@@ -185,13 +195,8 @@ auto NetworkInterfaceStatusTracker::isDirty() const -> bool
 
 auto NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const -> bool
 {
-    const auto idx = std::to_underlying(flag);
-    if (idx >= m_dirtyFlags.size()) {
-        spdlog::error("Invalid dirty flag index: {}, returning false", idx);
-        return false;
-    }
     m_nerdstats.dirtyFlagChecks++;
-    return m_dirtyFlags.test(idx);
+    return m_dirtyFlags.test(flag);
 }
 
 auto NetworkInterfaceStatusTracker::dirtyFlags() const -> DirtyFlags
@@ -201,13 +206,8 @@ auto NetworkInterfaceStatusTracker::dirtyFlags() const -> DirtyFlags
 
 void NetworkInterfaceStatusTracker::clearFlag(DirtyFlag flag)
 {
-    const auto idx = std::to_underlying(flag);
-    if (idx >= m_dirtyFlags.size()) {
-        spdlog::error("Invalid dirty flag index: {}", idx);
-        return;
-    }
-    if (m_dirtyFlags.test(idx)) {
-        m_dirtyFlags.reset(idx);
+    if (m_dirtyFlags.test(flag)) {
+        m_dirtyFlags.reset(flag);
         m_nerdstats.dirtyFlagClears++;
         logTrace(flag, this, "dirty flag cleared");
     } else {
@@ -219,6 +219,7 @@ void NetworkInterfaceStatusTracker::logNerdstats() const
 {
     spdlog::info("{:-^38}", m_name);
     spdlog::info("name changes                         {}", m_nerdstats.nameChanges);
+    spdlog::info("LinkFlag changes                     {}", m_nerdstats.linkFlagChanges);
     spdlog::info("operationalState changes             {}", m_nerdstats.operationalStateChanges);
     spdlog::info("macAddress changes                   {}", m_nerdstats.macAddressChanges);
     spdlog::info("broadcastAddress changes             {}", m_nerdstats.broadcastAddressChanges);
@@ -257,26 +258,6 @@ auto toString(const NetworkInterfaceStatusTracker::OperationalState o) -> std::s
     }
 }
 
-auto dirtyFlagsToString(const DirtyFlags& flags) -> std::string
-{
-    if (flags.none()) {
-        return "None";
-    }
-
-    std::ostringstream result;
-    bool empty = true;
-    for (size_t pos = flags._Find_first(); pos < flags.size(); pos = flags._Find_next(pos)) {
-        if (flags.test(pos)) {
-            if (!empty) {
-                result << "|";
-            }
-            result << static_cast<DirtyFlag>(pos);
-            empty = false;
-        }
-    }
-
-    return result.str();
-}
 }  // namespace
 
 auto operator<<(std::ostream& o, const OperationalState op) -> std::ostream&
@@ -307,6 +288,8 @@ auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&
     switch (d) {
         case NameChanged:
             return o << "NameChanged";
+        case LinkFlagsChanged:
+            return o << "LinkFlagsChanged";
         case OperationalStateChanged:
             return o << "OperationalStateChanged";
         case MacAddressChanged:
@@ -325,12 +308,61 @@ auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&
 
 auto operator<<(std::ostream& o, const DirtyFlags& d) -> std::ostream&
 {
-    return o << dirtyFlagsToString(d);
+    return o << d.toString();
+}
+
+auto operator<<(std::ostream& o, NetworkInterfaceStatusTracker::LinkFlag l) -> std::ostream&
+{
+    using enum NetworkInterfaceStatusTracker::LinkFlag;
+    switch (l) {
+        case Up:
+            return o << "Up";
+        case Broadcast:
+            return o << "Broadcast";
+        case Debug:
+            return o << "Debug";
+        case Loopback:
+            return o << "Loopback";
+        case PointToPoint:
+            return o << "PointToPoint";
+        case NoTrailers:
+            return o << "NoTrailers";
+        case Running:
+            return o << "Running";
+        case NoArp:
+            return o << "NoArp";
+        case Promiscuous:
+            return o << "Promiscuous";
+        case AllMulticast:
+            return o << "AllMulticast";
+        case Master:
+            return o << "Master";
+        case Slave:
+            return o << "Slave";
+        case Multicast:
+            return o << "Multicast";
+        case PortSet:
+            return o << "PortSet";
+        case AutoMedia:
+            return o << "AutoMedia";
+        case Dynamic:
+            return o << "Dynamic";
+        case FlagsCount:
+        default:
+            return o << "UnknownLinkFlag: 0x" << std::hex << static_cast<uint8_t>(l);
+    }
+}
+
+auto operator<<(std::ostream& o, const LinkFlags& l) -> std::ostream&
+
+{
+    return o << '<' << l.toString() << '>';
 }
 
 auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std::ostream&
 {
     o << s.name();
+    o << " " << s.linkFlags();
     o << " mac " << s.macAddress();
     o << " brd " << s.broadcastAddress();
     if (!s.networkAddresses().empty()) {
@@ -350,7 +382,7 @@ auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std:
     }
     o << " op " << toString(s.operationalState()) << "(" << static_cast<int>(s.operationalState()) << ")";
     o << " age " << s.age().count();
-    o << " dirty " << dirtyFlagsToString(s.dirtyFlags());
+    o << " dirty " << s.dirtyFlags();
     return o;
 }
 

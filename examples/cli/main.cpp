@@ -75,6 +75,9 @@ auto main(int argc, char* argv[]) -> int
     std::ignore = mon.addInterfacesWatcher([](const Interfaces& interfaces)
                                            { spdlog::info("Interfaces changed to: {}", fmt::join(interfaces, ", ")); },
                                            InitialSnapshotMode::InitialSnapshot);
+    std::ignore = mon.addLinkFlagsWatcher([](const Interface& iface, const LinkFlags& flags)
+                                          { spdlog::info("{} changed link flags to {}", iface, flags); },
+                                          InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addOperationalStateWatcher([](const Interface& iface, OperationalState state)
                                                  { spdlog::info("{} changed operational state to {}", iface, state); },
                                                  InitialSnapshotMode::InitialSnapshot);
