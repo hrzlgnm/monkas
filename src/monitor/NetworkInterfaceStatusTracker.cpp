@@ -136,7 +136,7 @@ auto NetworkInterfaceStatusTracker::networkAddresses() const -> const Addresses&
 
 void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address& address)
 {
-    if (const bool isNew = m_networkAddresses.erase(address) == 0) {
+    if (m_networkAddresses.erase(address) == 0) {
         m_networkAddresses.insert(address);
         touch(DirtyFlag::NetworkAddressesChanged);
         logTrace(address, this, "address added");

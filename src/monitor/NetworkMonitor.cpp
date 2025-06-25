@@ -43,8 +43,8 @@ auto toRtnlGroupFlag(rtnetlink_groups group) -> unsigned
     return (1U << (group - 1U));
 }
 
-inline constexpr size_t RECEIVE_SOCKET_BUFFER_SIZE = static_cast<const size_t>(32U * 1024U);
-inline constexpr size_t SEND_SOCKET_BUFFER_SIZE = static_cast<const size_t>(4U * 1024U);
+constexpr auto RECEIVE_SOCKET_BUFFER_SIZE = 32U * 1024U;
+constexpr auto SEND_SOCKET_BUFFER_SIZE = 4U * 1024U;
 
 auto ensureMnlSocket(bool nonBlocking) -> mnl_socket*
 {
@@ -58,9 +58,9 @@ auto ensureMnlSocket(bool nonBlocking) -> mnl_socket*
 
 NetworkMonitor::NetworkMonitor(const RuntimeFlags& options)
     : m_mnlSocket {ensureMnlSocket(options.test(RuntimeFlag::NonBlocking)), mnl_socket_close}
-    , m_portid {mnl_socket_get_portid(m_mnlSocket.get())}
     , m_receiveBuffer(RECEIVE_SOCKET_BUFFER_SIZE)
     , m_sendBuffer(SEND_SOCKET_BUFFER_SIZE)
+    , m_portid {mnl_socket_get_portid(m_mnlSocket.get())}
     , m_runtimeOptions(options)
 {
     m_stats.startTime = std::chrono::steady_clock::now();

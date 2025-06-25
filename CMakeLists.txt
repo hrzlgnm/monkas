@@ -22,6 +22,8 @@ if(NOT TARGET spdlog)
     find_package(spdlog REQUIRED)
 endif()
 
+add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+
 if(BUILD_TESTS)
     include(CTest)
     add_subdirectory(external/doctest)
