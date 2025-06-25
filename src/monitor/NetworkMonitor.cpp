@@ -78,6 +78,11 @@ NetworkMonitor::NetworkMonitor(const RuntimeOptions& options)
     }
 }
 
+/**
+ * @brief Initiates enumeration of network interfaces and waits for completion.
+ *
+ * Sends a netlink dump request to retrieve all network interfaces and processes messages until enumeration is complete. If enumeration has already been performed, the function returns immediately.
+ */
 void NetworkMonitor::enumerateInterfaces()
 {
     if (m_cacheState == CacheState::WaitingForChanges) {
@@ -91,6 +96,11 @@ void NetworkMonitor::enumerateInterfaces()
     }
 }
 
+/**
+ * @brief Starts monitoring network interfaces and processes netlink messages until stopped.
+ *
+ * Initiates interface enumeration and then enters a loop to receive and process netlink messages, continuing until monitoring is explicitly stopped.
+ */
 void NetworkMonitor::run()
 {
     // someone may call enumerateInterfaces() and stop() during enumerateInterfaces
@@ -108,6 +118,11 @@ void NetworkMonitor::run()
     }
 }
 
+/**
+ * @brief Stops the network monitoring process and releases resources.
+ *
+ * Closes the netlink socket and marks the monitor as no longer running.
+ */
 void NetworkMonitor::stop()
 {
     spdlog::debug("Stopping NetworkMonitor");
