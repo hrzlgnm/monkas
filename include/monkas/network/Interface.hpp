@@ -15,21 +15,16 @@ class Interface
     Interface() = default;
     Interface(std::uint32_t index, std::string name);
 
-    [[nodiscard]] auto index() const -> uint32_t { return m_index; }
+    [[nodiscard]] constexpr auto index() const -> uint32_t { return m_index; }
 
-    [[nodiscard]] auto name() const -> const std::string& { return m_name; }
+    [[nodiscard]] constexpr auto name() const -> const std::string& { return m_name; }
 
-    constexpr auto operator<(const Interface& other) const noexcept -> bool
+    [[nodiscard]] constexpr auto operator<=>(const Interface& other) const noexcept -> std::strong_ordering
     {
-        return std::tie(m_index, m_name) < std::tie(other.m_index, other.m_name);
+        return std::tie(m_index, m_name) <=> std::tie(other.m_index, other.m_name);
     }
 
-    constexpr auto operator==(const Interface& other) const -> bool
-    {
-        return m_index == other.m_index && m_name == other.m_name;
-    }
-
-    constexpr auto operator!=(const Interface& other) const -> bool { return !(*this == other); }
+    [[nodiscard]] constexpr auto operator==(const Interface& other) const -> bool = default;
 
   private:
     uint32_t m_index {};
