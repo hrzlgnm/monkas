@@ -11,6 +11,7 @@ set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/monitor/NetworkMonitor.hpp
     ${PUBLIC_INCLUDE_DIR}/network/Address.hpp
     ${PUBLIC_INCLUDE_DIR}/network/Interface.hpp
+    ${PUBLIC_INCLUDE_DIR}/util/FlagSet.hpp
     ${PUBLIC_INCLUDE_DIR}/watchable/Watchable.hpp
 )
 
