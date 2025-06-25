@@ -64,18 +64,17 @@ void NetworkInterfaceStatusTracker::setName(const std::string& name)
     }
 }
 
-// TODO: fallback to flags
 auto NetworkInterfaceStatusTracker::operationalState() const -> OperationalState
 {
-    return m_operState;
+    return m_operationalState;
 }
 
-void NetworkInterfaceStatusTracker::setOperationalState(const OperationalState operstate)
+void NetworkInterfaceStatusTracker::setOperationalState(const OperationalState operationalState)
 {
-    if (m_operState != operstate) {
-        m_operState = operstate;
+    if (m_operationalState != operationalState) {
+        m_operationalState = operationalState;
         touch(DirtyFlag::OperationalStateChanged);
-        logTrace(operstate, this, "operational state changed to");
+        logTrace(operationalState, this, "operational state changed to");
         m_nerdstats.operationalStateChanges++;
     }
 }
@@ -92,7 +91,7 @@ auto NetworkInterfaceStatusTracker::broadcastAddress() const -> const ethernet::
 
 void NetworkInterfaceStatusTracker::setMacAddress(const ethernet::Address& address)
 {
-    if (m_macAddress != address) {
+    if (m_macAddress != address || address.allZeroes()) {
         m_macAddress = address;
         touch(DirtyFlag::MacAddressChanged);
         logTrace(address, this, "mac address changed to");
@@ -102,7 +101,7 @@ void NetworkInterfaceStatusTracker::setMacAddress(const ethernet::Address& addre
 
 void NetworkInterfaceStatusTracker::setBroadcastAddress(const ethernet::Address& address)
 {
-    if (m_broadcastAddress != address) {
+    if (m_broadcastAddress != address || address.allZeroes()) {
         m_broadcastAddress = address;
         touch(DirtyFlag::BroadcastAddressChanged);
         logTrace(address, this, "broadcast address changed to");
@@ -332,12 +331,12 @@ auto operator<<(std::ostream& o, const DirtyFlags& d) -> std::ostream&
 auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std::ostream&
 {
     o << s.name();
-    o << " mac " << s.m_macAddress;
-    o << " brd " << s.m_broadcastAddress;
-    if (!s.m_networkAddresses.empty()) {
+    o << " mac " << s.macAddress();
+    o << " brd " << s.broadcastAddress();
+    if (!s.networkAddresses().empty()) {
         o << " [";
         bool first = true;
-        for (const auto& a : s.m_networkAddresses) {
+        for (const auto& a : s.networkAddresses()) {
             if (!first) {
                 o << ", ";
             }
@@ -346,10 +345,10 @@ auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std:
         }
         o << "]";
     }
-    if (s.m_gateway.has_value()) {
-        o << " default via " << s.m_gateway.value();
+    if (s.gatewayAddress().has_value()) {
+        o << " default via " << s.gatewayAddress().value();
     }
-    o << " op " << toString(s.m_operState) << "(" << static_cast<int>(s.m_operState) << ")";
+    o << " op " << toString(s.operationalState()) << "(" << static_cast<int>(s.operationalState()) << ")";
     o << " age " << s.age().count();
     o << " dirty " << dirtyFlagsToString(s.dirtyFlags());
     return o;

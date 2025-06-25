@@ -57,7 +57,7 @@ class NetworkInterfaceStatusTracker
     void setName(const std::string& name);
 
     [[nodiscard]] auto operationalState() const -> OperationalState;
-    void setOperationalState(OperationalState operstate);
+    void setOperationalState(OperationalState operationalState);
 
     [[nodiscard]] auto macAddress() const -> const ethernet::Address&;
     void setMacAddress(const ethernet::Address& address);
@@ -88,12 +88,10 @@ class NetworkInterfaceStatusTracker
   private:
     void touch(DirtyFlag flag);
 
-    // TODO: only use public api
-    friend auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std::ostream&;
     std::string m_name;
     ethernet::Address m_macAddress;
     ethernet::Address m_broadcastAddress;
-    OperationalState m_operState {OperationalState::Unknown};
+    OperationalState m_operationalState {OperationalState::Unknown};
     Addresses m_networkAddresses;
     std::optional<ip::Address> m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
@@ -125,6 +123,7 @@ using DirtyFlag = NetworkInterfaceStatusTracker::DirtyFlag;
 using DirtyFlags = NetworkInterfaceStatusTracker::DirtyFlags;
 auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&;
 auto operator<<(std::ostream& o, const DirtyFlags& d) -> std::ostream&;
+auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std::ostream&;
 
 }  // namespace monkas::monitor
 
