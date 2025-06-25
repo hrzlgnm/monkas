@@ -19,7 +19,7 @@ class FlagSet
 
     FlagSet() = default;
 
-    explicit FlagSet(uint32_t bits)
+    explicit FlagSet(uint64_t bits)
         : m_flags(bits)
     {
     }
@@ -42,15 +42,15 @@ class FlagSet
     {
         std::ostringstream oss;
         bool first = true;
-    for (size_t i = 0; i < FLAG_COUNT; ++i) {
-        if (m_flags.test(i)) {
-            if (!first) {
-                oss << "|";
+        for (size_t i = 0; i < FLAG_COUNT; ++i) {
+            if (m_flags.test(i)) {
+                if (!first) {
+                    oss << "|";
+                }
+                first = false;
+                oss << static_cast<Enum>(i);
             }
-            first = false;
-            oss << static_cast<Enum>(i);
         }
-    }
         if (first) {
             return "None";
         }
