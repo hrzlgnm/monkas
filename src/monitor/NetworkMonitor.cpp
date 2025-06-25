@@ -16,6 +16,7 @@
 #include <spdlog/spdlog.h>
 
 #include "ethernet/Address.hpp"
+#include "network/Address.hpp"
 
 namespace monkas::monitor
 {
@@ -515,8 +516,12 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr* nlhdr, const ifaddrmsg*
     if (const auto addressV6Opt = attributes.getIpV6Address(IFA_ADDRESS); addressV6Opt.has_value()) {
         address = addressV6Opt.value();
     }
-    const network::Address networkAddress {
-        address, broadcast, ifa->ifa_prefixlen, network::fromRtnlScope(ifa->ifa_scope), flags, prot};
+    const network::Address networkAddress {address,
+                                           broadcast,
+                                           ifa->ifa_prefixlen,
+                                           network::fromRtnlScope(ifa->ifa_scope),
+                                           network::AddressFlags(flags),
+                                           static_cast<network::AddressAssignmentProtocol>(prot)};
     if (nlhdr->nlmsg_type == RTM_NEWADDR) {
         cacheEntry.addNetworkAddress(networkAddress);
     } else if (nlhdr->nlmsg_type == RTM_DELADDR) {

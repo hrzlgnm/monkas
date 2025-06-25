@@ -18,8 +18,9 @@ TEST_SUITE("[network::Address]")
     const auto someV4 = ip::Address(someIpV4);
     const auto someBroadcastV4 = ip::Address(someBroadcast);
     const auto someV6 = ip::Address::fromString("2001:db8::1");
-    const Address addrV6 {someV6, std::nullopt, 24, scope, 5, 0};
-    const Address addrV4 {someV4, someBroadcastV4, 24, scope, 10, 1};
+    const Address addrV6 {someV6, std::nullopt, 24, scope, AddressFlags(5), AddressAssignmentProtocol::Unspecified};
+    const Address addrV4 {
+        someV4, someBroadcastV4, 24, scope, AddressFlags(10), AddressAssignmentProtocol::KernelLinkLocal};
     const Address defaultAddress {};
 
     TEST_CASE("family")
@@ -67,15 +68,17 @@ TEST_SUITE("[network::Address]")
 
     TEST_CASE("flags")
     {
-        CHECK(addrV4.flags() == 10);
-        CHECK(defaultAddress.flags() == 0);
+        INFO("Address flags ", addrV4.flags().toString());
+        CHECK(addrV4.flags().test(AddressFlag::HomeAddress));
+        CHECK(addrV4.flags().test(AddressFlag::NoDuplicateAddressDetection));
+        CHECK(defaultAddress.flags().none());
     }
 
     TEST_CASE("proto")
     {
-        CHECK(addrV4.proto() == 1);
-        CHECK(addrV6.proto() == 0);
-        CHECK(defaultAddress.proto() == 0);
+        CHECK(addrV4.addressAssignmentProtocol() == AddressAssignmentProtocol::KernelLinkLocal);
+        CHECK(addrV6.addressAssignmentProtocol() == AddressAssignmentProtocol::Unspecified);
+        CHECK(defaultAddress.addressAssignmentProtocol() == AddressAssignmentProtocol::Unspecified);
     }
 
     TEST_CASE("operator ==")
