@@ -91,7 +91,7 @@ class NetworkInterfaceStatusTracker
     std::string m_name;
     ethernet::Address m_macAddress;
     ethernet::Address m_broadcastAddress;
-    OperationalState m_opeationalState {OperationalState::Unknown};
+    OperationalState m_operationalState {OperationalState::Unknown};
     Addresses m_networkAddresses;
     std::optional<ip::Address> m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;

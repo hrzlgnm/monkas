@@ -66,13 +66,13 @@ void NetworkInterfaceStatusTracker::setName(const std::string& name)
 
 auto NetworkInterfaceStatusTracker::operationalState() const -> OperationalState
 {
-    return m_opeationalState;
+    return m_operationalState;
 }
 
 void NetworkInterfaceStatusTracker::setOperationalState(const OperationalState operationalState)
 {
-    if (m_opeationalState != operationalState) {
-        m_opeationalState = operationalState;
+    if (m_operationalState != operationalState) {
+        m_operationalState = operationalState;
         touch(DirtyFlag::OperationalStateChanged);
         logTrace(operationalState, this, "operational state changed to");
         m_nerdstats.operationalStateChanges++;
