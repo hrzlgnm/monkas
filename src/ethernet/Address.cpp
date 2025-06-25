@@ -1,5 +1,5 @@
-#include <ostream>
 #include <algorithm>
+#include <ostream>
 
 #include <ethernet/Address.hpp>
 
