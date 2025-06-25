@@ -53,7 +53,7 @@ auto main(int argc, char* argv[]) -> int
     }
     constexpr auto FLUSH_EVERY = std::chrono::seconds(5);
     spdlog::flush_every(FLUSH_EVERY);
-    RuntimeOptions options;
+    RuntimeFlags options;
     if (FLAGS_nerdstats) {
         options.set(RuntimeFlag::StatsForNerds);
     }
