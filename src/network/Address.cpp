@@ -9,10 +9,10 @@ namespace monkas::network
 
 Address::Address(const ip::Address& address,
                  std::optional<ip::Address> broadcast,
-                 uint8_t prefixLen,
-                 Scope scope,
-                 uint32_t flags,
-                 uint8_t proto)
+                 const uint8_t prefixLen,
+                 const Scope scope,
+                 const AddressFlags& flags,
+                 const AddressAssignmentProtocol proto)
     : m_ip {address}
     , m_brd {broadcast}
     , m_prefixlen {prefixLen}
@@ -57,12 +57,12 @@ auto Address::scope() const -> Scope
     return m_scope;
 }
 
-auto Address::flags() const -> uint32_t
+auto Address::flags() const -> AddressFlags
 {
     return m_flags;
 }
 
-auto Address::proto() const -> uint8_t
+auto Address::addressAssignmentProtocol() const -> AddressAssignmentProtocol
 {
     return m_prot;
 }
@@ -127,6 +127,61 @@ auto operator<<(std::ostream& o, Scope a) -> std::ostream&
     return o;
 }
 
+auto operator<<(std::ostream& o, const AddressFlag a) -> std::ostream&
+{
+    using enum AddressFlag;
+    switch (a) {
+        case Temporary:
+            return o << "Temporary";
+        case NoDuplicateAddressDetection:
+            return o << "NoDuplicateAddressDetection";
+        case Optimistic:
+            return o << "Optimistic";
+        case HomeAddress:
+            return o << "HomeAddress";
+        case DuplicateAddressDetectionFailed:
+            return o << "DuplicateAddressDetectionFailed";
+        case Deprecated:
+            return o << "Deprecated";
+        case Tentative:
+            return o << "Tentative";
+        case Permanent:
+            return o << "Permanent";
+        case ManagedTemporaryAddress:
+            return o << "ManagedTemporaryAddress";
+        case NoPrefixRoute:
+            return o << "NoPrefixRoute";
+        case MulticastAutoJoin:
+            return o << "MulticastAutoJoin";
+        case StablePrivacy:
+            return o << "StablePrivacy";
+        default:
+            return o << "Unknown Flag: 0x" << std::hex << static_cast<int>(a);
+    }
+}
+
+auto operator<<(std::ostream& o, const AddressFlags& a) -> std::ostream&
+{
+    return o << a.toString();
+}
+
+auto operator<<(std::ostream& o, AddressAssignmentProtocol a) -> std::ostream&
+{
+    using enum AddressAssignmentProtocol;
+    switch (a) {
+        case Unspecified:
+            return o << "Unspecified";
+        case KernelLoopback:
+            return o << "KernelLoopback";
+        case KernelRouterAdvertisement:
+            return o << "KernelRouterAdvertisement";
+        case KernelLinkLocal:
+            return o << "KernelLinkLocal";
+        default:
+            return o << "Unknown Address AddressAssignmentProtocol: 0x" << std::hex << static_cast<int>(a);
+    }
+}
+
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
 {
     o << a.family() << " " << a.ip() << "/" << static_cast<int>(a.prefixLength());
@@ -134,27 +189,12 @@ auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
     if (a.broadcast().has_value()) {
         o << " brd " << a.broadcast().value();
     }
-    // TODO: to readable
-    if (a.flags() != 0U) {
-        o << " f 0x" << std::hex << a.flags() << std::dec;
+    if (a.flags().any()) {
+        o << " <" << a.flags() << ">";
     }
-    switch (a.proto()) {
-        case IFAPROT_UNSPEC:
-            break;
-        case IFAPROT_KERNEL_LO:
-            o << " kernel_lo";
-            break;
-        case IFAPROT_KERNEL_RA:
-            o << " kernel_ra";
-            break;
-        case IFAPROT_KERNEL_LL:
-            o << " kernel_ll";
-            break;
-        default:
-            o << " prot unknown: " << static_cast<int>(a.proto());
-            break;
+    if (a.addressAssignmentProtocol() != AddressAssignmentProtocol::Unspecified) {
+        o << " proto " << a.addressAssignmentProtocol();
     }
-
     return o;
 }
 
