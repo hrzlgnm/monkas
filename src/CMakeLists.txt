@@ -27,11 +27,13 @@ target_sources(
         ethernet/Address.cpp
         ip/Address.cpp
         monitor/Attributes.cpp
-        monitor/Attributes.hpp
         monitor/NetworkInterfaceStatusTracker.cpp
         monitor/NetworkMonitor.cpp
         network/Address.cpp
         network/Interface.cpp
+    PRIVATE
+        FILE_SET HEADERS
+        FILES monitor/Attributes.hpp overloaded/Overloaded.hpp
 )
 
 target_link_libraries(
