@@ -31,8 +31,8 @@ auto Address::toString() const -> std::string
 {
     constexpr auto LEN = 17;  // 6*2 hex digits + 5 colons
     std::array<char, LEN> buf {};
-    int idx = 0;
-    int i = 0;
+    size_t idx = 0;
+    size_t i = 0;
     for (const auto octet : m_bytes) {
         constexpr auto UPPER_NIBBLE_MASK = 0xFU;
         constexpr auto LOWER_NIBBLE_SHIFT = 0x4U;
