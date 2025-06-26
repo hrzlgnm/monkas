@@ -25,7 +25,7 @@ set_property(
         OUTPUT_NAME
             doctest
 )
-target_compile_features(doctest_exe PRIVATE cxx_std_20)
+target_compile_features(doctest_exe PRIVATE cxx_std_23)
 
 add_test(
     NAME doctest
