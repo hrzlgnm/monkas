@@ -45,7 +45,7 @@ class Address
     [[nodiscard]] auto isV6() const -> bool;
 
     [[nodiscard]] auto isMulticast() const -> bool;
-    [[nodiscard]] auto isLinkLocal() const -> bool;
+    [[nodiscard]] auto isUnicastLinkLocal() const -> bool;
     [[nodiscard]] auto isUniqueLocal() const -> bool;
     [[nodiscard]] auto isLoopback() const -> bool;
     [[nodiscard]] auto isBroadcast() const -> bool;

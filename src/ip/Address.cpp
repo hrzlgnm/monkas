@@ -82,7 +82,7 @@ auto Address::isMulticast() const -> bool
                       m_bytes);
 }
 
-auto Address::isLinkLocal() const -> bool
+auto Address::isUnicastLinkLocal() const -> bool
 {
     return std::visit(Overloaded {[](const V4Bytes& addr)
                                   {
