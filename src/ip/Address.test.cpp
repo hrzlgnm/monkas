@@ -78,16 +78,16 @@ TEST_SUITE("[ip::Address]")
 
     TEST_CASE("isLinkLocal")
     {
-        CHECK(Address::fromString("169.254.0.1").isLinkLocal());
-        CHECK(Address::fromString("169.254.255.255").isLinkLocal());
-        CHECK(Address::fromString("fe80::1").isLinkLocal());
-        CHECK(Address::fromString("fe80::2").isLinkLocal());
-        CHECK(Address::fromString("fe80::3").isLinkLocal());
-        CHECK(!defaultCtor.isLinkLocal());
-        CHECK(!localhost4.isLinkLocal());
-        CHECK(!localHost6.isLinkLocal());
-        CHECK(!any4.isLinkLocal());
-        CHECK(!any6.isLinkLocal());
+        CHECK(Address::fromString("169.254.0.1").isUnicastLinkLocal());
+        CHECK(Address::fromString("169.254.255.255").isUnicastLinkLocal());
+        CHECK(Address::fromString("fe80::1").isUnicastLinkLocal());
+        CHECK(Address::fromString("fe80::2").isUnicastLinkLocal());
+        CHECK(Address::fromString("fe80::3").isUnicastLinkLocal());
+        CHECK(!defaultCtor.isUnicastLinkLocal());
+        CHECK(!localhost4.isUnicastLinkLocal());
+        CHECK(!localHost6.isUnicastLinkLocal());
+        CHECK(!any4.isUnicastLinkLocal());
+        CHECK(!any6.isUnicastLinkLocal());
     }
 
     TEST_CASE("isUniqueLocal")
