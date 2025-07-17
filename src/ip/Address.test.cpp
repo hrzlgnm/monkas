@@ -76,7 +76,7 @@ TEST_SUITE("[ip::Address]")
         CHECK(!any6.isMulticast());
     }
 
-    TEST_CASE("isLinkLocal")
+    TEST_CASE("isUnicastLinkLocal")
     {
         CHECK(Address::fromString("169.254.0.1").isUnicastLinkLocal());
         CHECK(Address::fromString("169.254.255.255").isUnicastLinkLocal());
