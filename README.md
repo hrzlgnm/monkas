@@ -2,7 +2,8 @@
 
 - [monkas](#monkas)
 - [Dependencies](#dependencies)
-  - [Quick installation for debian/ubuntu based distros](#quick-install-for-debianubuntu-based-distors)
+-## Quick install for debian/ubuntu based distros
++## Quick installation for debian/ubuntu based distros
 - [Quick Start](#quick-start)
 <!--toc:end-->
 
