@@ -3,7 +3,6 @@
 #include <array>
 #include <compare>
 #include <cstddef>
-#include <cstdint>
 #include <iosfwd>
 #include <string>
 #include <variant>
@@ -50,7 +49,6 @@ class Address
     [[nodiscard]] auto isLoopback() const -> bool;
     [[nodiscard]] auto isBroadcast() const -> bool;
 
-    [[nodiscard]] auto ip() const -> const Address&;
     [[nodiscard]] auto family() const -> Family;
 
     [[nodiscard]] auto operator<=>(const Address& rhs) const noexcept -> std::strong_ordering;

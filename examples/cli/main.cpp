@@ -101,7 +101,7 @@ auto main(int argc, char* argv[]) -> int
                                        { spdlog::info("{} changed broadcast address to {}", iface, broadcast); },
                                        InitialSnapshotMode::InitialSnapshot);
     std::ignore = mon.addEnumerationDoneWatcher(
-        [&mon]()
+        [&mon]
         {
             spdlog::info("Enumeration done");
             if (FLAGS_exit_after_enumeration) {

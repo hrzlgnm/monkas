@@ -54,7 +54,7 @@ class Address
   public:
     Address() = default;
     Address(const ip::Address& address,
-            std::optional<ip::Address> broadcast,
+            const std::optional<ip::Address>& broadcast,
             uint8_t prefixLen,
             Scope scope,
             const AddressFlags& flags,

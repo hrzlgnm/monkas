@@ -1,7 +1,6 @@
 #pragma once
 
 #include <chrono>
-#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
@@ -148,7 +147,7 @@ class NetworkMonitor
     void printStatsForNerdsIfEnabled();
 
     auto mnlMessageCallback(const nlmsghdr* n) -> int;
-    static auto dispatchMnMessageCallbackToSelf(const struct nlmsghdr* n, void* self) -> int;
+    static auto dispatchMnMessageCallbackToSelf(const nlmsghdr* n, void* self) -> int;
 
     [[nodiscard]] auto isEnumerating() const -> bool { return m_cacheState != CacheState::WaitingForChanges; }
 

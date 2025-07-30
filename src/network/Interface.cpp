@@ -5,7 +5,7 @@
 namespace monkas::network
 {
 
-Interface::Interface(uint32_t index, std::string name)
+Interface::Interface(const uint32_t index, std::string name)
     : m_index {index}
     , m_name {std::move(name)}
 {

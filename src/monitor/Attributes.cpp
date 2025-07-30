@@ -13,7 +13,7 @@ namespace
 
 using Attrs = std::vector<const nlattr*>;
 
-[[nodiscard]] auto has(const Attrs& attrs, uint16_t type) -> bool
+[[nodiscard]] auto has(const Attrs& attrs, const uint16_t type) -> bool
 {
     return type < attrs.size() && attrs[type] != nullptr;
 }
@@ -21,7 +21,7 @@ using Attrs = std::vector<const nlattr*>;
 template<typename T>
 [[nodiscard]] auto getTypedAttribute(const Attrs& attrs,
                                      uint16_t type,
-                                     mnl_attr_data_type mnlType,
+                                     const mnl_attr_data_type mnlType,
                                      T (*getter)(const nlattr*)) -> std::optional<T>
 {
     if (!has(attrs, type)) {

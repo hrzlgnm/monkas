@@ -122,7 +122,7 @@ class Watchable
     auto tokenIsValid(const Token& token) const -> bool
     {
         return token != m_watchers.end()
-            && std::any_of(m_watchers.cbegin(), m_watchers.cend(), [&](const auto& w) { return &w == &(*token); });
+            && std::any_of(m_watchers.cbegin(), m_watchers.cend(), [&](const auto& w) { return &w == &*token; });
     }
 
     Watchers m_watchers;
