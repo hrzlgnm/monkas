@@ -131,7 +131,7 @@ class NetworkMonitor
   private:
     void receiveAndProcess();
     void updateStats(ssize_t receiveResult);
-    void dumpPacket(ssize_t receiveResult);
+    void dumpPacket(ssize_t receiveResult) const;
     auto handleCallbackResult(int callbackResult) -> bool;
 
     /* @note: only one such request can be in progress until the reply is received */

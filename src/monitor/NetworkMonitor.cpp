@@ -303,7 +303,7 @@ void NetworkMonitor::updateStats(const ssize_t receiveResult)
     m_stats.bytesReceived += receiveResult;
 }
 
-void NetworkMonitor::dumpPacket(const ssize_t receiveResult)
+void NetworkMonitor::dumpPacket(const ssize_t receiveResult) const
 {
     std::ignore = fflush(stderr);
     std::ignore = fflush(stdout);
@@ -454,7 +454,7 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
     }
 
     auto& cacheEntry = ensureNameCurrent(ifi->ifi_index, itfName);
-    NetworkInterfaceStatusTracker::LinkFlags linkFlags(ifi->ifi_flags);
+    const NetworkInterfaceStatusTracker::LinkFlags linkFlags(ifi->ifi_flags);
     cacheEntry.updateLinkFlags(linkFlags);
 
     if (const auto operationalStateOpt = attributes.getU8(IFLA_OPERSTATE); operationalStateOpt.has_value()) {
@@ -551,13 +551,13 @@ void NetworkMonitor::parseRouteMessage(const nlmsghdr* nlhdr, const rtmsg* rtm)
     if (nlhdr->nlmsg_type == RTM_DELROUTE) {
         if (ifIndexOpt.has_value()) {
             if ((rtm->rtm_flags & RTNH_F_LINKDOWN) != 0U) {
-                if (auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
+                if (const auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
                     itr->second.clearGatewayAddress(GatewayClearReason::LinkDown);
                 }
                 return;
             }
             if (gatewayV4Opt.has_value()) {
-                if (auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
+                if (const auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
                     itr->second.clearGatewayAddress(GatewayClearReason::RouteDeleted);
                 }
             }
@@ -594,7 +594,7 @@ void NetworkMonitor::printStatsForNerdsIfEnabled()
     spdlog::info("          {} route messages", m_stats.routeMessagesSeen);
 
     spdlog::info("{:=^48}", "Interface details in cache");
-    for (const auto& [index, tracker] : m_trackers) {
+    for (const auto& tracker : m_trackers | std::views::values) {
         spdlog::info(tracker);
         tracker.logNerdstats();
     }
