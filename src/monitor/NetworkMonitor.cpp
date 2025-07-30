@@ -594,7 +594,7 @@ void NetworkMonitor::printStatsForNerdsIfEnabled()
     spdlog::info("          {} route messages", m_stats.routeMessagesSeen);
 
     spdlog::info("{:=^48}", "Interface details in cache");
-    for (const auto& tracker : m_trackers | std::views::values) {
+    for (const auto& [_, tracker] : m_trackers) {
         spdlog::info(tracker);
         tracker.logNerdstats();
     }
