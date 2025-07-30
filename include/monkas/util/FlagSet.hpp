@@ -29,7 +29,7 @@ class FlagSet
 
     [[nodiscard]] constexpr auto toU32() const -> uint32_t { return m_flags.to_ulong(); }
 
-    [[nodiscard]] constexpr auto size() const -> size_t { return FLAG_COUNT; }
+    [[nodiscard]] constexpr static auto size() -> size_t { return FLAG_COUNT; }
 
     [[nodiscard]] constexpr auto count() const -> size_t { return m_flags.count(); }
 

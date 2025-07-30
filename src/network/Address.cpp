@@ -1,6 +1,5 @@
 #include <ostream>
 
-#include <linux/if_addr.h>
 #include <linux/rtnetlink.h>
 #include <network/Address.hpp>
 
@@ -8,7 +7,7 @@ namespace monkas::network
 {
 
 Address::Address(const ip::Address& address,
-                 std::optional<ip::Address> broadcast,
+                 const std::optional<ip::Address>& broadcast,
                  const uint8_t prefixLen,
                  const Scope scope,
                  const AddressFlags& flags,
@@ -69,25 +68,25 @@ auto Address::addressAssignmentProtocol() const -> AddressAssignmentProtocol
 
 auto Address::operator<=>(const Address& other) const -> std::strong_ordering
 {
-    if (auto cmp = m_ip <=> other.m_ip; cmp != 0) {
+    if (const auto cmp = m_ip <=> other.m_ip; cmp != 0) {
         return cmp;
     }
-    if (auto cmp = m_brd <=> other.m_brd; cmp != 0) {
+    if (const auto cmp = m_brd <=> other.m_brd; cmp != 0) {
         return cmp;
     }
-    if (auto cmp = m_prefixlen <=> other.m_prefixlen; cmp != 0) {
+    if (const auto cmp = m_prefixlen <=> other.m_prefixlen; cmp != 0) {
         return cmp;
     }
-    if (auto cmp = m_scope <=> other.m_scope; cmp != 0) {
+    if (const auto cmp = m_scope <=> other.m_scope; cmp != 0) {
         return cmp;
     }
-    if (auto cmp = m_flags <=> other.m_flags; cmp != 0) {
+    if (const auto cmp = m_flags <=> other.m_flags; cmp != 0) {
         return cmp;
     }
     return m_prot <=> other.m_prot;
 }
 
-auto fromRtnlScope(uint8_t rtnlScope) -> Scope
+auto fromRtnlScope(const uint8_t rtnlScope) -> Scope
 {
     switch (rtnlScope) {
         case RT_SCOPE_SITE:
@@ -104,7 +103,7 @@ auto fromRtnlScope(uint8_t rtnlScope) -> Scope
     }
 }
 
-auto operator<<(std::ostream& o, Scope a) -> std::ostream&
+auto operator<<(std::ostream& o, const Scope a) -> std::ostream&
 {
     switch (a) {
         case Scope::Site:

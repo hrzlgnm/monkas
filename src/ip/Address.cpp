@@ -126,7 +126,7 @@ auto Address::isLoopback() const -> bool
                                   {
                                       // Loopback address in IPv6 is ::1
                                       return std::all_of(
-                                                 addr.cbegin(), addr.cend() - 1, [](uint8_t b) { return b == 0; })
+                                                 addr.cbegin(), addr.cend() - 1, [](const uint8_t b) { return b == 0; })
                                           && addr[IPV6_ADDR_LEN - 1] == 1;
                                   }},
                       m_bytes);

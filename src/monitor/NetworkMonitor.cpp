@@ -15,7 +15,6 @@
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 
-#include "ethernet/Address.hpp"
 #include "network/Address.hpp"
 
 namespace monkas::monitor
@@ -38,15 +37,15 @@ void pwarn(const T& msg)
     spdlog::warn("{} failed: {}[{}]", msg, strerror(errno), errno);
 }
 
-auto toRtnlGroupFlag(rtnetlink_groups group) -> unsigned
+auto toRtnlGroupFlag(const rtnetlink_groups group) -> unsigned
 {
-    return (1U << (group - 1U));
+    return 1U << (group - 1U);
 }
 
 constexpr auto RECEIVE_SOCKET_BUFFER_SIZE = 32U * 1024U;
 constexpr auto SEND_SOCKET_BUFFER_SIZE = 4U * 1024U;
 
-auto ensureMnlSocket(bool nonBlocking) -> mnl_socket*
+auto ensureMnlSocket(const bool nonBlocking) -> mnl_socket*
 {
     auto* s = mnl_socket_open2(NETLINK_ROUTE, nonBlocking ? SOCK_NONBLOCK : 0);
     if (s == nullptr) {
@@ -134,7 +133,7 @@ void NetworkMonitor::stop()
     m_running = false;
 }
 
-auto NetworkMonitor::addInterfacesWatcher(const InterfacesWatcher& watcher, InitialSnapshotMode initialSnapshot)
+auto NetworkMonitor::addInterfacesWatcher(const InterfacesWatcher& watcher, const InitialSnapshotMode initialSnapshot)
     -> InterfacesWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
@@ -148,7 +147,7 @@ void NetworkMonitor::removeInterfacesWatcher(const InterfacesWatcherToken& token
     m_interfacesNotifier.removeWatcher(token);
 }
 
-auto NetworkMonitor::addLinkFlagsWatcher(const LinkFlagsWatcher& watcher, InitialSnapshotMode initialSnapshot)
+auto NetworkMonitor::addLinkFlagsWatcher(const LinkFlagsWatcher& watcher, const InitialSnapshotMode initialSnapshot)
     -> LinkFlagsWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
@@ -166,7 +165,8 @@ void NetworkMonitor::removeLinkFlagsWatcher(const LinkFlagsWatcherToken& token)
 }
 
 auto NetworkMonitor::addOperationalStateWatcher(const OperationalStateWatcher& watcher,
-                                                InitialSnapshotMode initialSnapshot) -> OperationalStateWatcherToken
+                                                const InitialSnapshotMode initialSnapshot)
+    -> OperationalStateWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
         for (auto& [index, tracker] : m_trackers) {
@@ -182,8 +182,8 @@ void NetworkMonitor::removeOperationalStateWatcher(const OperationalStateWatcher
     m_operationalStateNotifier.removeWatcher(token);
 }
 
-auto NetworkMonitor::addNetworkAddressWatcher(const NetworkAddressWatcher& watcher, InitialSnapshotMode initialSnapshot)
-    -> NetworkAddressWatcherToken
+auto NetworkMonitor::addNetworkAddressWatcher(const NetworkAddressWatcher& watcher,
+                                              const InitialSnapshotMode initialSnapshot) -> NetworkAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
         for (auto& [index, tracker] : m_trackers) {
@@ -199,8 +199,8 @@ void NetworkMonitor::removeNetworkAddressWatcher(const NetworkAddressWatcherToke
     m_networkAddressNotifier.removeWatcher(token);
 }
 
-auto NetworkMonitor::addGatewayAddressWatcher(const GatewayAddressWatcher& watcher, InitialSnapshotMode initialSnapshot)
-    -> GatewayAddressWatcherToken
+auto NetworkMonitor::addGatewayAddressWatcher(const GatewayAddressWatcher& watcher,
+                                              const InitialSnapshotMode initialSnapshot) -> GatewayAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
         for (auto& [index, tracker] : m_trackers) {
@@ -216,7 +216,7 @@ void NetworkMonitor::removeGatewayAddressWatcher(const GatewayAddressWatcherToke
     m_gatewayAddressNotifier.removeWatcher(token);
 }
 
-auto NetworkMonitor::addMacAddressWatcher(const MacAddressWatcher& watcher, InitialSnapshotMode initialSnapshot)
+auto NetworkMonitor::addMacAddressWatcher(const MacAddressWatcher& watcher, const InitialSnapshotMode initialSnapshot)
     -> MacAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
@@ -234,7 +234,8 @@ void NetworkMonitor::removeMacAddressWatcher(const MacAddressWatcherToken& token
 }
 
 auto NetworkMonitor::addBroadcastAddressWatcher(const BroadcastAddressWatcher& watcher,
-                                                InitialSnapshotMode initialSnapshot) -> BroadcastAddressWatcherToken
+                                                const InitialSnapshotMode initialSnapshot)
+    -> BroadcastAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
         for (auto& [index, tracker] : m_trackers) {
@@ -296,20 +297,20 @@ void NetworkMonitor::receiveAndProcess()
     }
 }
 
-void NetworkMonitor::updateStats(ssize_t receiveResult)
+void NetworkMonitor::updateStats(const ssize_t receiveResult)
 {
     m_stats.packetsReceived++;
     m_stats.bytesReceived += receiveResult;
 }
 
-void NetworkMonitor::dumpPacket(ssize_t receiveResult)
+void NetworkMonitor::dumpPacket(const ssize_t receiveResult) const
 {
     std::ignore = fflush(stderr);
     std::ignore = fflush(stdout);
     mnl_nlmsg_fprintf(stdout, m_receiveBuffer.data(), receiveResult, 0);
 }
 
-auto NetworkMonitor::handleCallbackResult(int callbackResult) -> bool
+auto NetworkMonitor::handleCallbackResult(const int callbackResult) -> bool
 {
     if (callbackResult == MNL_CB_ERROR) {
         if (errno == EPROTO) {
@@ -351,7 +352,7 @@ auto NetworkMonitor::handleCallbackResult(int callbackResult) -> bool
     return false;
 }
 
-void NetworkMonitor::sendDumpRequest(uint16_t msgType)
+void NetworkMonitor::sendDumpRequest(const uint16_t msgType)
 {
     nlmsghdr* nlh = mnl_nlmsg_put_header(m_sendBuffer.data());
     nlh->nlmsg_type = msgType;
@@ -360,7 +361,7 @@ void NetworkMonitor::sendDumpRequest(uint16_t msgType)
     auto* gen = static_cast<rtgenmsg*>(mnl_nlmsg_put_extra_header(nlh, sizeof(struct rtgenmsg)));
     gen->rtgen_family = AF_UNSPEC;
     mnl_attr_put_u32(nlh, IFLA_EXT_MASK, RTEXT_FILTER_SKIP_STATS);
-    auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
+    const auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0) {
         pfatal("mnl_socket_sendto");
     }
@@ -411,7 +412,7 @@ auto NetworkMonitor::mnlMessageCallback(const nlmsghdr* n) -> int
     return MNL_CB_OK;
 }
 
-auto NetworkMonitor::ensureNameCurrent(uint32_t ifIndex, const std::optional<std::string>& name)
+auto NetworkMonitor::ensureNameCurrent(const uint32_t ifIndex, const std::optional<std::string>& name)
     -> NetworkInterfaceStatusTracker&
 {
     const auto before = m_trackers.size();
@@ -453,7 +454,7 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
     }
 
     auto& cacheEntry = ensureNameCurrent(ifi->ifi_index, itfName);
-    NetworkInterfaceStatusTracker::LinkFlags linkFlags(ifi->ifi_flags);
+    const NetworkInterfaceStatusTracker::LinkFlags linkFlags(ifi->ifi_flags);
     cacheEntry.updateLinkFlags(linkFlags);
 
     if (const auto operationalStateOpt = attributes.getU8(IFLA_OPERSTATE); operationalStateOpt.has_value()) {
@@ -478,7 +479,7 @@ void NetworkMonitor::parseAddressMessage(const nlmsghdr* nlhdr, const ifaddrmsg*
 {
     spdlog::trace("Parsing address message for interface index {}", ifa->ifa_index);
     m_stats.addressMessagesSeen++;
-    if (m_trackers.find(ifa->ifa_index) == m_trackers.cend()) {
+    if (!m_trackers.contains(ifa->ifa_index)) {
         m_stats.msgsDiscarded++;
         return;
     }
@@ -550,13 +551,13 @@ void NetworkMonitor::parseRouteMessage(const nlmsghdr* nlhdr, const rtmsg* rtm)
     if (nlhdr->nlmsg_type == RTM_DELROUTE) {
         if (ifIndexOpt.has_value()) {
             if ((rtm->rtm_flags & RTNH_F_LINKDOWN) != 0U) {
-                if (auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
+                if (const auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
                     itr->second.clearGatewayAddress(GatewayClearReason::LinkDown);
                 }
                 return;
             }
             if (gatewayV4Opt.has_value()) {
-                if (auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
+                if (const auto itr = m_trackers.find(ifIndexOpt.value()); itr != m_trackers.end()) {
                     itr->second.clearGatewayAddress(GatewayClearReason::RouteDeleted);
                 }
             }
@@ -593,7 +594,7 @@ void NetworkMonitor::printStatsForNerdsIfEnabled()
     spdlog::info("          {} route messages", m_stats.routeMessagesSeen);
 
     spdlog::info("{:=^48}", "Interface details in cache");
-    for (const auto& [index, tracker] : m_trackers) {
+    for (const auto& [_, tracker] : m_trackers) {
         spdlog::info(tracker);
         tracker.logNerdstats();
     }

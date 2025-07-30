@@ -1,14 +1,11 @@
 #include <algorithm>
 #include <ostream>
-#include <sstream>
 #include <string_view>
 
-#include <fmt/format.h>
 #include <ip/Address.hpp>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <network/Address.hpp>
 #include <spdlog/spdlog.h>
-#include <sys/types.h>
 
 namespace monkas::monitor
 {
@@ -32,7 +29,7 @@ auto NetworkInterfaceStatusTracker::hasName() const -> bool
     return !m_name.empty();
 }
 
-void NetworkInterfaceStatusTracker::touch(DirtyFlag flag)
+void NetworkInterfaceStatusTracker::touch(const DirtyFlag flag)
 {
     if (!m_dirtyFlags.test(flag)) {
         m_lastChanged = std::chrono::steady_clock::now();
@@ -119,7 +116,7 @@ void NetworkInterfaceStatusTracker::setGatewayAddress(const ip::Address& gateway
     }
 }
 
-void NetworkInterfaceStatusTracker::clearGatewayAddress(GatewayClearReason r)
+void NetworkInterfaceStatusTracker::clearGatewayAddress(const GatewayClearReason r)
 {
     if (m_gateway) {
         m_gateway = ip::Address();
@@ -193,7 +190,7 @@ auto NetworkInterfaceStatusTracker::isDirty() const -> bool
     return m_dirtyFlags.any();
 }
 
-auto NetworkInterfaceStatusTracker::isDirty(DirtyFlag flag) const -> bool
+auto NetworkInterfaceStatusTracker::isDirty(const DirtyFlag flag) const -> bool
 {
     m_nerdstats.dirtyFlagChecks++;
     return m_dirtyFlags.test(flag);
@@ -204,7 +201,7 @@ auto NetworkInterfaceStatusTracker::dirtyFlags() const -> DirtyFlags
     return m_dirtyFlags;
 }
 
-void NetworkInterfaceStatusTracker::clearFlag(DirtyFlag flag)
+void NetworkInterfaceStatusTracker::clearFlag(const DirtyFlag flag)
 {
     if (m_dirtyFlags.test(flag)) {
         m_dirtyFlags.reset(flag);

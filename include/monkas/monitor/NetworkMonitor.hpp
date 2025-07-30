@@ -1,7 +1,6 @@
 #pragma once
 
 #include <chrono>
-#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
@@ -132,7 +131,7 @@ class NetworkMonitor
   private:
     void receiveAndProcess();
     void updateStats(ssize_t receiveResult);
-    void dumpPacket(ssize_t receiveResult);
+    void dumpPacket(ssize_t receiveResult) const;
     auto handleCallbackResult(int callbackResult) -> bool;
 
     /* @note: only one such request can be in progress until the reply is received */
@@ -148,7 +147,7 @@ class NetworkMonitor
     void printStatsForNerdsIfEnabled();
 
     auto mnlMessageCallback(const nlmsghdr* n) -> int;
-    static auto dispatchMnMessageCallbackToSelf(const struct nlmsghdr* n, void* self) -> int;
+    static auto dispatchMnMessageCallbackToSelf(const nlmsghdr* n, void* self) -> int;
 
     [[nodiscard]] auto isEnumerating() const -> bool { return m_cacheState != CacheState::WaitingForChanges; }
 

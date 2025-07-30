@@ -17,8 +17,8 @@ TEST_CASE("Watchable tests")
     Watchable<int> watchable;
     int lastA = 0;
     int lastB = 0;
-    auto assignToLastA = [&lastA](int x) { lastA = x; };
-    auto assignToLastB = [&lastB](int x) { lastB = x; };
+    auto assignToLastA = [&lastA](const int x) { lastA = x; };
+    auto assignToLastB = [&lastB](const int x) { lastB = x; };
     SUBCASE("registering watcher and calling notify calls watcher")
     {
         std::ignore = watchable.addWatcher(assignToLastA);
@@ -53,7 +53,7 @@ TEST_CASE("Watchable tests")
     {
         auto u = std::make_shared<Watchable<int>::Token>();
         std::ignore = watchable.addWatcher(
-            [&watchable, &lastA, u](int x)
+            [&watchable, &lastA, u](const int x)
             {
                 if (lastA == 0) {
                     watchable.removeWatcher(*u);
