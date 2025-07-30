@@ -165,7 +165,8 @@ void NetworkMonitor::removeLinkFlagsWatcher(const LinkFlagsWatcherToken& token)
 }
 
 auto NetworkMonitor::addOperationalStateWatcher(const OperationalStateWatcher& watcher,
-                                                const InitialSnapshotMode initialSnapshot) -> OperationalStateWatcherToken
+                                                const InitialSnapshotMode initialSnapshot)
+    -> OperationalStateWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
         for (auto& [index, tracker] : m_trackers) {
@@ -182,8 +183,7 @@ void NetworkMonitor::removeOperationalStateWatcher(const OperationalStateWatcher
 }
 
 auto NetworkMonitor::addNetworkAddressWatcher(const NetworkAddressWatcher& watcher,
-                                              const InitialSnapshotMode initialSnapshot)
-    -> NetworkAddressWatcherToken
+                                              const InitialSnapshotMode initialSnapshot) -> NetworkAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
         for (auto& [index, tracker] : m_trackers) {
@@ -200,8 +200,7 @@ void NetworkMonitor::removeNetworkAddressWatcher(const NetworkAddressWatcherToke
 }
 
 auto NetworkMonitor::addGatewayAddressWatcher(const GatewayAddressWatcher& watcher,
-                                              const InitialSnapshotMode initialSnapshot)
-    -> GatewayAddressWatcherToken
+                                              const InitialSnapshotMode initialSnapshot) -> GatewayAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
         for (auto& [index, tracker] : m_trackers) {
@@ -235,7 +234,8 @@ void NetworkMonitor::removeMacAddressWatcher(const MacAddressWatcherToken& token
 }
 
 auto NetworkMonitor::addBroadcastAddressWatcher(const BroadcastAddressWatcher& watcher,
-                                                const InitialSnapshotMode initialSnapshot) -> BroadcastAddressWatcherToken
+                                                const InitialSnapshotMode initialSnapshot)
+    -> BroadcastAddressWatcherToken
 {
     if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
         for (auto& [index, tracker] : m_trackers) {

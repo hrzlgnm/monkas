@@ -142,7 +142,6 @@ auto Address::isBroadcast() const -> bool
     return std::ranges::all_of(std::as_const(bytes), [](const uint8_t byte) { return byte == IPV4_BROADCAST_BYTE; });
 }
 
-
 auto Address::family() const -> Family
 {
     return std::visit(
