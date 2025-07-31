@@ -63,6 +63,6 @@ auto operator<<(std::ostream& o, const Address& a) -> std::ostream&;
 }  // namespace monkas::ip
 
 template<>
-struct fmt::formatter<monkas::ip::Address> : fmt::ostream_formatter
+struct fmt::formatter<monkas::ip::Address> : ostream_formatter
 {
 };

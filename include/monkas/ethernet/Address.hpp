@@ -35,6 +35,6 @@ auto operator<<(std::ostream& o, const Address& a) -> std::ostream&;
 }  // namespace monkas::ethernet
 
 template<>
-struct fmt::formatter<monkas::ethernet::Address> : fmt::ostream_formatter
+struct fmt::formatter<monkas::ethernet::Address> : ostream_formatter
 {
 };

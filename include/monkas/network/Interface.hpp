@@ -35,6 +35,6 @@ auto operator<<(std::ostream& os, const Interface& iface) -> std::ostream&;
 }  // namespace monkas::network
 
 template<>
-struct fmt::formatter<monkas::network::Interface> : fmt::ostream_formatter
+struct fmt::formatter<monkas::network::Interface> : ostream_formatter
 {
 };

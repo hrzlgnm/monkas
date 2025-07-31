@@ -166,36 +166,36 @@ auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std:
 }  // namespace monkas::monitor
 
 template<>
-struct fmt::formatter<monkas::monitor::NetworkInterfaceStatusTracker> : fmt::ostream_formatter
+struct fmt::formatter<monkas::monitor::NetworkInterfaceStatusTracker> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::monitor::OperationalState> : fmt::ostream_formatter
+struct fmt::formatter<monkas::monitor::OperationalState> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::monitor::GatewayClearReason> : fmt::ostream_formatter
+struct fmt::formatter<monkas::monitor::GatewayClearReason> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::monitor::DirtyFlag> : fmt::ostream_formatter
+struct fmt::formatter<monkas::monitor::DirtyFlag> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::monitor::DirtyFlags> : fmt::ostream_formatter
+struct fmt::formatter<monkas::monitor::DirtyFlags> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::monitor::LinkFlag> : fmt::ostream_formatter
+struct fmt::formatter<monkas::monitor::LinkFlag> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::monitor::NetworkInterfaceStatusTracker::LinkFlags> : fmt::ostream_formatter
+struct fmt::formatter<monkas::monitor::NetworkInterfaceStatusTracker::LinkFlags> : ostream_formatter
 {
 };
