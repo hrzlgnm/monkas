@@ -92,21 +92,21 @@ auto operator<<(std::ostream& o, AddressAssignmentProtocol a) -> std::ostream&;
 }  // namespace monkas::network
 
 template<>
-struct fmt::formatter<monkas::network::Address> : fmt::ostream_formatter
+struct fmt::formatter<monkas::network::Address> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::network::AddressFlag> : fmt::ostream_formatter
+struct fmt::formatter<monkas::network::AddressFlag> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::network::AddressFlags> : fmt::ostream_formatter
+struct fmt::formatter<monkas::network::AddressFlags> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::network::AddressAssignmentProtocol> : fmt::ostream_formatter
+struct fmt::formatter<monkas::network::AddressAssignmentProtocol> : ostream_formatter
 {
 };
