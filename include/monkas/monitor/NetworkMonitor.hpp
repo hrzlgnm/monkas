@@ -67,29 +67,6 @@ struct Subscriber
 };
 
 using SubscriberPtr = std::shared_ptr<Subscriber>;
-using SubscriberWeakPtr = std::weak_ptr<Subscriber>;
-
-struct WeakPtrHash
-{
-    template<typename T>
-    auto operator()(const std::weak_ptr<T>& wp) const noexcept -> std::size_t
-    {
-        if (auto sp = wp.lock()) {
-            return std::hash<T*>()(sp.get());
-        }
-        // Hash for expired pointers — could be constant or some sentinel
-        return 0;
-    }
-};
-
-struct WeakPtrEqual
-{
-    template<typename T>
-    auto operator()(const std::weak_ptr<T>& a, const std::weak_ptr<T>& b) const noexcept -> bool
-    {
-        return !a.owner_before(b) && !b.owner_before(a);
-    }
-};
 
 class NetworkMonitor
 {
@@ -97,7 +74,7 @@ class NetworkMonitor
     explicit NetworkMonitor(const RuntimeFlags& options);
     auto enumerateInterfaces() -> Interfaces;
     void subscribe(const Interfaces& interfaces, const SubscriberPtr& subscriber);
-
+    void unsubscribe(const SubscriberPtr& subscriber);
     void run();
     void stop();
 
@@ -171,6 +148,6 @@ class NetworkMonitor
     } m_stats;
 
     RuntimeFlags m_runtimeOptions;
-    std::unordered_map<SubscriberWeakPtr, Interfaces, WeakPtrHash, WeakPtrEqual> m_subscribers;
+    std::unordered_map<SubscriberPtr, Interfaces> m_subscribers;
 };
 }  // namespace monkas::monitor

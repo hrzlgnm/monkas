@@ -104,6 +104,21 @@ void NetworkMonitor::subscribe(const Interfaces& interfaces, const SubscriberPtr
     notifyChanges(subscriber.get(), interfaces);
 }
 
+void NetworkMonitor::unsubscribe(const SubscriberPtr& subscriber)
+{
+    if (subscriber == nullptr) {
+        spdlog::warn("Cannot unsubscribe null subscriber");
+        return;
+    }
+    const auto it = m_subscribers.find(subscriber);
+    if (it != m_subscribers.end()) {
+        spdlog::debug("Unsubscribed {} from {} interfaces", static_cast<void*>(subscriber.get()), it->second.size());
+        m_subscribers.erase(it);
+    } else {
+        spdlog::warn("Subscriber {} not found", static_cast<void*>(subscriber.get()));
+    }
+}
+
 /**
  * @brief Starts monitoring network interfaces and processes netlink messages until stopped.
  *
@@ -488,8 +503,8 @@ void NetworkMonitor::notifyChanges()
     for (auto& [index, tracker] : m_trackers) {
         spdlog::trace("checking {} for changes", tracker);
         const network::Interface intf {index, tracker.name()};
-        for (const auto& [subscriber, interfaces] : m_subscribers) {
-            if (auto sub = subscriber.lock(); interfaces.contains(intf) && sub) {
+        for (const auto& [sub, intfs] : m_subscribers) {
+            if (intfs.contains(intf)) {
                 if (tracker.isDirty(DirtyFlag::NameChanged)) {
                     sub->onInterfaceNameChanged(intf);
                 }
