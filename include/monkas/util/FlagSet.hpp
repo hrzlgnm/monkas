@@ -40,6 +40,8 @@ class FlagSet
 
     auto reset(EnumType flag) -> void { m_flags.reset(std::to_underlying(flag)); }
 
+    auto reset() -> void { m_flags.reset(); }
+
     [[nodiscard]] auto test(EnumType flag) const -> bool { return m_flags.test(std::to_underlying(flag)); }
 
     [[nodiscard]] auto toString() const -> std::string

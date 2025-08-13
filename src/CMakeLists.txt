@@ -12,7 +12,6 @@ set(PUBLIC_HEADERS
     ${PUBLIC_INCLUDE_DIR}/network/Address.hpp
     ${PUBLIC_INCLUDE_DIR}/network/Interface.hpp
     ${PUBLIC_INCLUDE_DIR}/util/FlagSet.hpp
-    ${PUBLIC_INCLUDE_DIR}/watchable/Watchable.hpp
 )
 
 target_compile_definitions(${TARGET_NAME} PUBLIC SPDLOG_FMT_EXTERNAL)
@@ -53,8 +52,8 @@ if(BUILD_TESTS)
             ethernet/Address.test.cpp
             ip/Address.test.cpp
             network/Address.test.cpp
+            network/Interface.test.cpp
             monitor/NetworkInterfaceStatusTracker.test.cpp
-            watchable/Watchable.test.cpp
     )
     target_link_libraries(
         ${TARGET_NAME}_tests

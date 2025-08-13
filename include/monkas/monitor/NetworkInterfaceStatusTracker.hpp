@@ -113,6 +113,7 @@ class NetworkInterfaceStatusTracker
     [[nodiscard]] auto dirtyFlags() const -> DirtyFlags;
 
     void clearFlag(DirtyFlag flag);
+    void clearDirtyFlags();
     void logNerdstats() const;
 
   private:

@@ -71,44 +71,61 @@ auto main(int argc, char* argv[]) -> int
         options.set(RuntimeFlag::IncludeNonIeee802);
     }
     NetworkMonitor mon(options);
-    mon.enumerateInterfaces();
-    std::ignore = mon.addInterfacesWatcher([](const Interfaces& interfaces)
-                                           { spdlog::info("Interfaces changed to: {}", fmt::join(interfaces, ", ")); },
-                                           InitialSnapshotMode::InitialSnapshot);
-    std::ignore = mon.addLinkFlagsWatcher([](const Interface& iface, const LinkFlags& flags)
-                                          { spdlog::info("{} changed link flags to {}", iface, flags); },
-                                          InitialSnapshotMode::InitialSnapshot);
-    std::ignore = mon.addOperationalStateWatcher([](const Interface& iface, OperationalState state)
-                                                 { spdlog::info("{} changed operational state to {}", iface, state); },
-                                                 InitialSnapshotMode::InitialSnapshot);
-    std::ignore =
-        mon.addNetworkAddressWatcher([](const Interface& iface, const Addresses& addresses)
-                                     { spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", ")); },
-                                     InitialSnapshotMode::InitialSnapshot);
-    std::ignore = mon.addGatewayAddressWatcher(
-        [](const Interface& iface, const std::optional<ip::Address>& gateway)
+
+    const auto intfs = mon.enumerateInterfaces();
+
+    spdlog::info("Found {} interfaces: {}", intfs.size(), fmt::join(intfs, ", "));
+
+    struct Sub final : monitor::Subscriber
+    {
+        void onInterfaceAdded(const Interface& iface) override { spdlog::info("Interface added: {}", iface); }
+
+        void onInterfaceRemoved(const Interface& iface) override { spdlog::info("Interface removed: {}", iface); }
+
+        void onInterfaceNameChanged(const Interface& iface) override
+        {
+            spdlog::info("{} changed name to {}", iface, iface.name());
+        }
+
+        void onLinkFlagsChanged(const Interface& iface, const LinkFlags& flags) override
+        {
+            spdlog::info("{} changed link flags to {}", iface, flags);
+        }
+
+        void onOperationalStateChanged(const Interface& iface, OperationalState state) override
+        {
+            spdlog::info("{} changed operational state to {}", iface, state);
+        }
+
+        void onNetworkAddressesChanged(const Interface& iface, const Addresses& addresses) override
+        {
+            spdlog::info("{} changed addresses to {}", iface, fmt::join(addresses, ", "));
+        }
+
+        void onGatewayAddressChanged(const Interface& iface, const std::optional<ip::Address>& gateway) override
         {
             spdlog::info("{} changed gateway address to {}",
                          iface,
                          gateway.transform([](const auto& a) { return a.toString(); }).value_or("None"));
-        },
-        InitialSnapshotMode::InitialSnapshot);
-    std::ignore = mon.addMacAddressWatcher([](const Interface& iface, const ethernet::Address& mac)
-                                           { spdlog::info("{} changed MAC address to {}", iface, mac); },
-                                           InitialSnapshotMode::InitialSnapshot);
-    std::ignore =
-        mon.addBroadcastAddressWatcher([](const Interface& iface, const ethernet::Address& broadcast)
-                                       { spdlog::info("{} changed broadcast address to {}", iface, broadcast); },
-                                       InitialSnapshotMode::InitialSnapshot);
-    std::ignore = mon.addEnumerationDoneWatcher(
-        [&mon]
+        }
+
+        void onMacAddressChanged(const Interface& iface, const ethernet::Address& mac) override
         {
-            spdlog::info("Enumeration done");
-            if (FLAGS_exit_after_enumeration) {
-                spdlog::info("Exiting after enumeration is done");
-                mon.stop();
-            }
-        });
+            spdlog::info("{} changed MAC address to {}", iface, mac);
+        }
+
+        void onBroadcastAddressChanged(const Interface& iface, const ethernet::Address& broadcast) override
+        {
+            spdlog::info("{} changed broadcast address to {}", iface, broadcast);
+        }
+    };
+
+    auto sub = std::make_shared<Sub>();
+    mon.subscribe(intfs, sub);
+    if (FLAGS_exit_after_enumeration) {
+        spdlog::info("Exiting after enumeration is done");
+        mon.stop();
+    }
 
     mon.run();
     return EXIT_SUCCESS;

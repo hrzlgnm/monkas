@@ -212,6 +212,13 @@ void NetworkInterfaceStatusTracker::clearFlag(const DirtyFlag flag)
     }
 }
 
+void NetworkInterfaceStatusTracker::clearDirtyFlags()
+{
+    m_nerdstats.dirtyFlagClears += m_dirtyFlags.count();
+    m_dirtyFlags.reset();
+    logTrace("all dirty flags", this, "cleared");
+}
+
 void NetworkInterfaceStatusTracker::logNerdstats() const
 {
     spdlog::info("{:-^38}", m_name);
