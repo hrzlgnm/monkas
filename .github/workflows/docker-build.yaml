@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - ".github/docker/**/Dockerfile"
+      - ".github/workflows/docker-build.yaml"
     branches:
       - main
   pull_request:
