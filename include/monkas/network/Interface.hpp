@@ -2,7 +2,6 @@
 
 #include <iosfwd>
 #include <string>
-#include <tuple>
 
 #include <fmt/ostream.h>
 
@@ -20,7 +19,7 @@ class Interface
 
     [[nodiscard]] constexpr auto operator<=>(const Interface& other) const noexcept -> std::strong_ordering
     {
-        return std::tie(m_index, m_name) <=> std::tie(other.m_index, other.m_name);
+        return m_index <=> other.m_index;
     }
 
     [[nodiscard]] constexpr auto operator==(const Interface& other) const -> bool = default;
