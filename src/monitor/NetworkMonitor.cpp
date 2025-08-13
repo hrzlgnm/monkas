@@ -16,6 +16,7 @@
 #include <spdlog/spdlog.h>
 
 #include "network/Address.hpp"
+#include "network/Interface.hpp"
 
 namespace monkas::monitor
 {
@@ -79,23 +80,28 @@ NetworkMonitor::NetworkMonitor(const RuntimeFlags& options)
     }
 }
 
-/**
- * @brief Initiates enumeration of network interfaces and waits for completion.
- *
- * Sends a netlink dump request to retrieve all network interfaces and processes messages until enumeration is complete.
- * If enumeration has already been performed, the function returns immediately.
- */
-void NetworkMonitor::enumerateInterfaces()
+auto NetworkMonitor::enumerateInterfaces() -> Interfaces
 {
     if (m_cacheState == CacheState::WaitingForChanges) {
-        spdlog::trace("Already enumerated interfaces, skipping");
-        return;
+        return interfacesFromCache();
     }
     spdlog::debug("Requesting RTM_GETLINK");
     sendDumpRequest(RTM_GETLINK);
     while (m_cacheState != CacheState::WaitingForChanges) {
         receiveAndProcess();
     }
+    return interfacesFromCache();
+}
+
+void NetworkMonitor::subscribe(const Interfaces& interfaces, const SubscriberPtr& subscriber)
+{
+    if (interfaces.empty()) {
+        spdlog::warn("Cannot subscribe to empty interface list");
+        return;
+    }
+    m_subscribers[subscriber] = interfaces;
+    spdlog::debug("Subscribed {} to {} interfaces", static_cast<void*>(subscriber.get()), interfaces.size());
+    notifyChanges(subscriber.get(), interfaces);
 }
 
 /**
@@ -133,139 +139,6 @@ void NetworkMonitor::stop()
     m_running = false;
 }
 
-auto NetworkMonitor::addInterfacesWatcher(const InterfacesWatcher& watcher, const InitialSnapshotMode initialSnapshot)
-    -> InterfacesWatcherToken
-{
-    if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
-        watcher(getInterfacesSnapshot());
-    }
-    return m_interfacesNotifier.addWatcher(watcher);
-}
-
-void NetworkMonitor::removeInterfacesWatcher(const InterfacesWatcherToken& token)
-{
-    m_interfacesNotifier.removeWatcher(token);
-}
-
-auto NetworkMonitor::addLinkFlagsWatcher(const LinkFlagsWatcher& watcher, const InitialSnapshotMode initialSnapshot)
-    -> LinkFlagsWatcherToken
-{
-    if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
-        for (auto& [index, tracker] : m_trackers) {
-            watcher(network::Interface {index, tracker.name()}, tracker.linkFlags());
-            tracker.clearFlag(DirtyFlag::LinkFlagsChanged);
-        }
-    }
-    return m_linkFlagsNotifier.addWatcher(watcher);
-}
-
-void NetworkMonitor::removeLinkFlagsWatcher(const LinkFlagsWatcherToken& token)
-{
-    m_linkFlagsNotifier.removeWatcher(token);
-}
-
-auto NetworkMonitor::addOperationalStateWatcher(const OperationalStateWatcher& watcher,
-                                                const InitialSnapshotMode initialSnapshot)
-    -> OperationalStateWatcherToken
-{
-    if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
-        for (auto& [index, tracker] : m_trackers) {
-            watcher(network::Interface {index, tracker.name()}, tracker.operationalState());
-            tracker.clearFlag(DirtyFlag::OperationalStateChanged);
-        }
-    }
-    return m_operationalStateNotifier.addWatcher(watcher);
-}
-
-void NetworkMonitor::removeOperationalStateWatcher(const OperationalStateWatcherToken& token)
-{
-    m_operationalStateNotifier.removeWatcher(token);
-}
-
-auto NetworkMonitor::addNetworkAddressWatcher(const NetworkAddressWatcher& watcher,
-                                              const InitialSnapshotMode initialSnapshot) -> NetworkAddressWatcherToken
-{
-    if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
-        for (auto& [index, tracker] : m_trackers) {
-            watcher(network::Interface {index, tracker.name()}, tracker.networkAddresses());
-            tracker.clearFlag(DirtyFlag::NetworkAddressesChanged);
-        }
-    }
-    return m_networkAddressNotifier.addWatcher(watcher);
-}
-
-void NetworkMonitor::removeNetworkAddressWatcher(const NetworkAddressWatcherToken& token)
-{
-    m_networkAddressNotifier.removeWatcher(token);
-}
-
-auto NetworkMonitor::addGatewayAddressWatcher(const GatewayAddressWatcher& watcher,
-                                              const InitialSnapshotMode initialSnapshot) -> GatewayAddressWatcherToken
-{
-    if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
-        for (auto& [index, tracker] : m_trackers) {
-            watcher(network::Interface {index, tracker.name()}, tracker.gatewayAddress());
-            tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
-        }
-    }
-    return m_gatewayAddressNotifier.addWatcher(watcher);
-}
-
-void NetworkMonitor::removeGatewayAddressWatcher(const GatewayAddressWatcherToken& token)
-{
-    m_gatewayAddressNotifier.removeWatcher(token);
-}
-
-auto NetworkMonitor::addMacAddressWatcher(const MacAddressWatcher& watcher, const InitialSnapshotMode initialSnapshot)
-    -> MacAddressWatcherToken
-{
-    if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
-        for (auto& [index, tracker] : m_trackers) {
-            watcher(network::Interface {index, tracker.name()}, tracker.macAddress());
-            tracker.clearFlag(DirtyFlag::MacAddressChanged);
-        }
-    }
-    return m_macAddressNotifier.addWatcher(watcher);
-}
-
-void NetworkMonitor::removeMacAddressWatcher(const MacAddressWatcherToken& token)
-{
-    m_macAddressNotifier.removeWatcher(token);
-}
-
-auto NetworkMonitor::addBroadcastAddressWatcher(const BroadcastAddressWatcher& watcher,
-                                                const InitialSnapshotMode initialSnapshot)
-    -> BroadcastAddressWatcherToken
-{
-    if (initialSnapshot == InitialSnapshotMode::InitialSnapshot) {
-        for (auto& [index, tracker] : m_trackers) {
-            watcher(network::Interface {index, tracker.name()}, tracker.broadcastAddress());
-            tracker.clearFlag(DirtyFlag::BroadcastAddressChanged);
-        }
-    }
-    return m_broadcastAddressNotifier.addWatcher(watcher);
-}
-
-void NetworkMonitor::removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken& token)
-{
-    m_broadcastAddressNotifier.removeWatcher(token);
-}
-
-auto NetworkMonitor::addEnumerationDoneWatcher(const EnumerationDoneWatcher& watcher)
-    -> std::optional<EnumerationDoneWatcherToken>
-{
-    if (m_cacheState == CacheState::WaitingForChanges) {
-        watcher();
-        return std::nullopt;  // already done with enumeration, no need to notify later
-    }
-    return m_enumerationDoneNotifier.addWatcher(watcher);
-}
-
-void NetworkMonitor::removeEnumerationDoneWatcher(const EnumerationDoneWatcherToken& token)
-{
-    m_enumerationDoneNotifier.removeWatcher(token);
-}
-
 void NetworkMonitor::receiveAndProcess()
 {
     if (!m_mnlSocket) {
@@ -295,6 +168,15 @@ void NetworkMonitor::receiveAndProcess()
             receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), m_receiveBuffer.data(), m_receiveBuffer.size());
         }
     }
+}
+
+auto NetworkMonitor::interfacesFromCache() -> Interfaces
+{
+    Interfaces intfs;
+    for (const auto& [index, tracker] : m_trackers) {
+        intfs.emplace(index, tracker.name());
+    }
+    return intfs;
 }
 
 void NetworkMonitor::updateStats(const ssize_t receiveResult)
@@ -336,9 +218,6 @@ auto NetworkMonitor::handleCallbackResult(const int callbackResult) -> bool
             m_cacheState = CacheState::WaitingForChanges;
             spdlog::debug("Done with enumeration of initial information");
             spdlog::debug("Tracking changes for {} interfaces", m_trackers.size());
-            if (m_enumerationDoneNotifier.hasWatchers()) {
-                m_enumerationDoneNotifier.notify();
-            }
             printStatsForNerdsIfEnabled();
             return true;
         } else {
@@ -415,16 +294,11 @@ auto NetworkMonitor::mnlMessageCallback(const nlmsghdr* n) -> int
 auto NetworkMonitor::ensureNameCurrent(const uint32_t ifIndex, const std::optional<std::string>& name)
     -> NetworkInterfaceStatusTracker&
 {
-    const auto before = m_trackers.size();
     auto& cacheEntry = m_trackers[ifIndex];
 
     // Sometimes interfaces are renamed, account for that
     if (name.has_value()) {
         cacheEntry.setName(name.value());
-    }
-    if (before != m_trackers.size() || cacheEntry.isDirty(DirtyFlag::NameChanged)) {
-        notifyInterfacesSnapshot();
-        cacheEntry.clearFlag(DirtyFlag::NameChanged);
     }
     return cacheEntry;
 }
@@ -448,8 +322,8 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK) {
         spdlog::trace("removing interface with index {}", ifi->ifi_index);
+        // TODO: add interface subscriber notification
         m_trackers.erase(ifi->ifi_index);
-        notifyInterfacesSnapshot();
         return;
     }
 
@@ -608,51 +482,56 @@ auto NetworkMonitor::dispatchMnMessageCallbackToSelf(const nlmsghdr* n, void* se
 
 void NetworkMonitor::notifyChanges()
 {
+    if (m_subscribers.empty()) {
+        return;  // no subscribers, nothing to notify
+    }
     for (auto& [index, tracker] : m_trackers) {
         spdlog::trace("checking {} for changes", tracker);
-        if (m_operationalStateNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::OperationalStateChanged)) {
-            m_operationalStateNotifier.notify(network::Interface {index, tracker.name()}, tracker.operationalState());
-            tracker.clearFlag(DirtyFlag::OperationalStateChanged);
+        const network::Interface intf {index, tracker.name()};
+        for (const auto& [subscriber, interfaces] : m_subscribers) {
+            if (auto sub = subscriber.lock(); interfaces.contains(intf) && sub) {
+                if (tracker.isDirty(DirtyFlag::NameChanged)) {
+                    sub->onInterfaceNameChanged(intf);
+                }
+                if (tracker.isDirty(DirtyFlag::OperationalStateChanged)) {
+                    sub->onOperationalStateChanged(intf, tracker.operationalState());
+                }
+                if (tracker.isDirty(DirtyFlag::NetworkAddressesChanged)) {
+                    sub->onNetworkAddressesChanged(intf, tracker.networkAddresses());
+                }
+                if (tracker.isDirty(DirtyFlag::GatewayAddressChanged)) {
+                    sub->onGatewayAddressChanged(intf, tracker.gatewayAddress());
+                }
+                if (tracker.isDirty(DirtyFlag::MacAddressChanged)) {
+                    sub->onMacAddressChanged(intf, tracker.macAddress());
+                }
+                if (tracker.isDirty(DirtyFlag::BroadcastAddressChanged)) {
+                    sub->onBroadcastAddressChanged(intf, tracker.broadcastAddress());
+                }
+                if (tracker.isDirty(DirtyFlag::LinkFlagsChanged)) {
+                    sub->onLinkFlagsChanged(intf, tracker.linkFlags());
+                }
+            }
         }
-        if (m_networkAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::NetworkAddressesChanged)) {
-            m_networkAddressNotifier.notify(network::Interface {index, tracker.name()}, tracker.networkAddresses());
-            tracker.clearFlag(DirtyFlag::NetworkAddressesChanged);
-        }
-        if (m_gatewayAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::GatewayAddressChanged)) {
-            m_gatewayAddressNotifier.notify(network::Interface {index, tracker.name()}, tracker.gatewayAddress());
-            tracker.clearFlag(DirtyFlag::GatewayAddressChanged);
-        }
-        if (m_macAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::MacAddressChanged)) {
-            m_macAddressNotifier.notify(network::Interface {index, tracker.name()}, tracker.macAddress());
-            tracker.clearFlag(DirtyFlag::MacAddressChanged);
-        }
-        if (m_broadcastAddressNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::BroadcastAddressChanged)) {
-            m_broadcastAddressNotifier.notify(network::Interface {index, tracker.name()}, tracker.broadcastAddress());
-            tracker.clearFlag(DirtyFlag::BroadcastAddressChanged);
-        }
-        if (m_linkFlagsNotifier.hasWatchers() && tracker.isDirty(DirtyFlag::LinkFlagsChanged)) {
-            m_linkFlagsNotifier.notify(network::Interface {index, tracker.name()}, tracker.linkFlags());
-            tracker.clearFlag(DirtyFlag::LinkFlagsChanged);
-        }
+        tracker.clearDirtyFlags();
     }
 }
 
-void NetworkMonitor::notifyInterfacesSnapshot()
+void NetworkMonitor::notifyChanges(Subscriber* subscriber, const Interfaces& interfaces)
 {
-    if (m_interfacesNotifier.hasWatchers()) {
-        m_interfacesNotifier.notify(getInterfacesSnapshot());
+    if (subscriber == nullptr || interfaces.empty()) {
+        return;  // no subscriber or no interfaces to notify
     }
-}
-
-auto NetworkMonitor::getInterfacesSnapshot() const -> Interfaces
-{
-    Interfaces intfs;
-    for (const auto& [idx, tracker] : m_trackers) {
-        if (tracker.hasName()) {
-            intfs.emplace(idx, tracker.name());
+    for (const auto& [index, tracker] : m_trackers) {
+        const auto intf = network::Interface {index, tracker.name()};
+        if (interfaces.contains(intf)) {
+            subscriber->onOperationalStateChanged(intf, tracker.operationalState());
+            subscriber->onNetworkAddressesChanged(intf, tracker.networkAddresses());
+            subscriber->onGatewayAddressChanged(intf, tracker.gatewayAddress());
+            subscriber->onMacAddressChanged(intf, tracker.macAddress());
+            subscriber->onBroadcastAddressChanged(intf, tracker.broadcastAddress());
+            subscriber->onLinkFlagsChanged(intf, tracker.linkFlags());
         }
     }
-    return intfs;
 }
-
 }  // namespace monkas::monitor

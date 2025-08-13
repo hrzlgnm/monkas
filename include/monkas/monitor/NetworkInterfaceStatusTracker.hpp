@@ -113,6 +113,17 @@ class NetworkInterfaceStatusTracker
     [[nodiscard]] auto dirtyFlags() const -> DirtyFlags;
 
     void clearFlag(DirtyFlag flag);
+    void clearDirtyFlags();
+
+    [[nodiscard]] auto macAddressChanged() const -> bool;
+    [[nodiscard]] auto broadcastAddressChanged() const -> bool;
+    [[nodiscard]] auto gatewayAddressChanged() const -> bool;
+    [[nodiscard]] auto networkAddressesChanged() const -> bool;
+    [[nodiscard]] auto linkFlagsChanged() const -> bool;
+    [[nodiscard]] auto operationalStateChanged() const -> bool;
+    [[nodiscard]] auto nameChanged() const -> bool;
+
+    [[nodiscard]] auto operationalStateString() const -> std::string;
     void logNerdstats() const;
 
   private:

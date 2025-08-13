@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <unordered_map>
 #include <vector>
 
 #include <ip/Address.hpp>
@@ -11,7 +12,6 @@
 #include <network/Interface.hpp>
 #include <sys/types.h>
 #include <util/FlagSet.hpp>
-#include <watchable/Watchable.hpp>
 
 struct mnl_socket;
 struct nlmsghdr;
@@ -21,12 +21,6 @@ struct rtmsg;
 
 namespace monkas::monitor
 {
-
-enum class InitialSnapshotMode : uint8_t
-{
-    NoInitialSnapshot = 0,
-    InitialSnapshot = 1,
-};
 
 enum class RuntimeFlag : uint8_t
 {
@@ -41,95 +35,75 @@ enum class RuntimeFlag : uint8_t
 };
 
 using RuntimeFlags = util::FlagSet<RuntimeFlag>;
-
 using Interfaces = std::set<network::Interface>;
-
-using InterfacesNotifier = Watchable<const Interfaces>;
-using InterfacesWatcher = InterfacesNotifier::Watcher;
-using InterfacesWatcherToken = InterfacesNotifier::Token;
-
 using LinkFlags = NetworkInterfaceStatusTracker::LinkFlags;
-using LinkFlagsNotifier = Watchable<const network::Interface, const LinkFlags>;
-using LinkFlagsWatcher = LinkFlagsNotifier::Watcher;
-using LinkFlagsWatcherToken = LinkFlagsNotifier::Token;
-
 using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
-using OperationalStateNotifier = Watchable<const network::Interface, OperationalState>;
-using OperationalStateWatcher = OperationalStateNotifier::Watcher;
-using OperationalStateWatcherToken = OperationalStateNotifier::Token;
 
-using NetworkAddressNotifier = Watchable<const network::Interface, const Addresses>;
-using NetworkAddressWatcher = NetworkAddressNotifier::Watcher;
-using NetworkAddressWatcherToken = NetworkAddressNotifier::Token;
+struct Subscriber
+{
+    Subscriber() = default;
+    virtual ~Subscriber() = default;
+    Subscriber(const Subscriber&) = delete;
+    Subscriber(Subscriber&&) = delete;
+    auto operator=(const Subscriber&) -> Subscriber& = delete;
+    auto operator=(Subscriber&&) -> Subscriber& = delete;
 
-using GatewayAddressNotifier = Watchable<const network::Interface, std::optional<ip::Address>>;
-using GatewayAddressWatcher = GatewayAddressNotifier::Watcher;
-using GatewayAddressWatcherToken = GatewayAddressNotifier::Token;
+    virtual void onInterfaceNameChanged(const network::Interface& /*unused*/) {}
 
-using MacAddressNotifier = Watchable<network::Interface, const ethernet::Address>;
-using MacAddressWatcher = MacAddressNotifier::Watcher;
-using MacAddressWatcherToken = MacAddressNotifier::Token;
+    virtual void onLinkFlagsChanged(const network::Interface& /*unused*/, const LinkFlags& /*unused*/) {}
 
-using BroadcastAddressNotifier = Watchable<network::Interface, const ethernet::Address>;
-using BroadcastAddressWatcher = BroadcastAddressNotifier::Watcher;
-using BroadcastAddressWatcherToken = BroadcastAddressNotifier::Token;
+    virtual void onOperationalStateChanged(const network::Interface& /*unused*/, OperationalState /*unused*/) {}
 
-using EnumerationDoneNotifier = Watchable<>;
-using EnumerationDoneWatcher = EnumerationDoneNotifier::Watcher;
-using EnumerationDoneWatcherToken = EnumerationDoneNotifier::Token;
+    virtual void onNetworkAddressesChanged(const network::Interface& /*unused*/, const Addresses& /*unused*/) {}
+
+    virtual void onGatewayAddressChanged(const network::Interface& /*unused*/,
+                                         const std::optional<ip::Address>& /*unused*/)
+    {
+    }
+
+    virtual void onMacAddressChanged(const network::Interface& /*unused*/, const ethernet::Address& /*unused*/) {}
+
+    virtual void onBroadcastAddressChanged(const network::Interface& /*unused*/, const ethernet::Address& /*unused*/) {}
+};
+
+using SubscriberPtr = std::shared_ptr<Subscriber>;
+using SubscriberWeakPtr = std::weak_ptr<Subscriber>;
+
+struct WeakPtrHash
+{
+    template<typename T>
+    auto operator()(const std::weak_ptr<T>& wp) const noexcept -> std::size_t
+    {
+        if (auto sp = wp.lock()) {
+            return std::hash<T*>()(sp.get());
+        }
+        // Hash for expired pointers — could be constant or some sentinel
+        return 0;
+    }
+};
+
+struct WeakPtrEqual
+{
+    template<typename T>
+    auto operator()(const std::weak_ptr<T>& a, const std::weak_ptr<T>& b) const noexcept -> bool
+    {
+        return !a.owner_before(b) && !b.owner_before(a);
+    }
+};
 
 class NetworkMonitor
 {
   public:
     explicit NetworkMonitor(const RuntimeFlags& options);
-    void enumerateInterfaces();
+    auto enumerateInterfaces() -> Interfaces;
+    void subscribe(const Interfaces& interfaces, const SubscriberPtr& subscriber);
+
     void run();
     void stop();
 
-    [[nodiscard]] auto addInterfacesWatcher(
-        const InterfacesWatcher& watcher, InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
-        -> InterfacesWatcherToken;
-    void removeInterfacesWatcher(const InterfacesWatcherToken& token);
-
-    [[nodiscard]] auto addLinkFlagsWatcher(const LinkFlagsWatcher& watcher,
-                                           InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
-        -> LinkFlagsWatcherToken;
-    void removeLinkFlagsWatcher(const LinkFlagsWatcherToken& token);
-
-    [[nodiscard]] auto addOperationalStateWatcher(
-        const OperationalStateWatcher& watcher,
-        InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot) -> OperationalStateWatcherToken;
-    void removeOperationalStateWatcher(const OperationalStateWatcherToken& token);
-
-    [[nodiscard]] auto addNetworkAddressWatcher(
-        const NetworkAddressWatcher& watcher,
-        InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot) -> NetworkAddressWatcherToken;
-    void removeNetworkAddressWatcher(const NetworkAddressWatcherToken& token);
-
-    [[nodiscard]] auto addGatewayAddressWatcher(
-        const GatewayAddressWatcher& watcher,
-        InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot) -> GatewayAddressWatcherToken;
-    void removeGatewayAddressWatcher(const GatewayAddressWatcherToken& token);
-
-    [[nodiscard]] auto addMacAddressWatcher(
-        const MacAddressWatcher& watcher, InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot)
-        -> MacAddressWatcherToken;
-    void removeMacAddressWatcher(const MacAddressWatcherToken& token);
-
-    [[nodiscard]] auto addBroadcastAddressWatcher(
-        const BroadcastAddressWatcher& watcher,
-        InitialSnapshotMode initialSnapshot = InitialSnapshotMode::NoInitialSnapshot) -> BroadcastAddressWatcherToken;
-
-    void removeBroadcastAddressWatcher(const BroadcastAddressWatcherToken& token);
-
-    // enumeration done watcher is called when enumeration is done, or immediately if enumeration is
-    // already done the optional return value is used to indicate that enumeration is already done
-    [[nodiscard]] auto addEnumerationDoneWatcher(const EnumerationDoneWatcher& watcher)
-        -> std::optional<EnumerationDoneWatcherToken>;
-    void removeEnumerationDoneWatcher(const EnumerationDoneWatcherToken& token);
-
   private:
     void receiveAndProcess();
+    auto interfacesFromCache() -> Interfaces;
     void updateStats(ssize_t receiveResult);
     void dumpPacket(ssize_t receiveResult) const;
     auto handleCallbackResult(int callbackResult) -> bool;
@@ -161,8 +135,7 @@ class NetworkMonitor
     [[nodiscard]] auto isEnumeratingRoutes() const -> bool { return m_cacheState == CacheState::EnumeratingRoutes; }
 
     void notifyChanges();
-    void notifyInterfacesSnapshot();
-    [[nodiscard]] auto getInterfacesSnapshot() const -> Interfaces;
+    void notifyChanges(Subscriber* subscriber, const Interfaces& interfaces);
 
     std::unique_ptr<mnl_socket, int (*)(mnl_socket*)> m_mnlSocket;
     std::vector<uint8_t> m_receiveBuffer;
@@ -198,13 +171,6 @@ class NetworkMonitor
     } m_stats;
 
     RuntimeFlags m_runtimeOptions;
-    InterfacesNotifier m_interfacesNotifier;
-    LinkFlagsNotifier m_linkFlagsNotifier;
-    OperationalStateNotifier m_operationalStateNotifier;
-    NetworkAddressNotifier m_networkAddressNotifier;
-    GatewayAddressNotifier m_gatewayAddressNotifier;
-    MacAddressNotifier m_macAddressNotifier;
-    BroadcastAddressNotifier m_broadcastAddressNotifier;
-    EnumerationDoneNotifier m_enumerationDoneNotifier;
+    std::unordered_map<SubscriberWeakPtr, Interfaces, WeakPtrHash, WeakPtrEqual> m_subscribers;
 };
 }  // namespace monkas::monitor
