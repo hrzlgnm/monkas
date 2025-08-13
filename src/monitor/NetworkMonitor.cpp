@@ -104,6 +104,27 @@ void NetworkMonitor::subscribe(const Interfaces& interfaces, const SubscriberPtr
     notifyChanges(subscriber.get(), interfaces);
 }
 
+void NetworkMonitor::updateSubscription(const Interfaces& interfaces, const SubscriberPtr& subscriber)
+{
+    if (subscriber == nullptr) {
+        spdlog::warn("Cannot update subscription for null subscriber");
+        return;
+    }
+    if (interfaces.empty()) {
+        unsubscribe(subscriber);
+        return;
+    }
+    auto it = m_subscribers.find(subscriber);
+    if (it != m_subscribers.end()) {
+        it->second = interfaces;
+        spdlog::debug(
+            "Updated subscription for {} to {} interfaces", static_cast<void*>(subscriber.get()), interfaces.size());
+        notifyChanges(subscriber.get(), interfaces);
+    } else {
+        spdlog::warn("Subscriber {} not found", static_cast<void*>(subscriber.get()));
+    }
+}
+
 void NetworkMonitor::unsubscribe(const SubscriberPtr& subscriber)
 {
     if (subscriber == nullptr) {
@@ -309,11 +330,16 @@ auto NetworkMonitor::mnlMessageCallback(const nlmsghdr* n) -> int
 auto NetworkMonitor::ensureNameCurrent(const uint32_t ifIndex, const std::optional<std::string>& name)
     -> NetworkInterfaceStatusTracker&
 {
+    const auto before = m_trackers.size();
     auto& cacheEntry = m_trackers[ifIndex];
 
     // Sometimes interfaces are renamed, account for that
     if (name.has_value()) {
         cacheEntry.setName(name.value());
+    }
+    if (before != m_trackers.size()) {
+        spdlog::debug("Added new interface tracker for index {}: {}", ifIndex, cacheEntry.name());
+        notifyInterfaceAdded(network::Interface {ifIndex, cacheEntry.name()});
     }
     return cacheEntry;
 }
@@ -337,8 +363,8 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK) {
         spdlog::trace("removing interface with index {}", ifi->ifi_index);
-        // TODO: add interface subscriber notification
         m_trackers.erase(ifi->ifi_index);
+        notifyInterfaceRemoved(network::Interface {static_cast<uint32_t>(ifi->ifi_index), itfName.value_or("unknown")});
         return;
     }
 
@@ -547,6 +573,20 @@ void NetworkMonitor::notifyChanges(Subscriber* subscriber, const Interfaces& int
             subscriber->onBroadcastAddressChanged(intf, tracker.broadcastAddress());
             subscriber->onLinkFlagsChanged(intf, tracker.linkFlags());
         }
+    }
+}
+
+void NetworkMonitor::notifyInterfaceAdded(const network::Interface& intf)
+{
+    for (const auto& [subscriber, _] : m_subscribers) {
+        subscriber->onInterfaceAdded(intf);
+    }
+}
+
+void NetworkMonitor::notifyInterfaceRemoved(const network::Interface& intf)
+{
+    for (const auto& [subscriber, _] : m_subscribers) {
+        subscriber->onInterfaceRemoved(intf);
     }
 }
 }  // namespace monkas::monitor

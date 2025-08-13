@@ -78,6 +78,10 @@ auto main(int argc, char* argv[]) -> int
 
     struct Sub final : monitor::Subscriber
     {
+        void onInterfaceAdded(const Interface& iface) override { spdlog::info("Interface added: {}", iface); }
+
+        void onInterfaceRemoved(const Interface& iface) override { spdlog::info("Interface removed: {}", iface); }
+
         void onInterfaceNameChanged(const Interface& iface) override
         {
             spdlog::info("{} changed name to {}", iface, iface.name());

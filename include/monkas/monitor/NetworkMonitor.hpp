@@ -48,6 +48,10 @@ struct Subscriber
     auto operator=(const Subscriber&) -> Subscriber& = delete;
     auto operator=(Subscriber&&) -> Subscriber& = delete;
 
+    virtual void onInterfaceAdded(const network::Interface& /*unused*/) {}
+
+    virtual void onInterfaceRemoved(const network::Interface& /*unused*/) {}
+
     virtual void onInterfaceNameChanged(const network::Interface& /*unused*/) {}
 
     virtual void onLinkFlagsChanged(const network::Interface& /*unused*/, const LinkFlags& /*unused*/) {}
@@ -74,6 +78,7 @@ class NetworkMonitor
     explicit NetworkMonitor(const RuntimeFlags& options);
     auto enumerateInterfaces() -> Interfaces;
     void subscribe(const Interfaces& interfaces, const SubscriberPtr& subscriber);
+    void updateSubscription(const Interfaces& interfaces, const SubscriberPtr& subscriber);
     void unsubscribe(const SubscriberPtr& subscriber);
     void run();
     void stop();
@@ -113,6 +118,8 @@ class NetworkMonitor
 
     void notifyChanges();
     void notifyChanges(Subscriber* subscriber, const Interfaces& interfaces);
+    void notifyInterfaceAdded(const network::Interface& interface);
+    void notifyInterfaceRemoved(const network::Interface& interface);
 
     std::unique_ptr<mnl_socket, int (*)(mnl_socket*)> m_mnlSocket;
     std::vector<uint8_t> m_receiveBuffer;
