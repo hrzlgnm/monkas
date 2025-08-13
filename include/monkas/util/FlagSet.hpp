@@ -12,8 +12,7 @@ class FlagSet
 {
     static_assert(std::is_scoped_enum_v<Enum>, "Template parameter must be a scoped enum");
     static_assert(std::is_integral_v<std::underlying_type_t<Enum>>, "Enum must have an integral underlying type");
-    static_assert(
-        requires { Enum::FlagsCount; }, "Enum must define FlagsCount enumerator");
+    static_assert(requires { Enum::FlagsCount; }, "Enum must define FlagsCount enumerator");
     static_assert(std::to_underlying(Enum::FlagsCount) <= 32, "FlagsCount must not exceed 32");
     static constexpr size_t FLAG_COUNT = static_cast<size_t>(Enum::FlagsCount);
 
