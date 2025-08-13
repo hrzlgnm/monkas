@@ -1,17 +1,24 @@
 <!--toc:start-->
 
 - [monkas](#monkas)
-- [Dependencies](#dependencies)
--## Quick install for debian/ubuntu based distros
-+## Quick installation for debian/ubuntu based distros
 - [Quick Start](#quick-start)
-<!--toc:end-->
+- [Dependencies](#dependencies)
+  - [Quick install](#quick-installation-for-debianubuntu-based-distributions)
+  <!--toc:end-->
 
 # monkas
 
-Netlink Socket experiments using libmnl
+Linux netlink socket experiments using `libmnl`
 
-# Dependencies
+## Quick Start
+
+```console
+cmake -B build -S .
+cmake --build build
+build/examples/cli/monkas
+```
+
+## Dependencies
 
 - [cmake](https://cmake.org/)
 - [libmnl](https://netfilter.org/projects/libmnl/)
@@ -19,16 +26,8 @@ Netlink Socket experiments using libmnl
 - [fmt](https://fmt.dev)
 - [gflags](https://github.com/gflags/gflags)
 
-## Quick install for debian/ubuntu based distros
+### Quick installation for Debian/Ubuntu based distributions
 
 ```console
-sudo apt install build-essential cmake libmnl-dev libspdlog-dev libgflags-dev libfmt-dev
-```
-
-# Quick Start
-
-```console
-cmake -B build -S .
-cmake --build build
-build/examples/cli/monkas
+sudo apt update && sudo apt install build-essential cmake libmnl-dev libspdlog-dev libgflags-dev libfmt-dev
 ```
