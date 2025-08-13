@@ -6,7 +6,7 @@ RUN apt-get update && \
     clang-format \
     cmake \
     jq \
-    libasan6 \
+    libasan8 \
     libclang-rt-dev \
     libgflags-dev \
     libmnl-dev \
