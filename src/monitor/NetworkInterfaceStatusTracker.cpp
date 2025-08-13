@@ -215,8 +215,9 @@ void NetworkInterfaceStatusTracker::clearFlag(const DirtyFlag flag)
 void NetworkInterfaceStatusTracker::clearDirtyFlags()
 {
     if (m_dirtyFlags.any()) {
+        m_nerdstats.dirtyFlagClears += m_dirtyFlags.count();
         m_dirtyFlags.reset();
-        m_nerdstats.dirtyFlagClears++;
+
         logTrace("all dirty flags", this, "cleared");
     }
 }
