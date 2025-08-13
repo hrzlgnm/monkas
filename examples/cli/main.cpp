@@ -76,7 +76,7 @@ auto main(int argc, char* argv[]) -> int
 
     spdlog::info("Found {} interfaces: {}", intfs.size(), fmt::join(intfs, ", "));
 
-    struct Sub : monitor::Subscriber
+    struct Sub final : monitor::Subscriber
     {
         void onInterfaceNameChanged(const Interface& iface) override
         {
