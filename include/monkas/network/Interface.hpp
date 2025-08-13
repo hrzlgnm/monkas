@@ -22,7 +22,7 @@ class Interface
         return m_index <=> other.m_index;
     }
 
-    [[nodiscard]] constexpr auto operator==(const Interface& other) const -> bool = default;
+    [[nodiscard]] constexpr auto operator==(const Interface& other) const -> bool { return m_index == other.m_index; };
 
   private:
     uint32_t m_index {};

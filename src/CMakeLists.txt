@@ -52,6 +52,7 @@ if(BUILD_TESTS)
             ethernet/Address.test.cpp
             ip/Address.test.cpp
             network/Address.test.cpp
+            network/Interface.test.cpp
             monitor/NetworkInterfaceStatusTracker.test.cpp
     )
     target_link_libraries(
