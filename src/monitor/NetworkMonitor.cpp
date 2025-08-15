@@ -353,7 +353,7 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
     const auto itfName = attributes.getString(IFLA_IFNAME);
     if (ifi->ifi_type != ARPHRD_ETHER && ifi->ifi_type != ARPHRD_IEEE80211) {
         if (!m_runtimeOptions.test(RuntimeFlag::IncludeNonIeee802)) {
-            spdlog::debug("Discarding interface {}: {} (use --include_non_ieee802 to include)",
+            spdlog::debug("Discarding interface {}: {} (use RuntimeFlag::IncludeNonIeee802 option to include those)",
                           ifi->ifi_index,
                           itfName.value_or("unknown"));
             m_stats.msgsDiscarded++;
