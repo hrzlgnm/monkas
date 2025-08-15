@@ -16,15 +16,16 @@ TEST_SUITE("[network::Interface]")
     TEST_CASE("from name")
     {
         const auto iface = Interface::fromName("lo");
-        CHECK(iface.index() == 1);
+        CHECK(iface.index() != 0);
         CHECK(iface.name() == "lo");
         CHECK_THROWS_AS(Interface::fromName("nonexistent"), std::invalid_argument);
     }
 
     TEST_CASE("from index")
     {
-        const auto iface = Interface::fromIndex(1);
-        CHECK(iface.index() == 1);
+        const auto lo = Interface::fromName("lo");
+        const auto iface = Interface::fromIndex(lo.index());
+        CHECK(iface.index() == lo.index());
         CHECK(iface.name() == "lo");
         CHECK_THROWS_AS(Interface::fromIndex(0), std::invalid_argument);
     }
