@@ -13,6 +13,22 @@ TEST_SUITE("[network::Interface]")
     Interface someInterface(1, "some");
     Interface renamedSomeInterface(1, "renamed");
 
+    TEST_CASE("from name")
+    {
+        const auto iface = Interface::from("lo");
+        CHECK(iface.index() == 1);
+        CHECK(iface.name() == "lo");
+        CHECK_THROWS_AS(Interface::from("nonexistent"), std::invalid_argument);
+    }
+
+    TEST_CASE("from index")
+    {
+        const auto iface = Interface::from(1);
+        CHECK(iface.index() == 1);
+        CHECK(iface.name() == "lo");
+        CHECK_THROWS_AS(Interface::from(0), std::invalid_argument);
+    }
+
     TEST_CASE("operator ==")
     {
         CHECK(defaultInterface == defaultInterface);
