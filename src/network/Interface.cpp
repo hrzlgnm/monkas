@@ -8,7 +8,7 @@
 namespace monkas::network
 {
 
-auto Interface::from(std::string name) -> Interface
+auto Interface::fromName(std::string name) -> Interface
 {
     const auto index = if_nametoindex(name.c_str());
     if (index == 0) {
@@ -17,7 +17,7 @@ auto Interface::from(std::string name) -> Interface
     return Interface {index, std::move(name)};
 }
 
-auto Interface::from(std::uint32_t index) -> Interface
+auto Interface::fromIndex(std::uint32_t index) -> Interface
 {
     std::array<char, IF_NAMESIZE> nameBuffer {};
     auto* const intfName = if_indextoname(index, nameBuffer.data());

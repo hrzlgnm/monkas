@@ -1,5 +1,7 @@
 #pragma once
 
+#include <compare>
+#include <cstdint>
 #include <iosfwd>
 #include <string>
 
@@ -10,8 +12,8 @@ namespace monkas::network
 class Interface
 {
   public:
-    static auto from(std::string name) noexcept(false) -> Interface;
-    static auto from(std::uint32_t index) noexcept(false) -> Interface;
+    static auto fromName(std::string name) -> Interface;
+    static auto fromIndex(std::uint32_t index) -> Interface;
     Interface() = default;
     Interface(std::uint32_t index, std::string name);
 
