@@ -1,3 +1,5 @@
+#include <system_error>
+
 #include <doctest/doctest.h>
 #include <network/Interface.hpp>
 
@@ -18,7 +20,7 @@ TEST_SUITE("[network::Interface]")
         const auto iface = Interface::fromName("lo");
         CHECK(iface.index() != 0);
         CHECK(iface.name() == "lo");
-        CHECK_THROWS_AS(Interface::fromName("nonexistent"), std::invalid_argument);
+        CHECK_THROWS_AS(Interface::fromName("nonexistent"), std::system_error);
     }
 
     TEST_CASE("from index")
@@ -27,7 +29,7 @@ TEST_SUITE("[network::Interface]")
         const auto iface = Interface::fromIndex(lo.index());
         CHECK(iface.index() == lo.index());
         CHECK(iface.name() == "lo");
-        CHECK_THROWS_AS(Interface::fromIndex(0), std::invalid_argument);
+        CHECK_THROWS_AS(Interface::fromIndex(0), std::system_error);
     }
 
     TEST_CASE("operator ==")
