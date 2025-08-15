@@ -12,8 +12,8 @@ namespace monkas::network
 class Interface
 {
   public:
-    static auto fromName(std::string name) -> Interface;
-    static auto fromIndex(std::uint32_t index) -> Interface;
+    [[nodiscard]] static auto fromName(std::string name) -> Interface;
+    [[nodiscard]] static auto fromIndex(std::uint32_t index) -> Interface;
     Interface() = default;
     Interface(std::uint32_t index, std::string name);
 
