@@ -31,7 +31,7 @@ jobs:
 
       - name: Check spelling using typos-action
         if: always()
-        uses: crate-ci/typos@a4c3e43aea0a9e9b9e6578d2731ebd9a27e8f6cd # v1.35.5
+        uses: crate-ci/typos@87d57f0e994b0e73e3efb34a953ae275b86b5971 # v1.35.6
 
       - name: Gersemi --check --diff
         if: always()
