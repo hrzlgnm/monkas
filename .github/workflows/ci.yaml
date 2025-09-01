@@ -4,12 +4,12 @@ on:
   push:
     paths-ignore:
       - ".github/docker/**/*"
-      - ".github/workflow/docker-build.yaml"
+      - ".github/workflows/docker-build.yaml"
     branches: [main]
   pull_request:
     paths-ignore:
       - ".github/docker/**/*"
-      - ".github/workflow/docker-build.yaml"
+      - ".github/workflows/docker-build.yaml"
     branches: [main]
 
 concurrency:
