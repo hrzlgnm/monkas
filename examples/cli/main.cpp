@@ -1,5 +1,5 @@
 #include <chrono>
-#include <ratio>
+#include <thread>
 
 #include <fmt/std.h>
 #include <gflags/gflags.h>
@@ -65,6 +65,7 @@ auto main(int argc, char* argv[]) -> int
 
     if (FLAGS_log_to_file) {
         const auto logFileName = fmt::format("/tmp/monka-{}.log", getpid());
+        // Let the user know where to find the log file before switching to file logging
         spdlog::info("Logging to {}", logFileName);
         auto logger = spdlog::basic_logger_mt("monka", logFileName, true);
         logger->flush_on(spdlog::level::critical);
