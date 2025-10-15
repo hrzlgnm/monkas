@@ -10,8 +10,12 @@ COUNT=$1
 for i in $(seq 1 "$COUNT"); do
     sudo ip link add dummy"$i" type dummy
     sudo ip link set dummy"$i" up
-    sudo ip link del dummy"$i"
-    printf "."
-    sleep 0.02
+    printf "+"
+    sleep 0.01
 done
-echo "Done"
+for i in $(seq 1 "$COUNT"); do
+    sudo ip link del dummy"$i"
+    printf "-"
+    sleep 0.01
+done
+echo " done"
