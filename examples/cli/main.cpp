@@ -1,5 +1,4 @@
 #include <chrono>
-#include <cmath>
 
 #include <fmt/std.h>
 #include <gflags/gflags.h>
