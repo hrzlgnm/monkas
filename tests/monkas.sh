@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-if [ ! -e ../build/examples/cli/monka ]; then
+if [ ! -x ../build/examples/cli/monka ]; then
     echo "Error: monka binary not found or not executable. Please build the project first." >&2
     exit 1
 fi
