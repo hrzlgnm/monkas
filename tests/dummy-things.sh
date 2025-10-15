@@ -25,4 +25,6 @@ for i in $(seq 1 "$COUNT"); do
     printf "-"
     sleep 0.01
 done
+
+ip link del dummy0
 echo " done"
