@@ -16,6 +16,11 @@ fi
 
 COUNT="$1"
 
+if ! [[ "$COUNT" =~ ^[0-9]+$ ]] || [ "$COUNT" -le 0 ]; then
+    echo "COUNT must be a positive integer" >&2
+    exit 1
+fi
+
 pids=()
 declare -a launched_info=()
 
