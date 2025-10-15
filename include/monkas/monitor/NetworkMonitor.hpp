@@ -82,7 +82,6 @@ class NetworkMonitor
     void unsubscribe(const SubscriberPtr& subscriber);
     void run();
     void stop();
-    void reset();
 
   private:
     void receiveAndProcess();

@@ -8,6 +8,7 @@
 #include <network/Interface.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
+#include <unistd.h>
 
 DEFINE_bool(nerdstats, false, "Enable stats for nerds");
 

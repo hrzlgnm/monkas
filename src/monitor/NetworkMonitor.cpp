@@ -176,16 +176,6 @@ void NetworkMonitor::stop()
     m_running = false;
 }
 
-void NetworkMonitor::reset()
-{
-    spdlog::debug("Resetting NetworkMonitor state");
-    m_trackers.clear();
-    m_cacheState = CacheState::EnumeratingLinks;
-    m_sequenceNumber = 0;
-    m_stats = {};
-    m_stats.startTime = std::chrono::steady_clock::now();
-}
-
 void NetworkMonitor::receiveAndProcess()
 {
     if (!m_mnlSocket) {
