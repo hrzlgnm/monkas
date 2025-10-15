@@ -25,9 +25,10 @@ namespace
 template<typename T>
 [[noreturn]] void pfatal(const T& msg)
 {
+    const auto err = errno;
     spdlog::flush_on(spdlog::level::critical);
     // NOLINTNEXTLINE(concurrency-mt-unsafe)
-    spdlog::critical("{} failed: {}[{}]", msg, strerror(errno), errno);
+    spdlog::critical("{} failed: {}[{}]", msg, strerror(err), err);
     std::abort();
 }
 
@@ -175,6 +176,16 @@ void NetworkMonitor::stop()
     m_running = false;
 }
 
+void NetworkMonitor::reset()
+{
+    spdlog::debug("Resetting NetworkMonitor state");
+    m_trackers.clear();
+    m_cacheState = CacheState::EnumeratingLinks;
+    m_sequenceNumber = 0;
+    m_stats = {};
+    m_stats.startTime = std::chrono::steady_clock::now();
+}
+
 void NetworkMonitor::receiveAndProcess()
 {
     if (!m_mnlSocket) {
@@ -236,7 +247,7 @@ auto NetworkMonitor::handleCallbackResult(const int callbackResult) -> bool
                 spdlog::debug("Received EPROTO while enumerating, retrying");
                 retryLastDumpRequest();
             } else {
-                pwarn("mnl_cb_run");
+                pfatal("mnl_cb_run unexpected MNL_CB_ERROR while not enumerating");
             }
         }
         return true;
@@ -258,7 +269,7 @@ auto NetworkMonitor::handleCallbackResult(const int callbackResult) -> bool
             return true;
         } else {
             if (m_mnlSocket) {
-                pwarn("Unexpected MNL_CB_STOP");
+                pfatal("Unexpected MNL_CB_STOP");
             } else {
                 return true;  // someone may call stop() while we are notifying watchers
             }
@@ -293,6 +304,7 @@ void NetworkMonitor::retryLastDumpRequest()
     const auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0) {
         pfatal("mnl_socket_sendto");
+        return;
     }
     m_stats.packetsSent++;
     m_stats.bytesSent += ret;
