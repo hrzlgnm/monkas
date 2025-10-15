@@ -1,4 +1,5 @@
 #include <chrono>
+#include <ratio>
 
 #include <fmt/std.h>
 #include <gflags/gflags.h>
@@ -27,8 +28,8 @@ DEFINE_validator(family,
 DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, critical, off");
 
 DEFINE_uint32(enum_loop, 1, "Run enumeration loop N times, 0 means infinite");
-DEFINE_uint32(loop_delay_ms, 100, "Delay between enumeration loops in ms");
-DEFINE_validator(loop_delay_ms, [](const char* /*flagname*/, const uint32_t value) -> bool { return value > 5; });
+DEFINE_uint64(loop_delay_us, 100, "Delay between enumeration loops in µs, at least 50");
+DEFINE_validator(loop_delay_us, [](const char* /*flagname*/, const uint64_t value) -> bool { return value >= 50; });
 
 // NOLINTNEXTLINE(google-build-*)
 using namespace monkas::monitor;
@@ -94,15 +95,16 @@ auto main(int argc, char* argv[]) -> int
     if (FLAGS_enum_loop > 1 || FLAGS_enum_loop == 0) {
         auto loop = FLAGS_enum_loop;
         if (FLAGS_enum_loop == 0) {
-            spdlog::info("Running enumeration loop infinitely");
+            spdlog::info("Running enumeration loop infinitely with loop delay of {}µs", FLAGS_loop_delay_us);
         } else {
-            spdlog::info("Running enumeration loop {} times", FLAGS_enum_loop);
+            spdlog::info(
+                "Running enumeration loop {} times with loop delay of {}µs", FLAGS_enum_loop, FLAGS_loop_delay_us);
         }
         while (FLAGS_enum_loop == 0 || loop > 1) {
             NetworkMonitor mon(options);
             std::ignore = mon.enumerateInterfaces();
             loop--;
-            std::this_thread::sleep_for(std::chrono::milliseconds(FLAGS_loop_delay_ms));
+            std::this_thread::sleep_for(std::chrono::microseconds(FLAGS_loop_delay_us));
         }
     }
 
