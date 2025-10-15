@@ -21,11 +21,14 @@ DEFINE_bool(log_to_file, false, "Enable logging to file");
 
 DEFINE_uint32(family, 0, "Preferred address family <0|4|6>");
 DEFINE_validator(family,
-                 [](const char* /*flagname*/, const uint32_t value) { return value == 0 || value == 4 || value == 6; });
+                 [](const char* /*flagname*/, const uint32_t value) -> bool
+                 { return value == 0 || value == 4 || value == 6; });
 
 DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, critical, off");
 
 DEFINE_uint32(enum_loop, 1, "Run enumeration loop N times, 0 means infinite");
+DEFINE_uint32(loop_delay_ms, 100, "Delay between enumeration loops in ms");
+DEFINE_validator(loop_delay_ms, [](const char* /*flagname*/, const uint32_t value) -> bool { return value > 5; });
 
 // NOLINTNEXTLINE(google-build-*)
 using namespace monkas::monitor;
@@ -99,6 +102,7 @@ auto main(int argc, char* argv[]) -> int
             NetworkMonitor mon(options);
             std::ignore = mon.enumerateInterfaces();
             loop--;
+            std::this_thread::sleep_for(std::chrono::milliseconds(FLAGS_loop_delay_ms));
         }
     }
 
