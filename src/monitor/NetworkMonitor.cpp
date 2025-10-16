@@ -1,6 +1,7 @@
 #include <cerrno>
 #include <cstddef>
 #include <ranges>
+#include <thread>
 
 #include <fmt/std.h>
 #include <ip/Address.hpp>
@@ -44,8 +45,25 @@ auto toRtnlGroupFlag(const rtnetlink_groups group) -> unsigned
     return 1U << (group - 1U);
 }
 
+auto shouldRetryDump(const int err) -> bool
+{
+    switch (err) {
+        case EPROTO:
+        case EINTR:
+        case EAGAIN:
+        case EBUSY:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
 constexpr auto RECEIVE_SOCKET_BUFFER_SIZE = 32U * 1024U;
 constexpr auto SEND_SOCKET_BUFFER_SIZE = 4U * 1024U;
+
+using namespace std::chrono_literals;
+constexpr auto DUMP_RETRY_DELAY = 10ms;
 
 auto ensureMnlSocket(const bool nonBlocking) -> mnl_socket*
 {
@@ -232,13 +250,15 @@ void NetworkMonitor::dumpPacket(const ssize_t receiveResult) const
 auto NetworkMonitor::handleCallbackResult(const int callbackResult) -> bool
 {
     if (callbackResult == MNL_CB_ERROR) {
-        if (errno == EPROTO) {
-            if (isEnumerating()) {
-                spdlog::debug("Received EPROTO while enumerating, retrying");
-                retryLastDumpRequest();
+        if (isEnumerating()) {
+            if (shouldRetryDump(errno)) {
+                spdlog::info("Retrying dump request");
+                retryLastDumpRequestWithNewSequenceNumber();
             } else {
-                pfatal("mnl_cb_run unexpected MNL_CB_ERROR while not enumerating");
+                pfatal("mnl_cb_run unexpected MNL_CB_ERROR while enumerating");
             }
+        } else {
+            pfatal("mnl_cb_run unexpected MNL_CB_ERROR while not enumerating");
         }
         return true;
     }
@@ -273,7 +293,7 @@ void NetworkMonitor::sendDumpRequest(const uint16_t msgType)
     nlmsghdr* nlh = mnl_nlmsg_put_header(m_sendBuffer.data());
     nlh->nlmsg_type = msgType;
     nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
-    nlh->nlmsg_seq = ++m_sequenceNumber;
+    nlh->nlmsg_seq = nextDumpRequestSequenceNumber();
     auto* gen = static_cast<rtgenmsg*>(mnl_nlmsg_put_extra_header(nlh, sizeof(struct rtgenmsg)));
     gen->rtgen_family = AF_UNSPEC;
     mnl_attr_put_u32(nlh, IFLA_EXT_MASK, RTEXT_FILTER_SKIP_STATS);
@@ -285,12 +305,20 @@ void NetworkMonitor::sendDumpRequest(const uint16_t msgType)
     m_stats.bytesSent += ret;
 }
 
-void NetworkMonitor::retryLastDumpRequest()
+void NetworkMonitor::retryLastDumpRequestWithNewSequenceNumber()
 {
-    spdlog::debug("Retrying last dump request with sequence number {}", m_sequenceNumber);
+    while (mnl_socket_recvfrom(m_mnlSocket.get(), m_receiveBuffer.data(), m_receiveBuffer.size()) > 0) {
+        spdlog::trace("Drained some old messages from socket");
+    }
     static_assert(alignof(nlmsghdr) <= alignof(std::max_align_t), "nlmsghdr alignment requirements not met");
-    const auto* buf = static_cast<const void*>(m_sendBuffer.data());
-    const auto* nlh = static_cast<const nlmsghdr*>(buf);
+    auto* buf = static_cast<void*>(m_sendBuffer.data());
+    auto* nlh = static_cast<nlmsghdr*>(buf);
+    if (((nlh->nlmsg_flags & NLM_F_DUMP) == 0) || ((nlh->nlmsg_flags & NLM_F_REQUEST) == 0)) {
+        spdlog::warn("Last message was not a dump request, skipping retry");
+        return;
+    }
+    std::this_thread::sleep_for(DUMP_RETRY_DELAY);
+    nlh->nlmsg_seq = nextDumpRequestSequenceNumber();
     const auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0) {
         pfatal("mnl_socket_sendto");
@@ -298,6 +326,15 @@ void NetworkMonitor::retryLastDumpRequest()
     }
     m_stats.packetsSent++;
     m_stats.bytesSent += ret;
+}
+
+auto NetworkMonitor::nextDumpRequestSequenceNumber() -> uint32_t
+{
+    ++m_sequenceNumber;
+    if (m_sequenceNumber == 0) {
+        m_sequenceNumber = 1;  // avoid zero sequence number
+    }
+    return m_sequenceNumber;
 }
 
 auto NetworkMonitor::mnlMessageCallback(const nlmsghdr* n) -> int

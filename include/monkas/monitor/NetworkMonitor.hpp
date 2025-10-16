@@ -92,7 +92,8 @@ class NetworkMonitor
 
     /* @note: only one such request can be in progress until the reply is received */
     void sendDumpRequest(uint16_t msgType);
-    void retryLastDumpRequest();
+    void retryLastDumpRequestWithNewSequenceNumber();
+    auto nextDumpRequestSequenceNumber() -> uint32_t;
 
     auto ensureNameCurrent(uint32_t ifIndex, const std::optional<std::string>& name) -> NetworkInterfaceStatusTracker&;
 
