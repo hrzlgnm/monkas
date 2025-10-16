@@ -254,8 +254,11 @@ auto NetworkMonitor::handleCallbackResult(const int callbackResult) -> bool
                 spdlog::info("Retrying dump request");
                 retryLastDumpRequestWithNewSequenceNumber();
             } else {
-                pfatal("mnl_cb_run unexpected MNL_CB_ERROR while not enumerating");
+                pfatal("mnl_cb_run unexpected MNL_CB_ERROR while enumerating");
             }
+        } else {
+            pfatal("mnl_cb_run unexpected MNL_CB_ERROR while not enumerating");
+        }
         }
         return true;
     }
