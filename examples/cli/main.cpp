@@ -1,6 +1,7 @@
 #include <chrono>
 #include <thread>
 
+#include <fmt/ranges.h>
 #include <fmt/std.h>
 #include <gflags/gflags.h>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
