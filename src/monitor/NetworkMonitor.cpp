@@ -307,7 +307,6 @@ void NetworkMonitor::retryLastDumpRequestWithNewSequenceNumber()
     while (mnl_socket_recvfrom(m_mnlSocket.get(), m_receiveBuffer.data(), m_receiveBuffer.size()) > 0) {
         spdlog::trace("Drained some old messages from socket");
     }
-    spdlog::debug("Retrying last dump request with sequence number {}", m_sequenceNumber);
     static_assert(alignof(nlmsghdr) <= alignof(std::max_align_t), "nlmsghdr alignment requirements not met");
     auto* buf = static_cast<void*>(m_sendBuffer.data());
     auto* nlh = static_cast<nlmsghdr*>(buf);
