@@ -2,6 +2,7 @@
 #include <thread>
 
 #include <fmt/std.h>
+#include <fmt/ranges.h>
 #include <gflags/gflags.h>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
 #include <monitor/NetworkMonitor.hpp>
