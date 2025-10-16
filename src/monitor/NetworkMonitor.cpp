@@ -260,7 +260,6 @@ auto NetworkMonitor::handleCallbackResult(const int callbackResult) -> bool
         } else {
             pfatal("mnl_cb_run unexpected MNL_CB_ERROR while not enumerating");
         }
-        }
         return true;
     }
     if (callbackResult == MNL_CB_STOP) {
