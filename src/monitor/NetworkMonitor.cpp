@@ -201,8 +201,8 @@ void NetworkMonitor::receiveAndProcess()
     }
     spdlog::trace("Receiving messages from mnl socket");
     auto receiveResult = mnl_socket_recvfrom(m_mnlSocket.get(), m_receiveBuffer.data(), m_receiveBuffer.size());
-    spdlog::trace("Received {} bytes", receiveResult);
     while (receiveResult > 0) {
+        spdlog::trace("Received {} bytes", receiveResult);
         updateStats(receiveResult);
         if (m_runtimeOptions.test(RuntimeFlag::DumpPackets)) {
             dumpPacket(receiveResult);
