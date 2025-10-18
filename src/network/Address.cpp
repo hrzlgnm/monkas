@@ -1,3 +1,4 @@
+#include <compare>
 #include <ostream>
 
 #include <linux/rtnetlink.h>
@@ -68,19 +69,19 @@ auto Address::addressAssignmentProtocol() const -> AddressAssignmentProtocol
 
 auto Address::operator<=>(const Address& other) const -> std::strong_ordering
 {
-    if (const auto cmp = m_ip <=> other.m_ip; cmp != 0) {
+    if (const auto cmp = m_ip <=> other.m_ip; cmp != std::strong_ordering::equivalent) {
         return cmp;
     }
-    if (const auto cmp = m_brd <=> other.m_brd; cmp != 0) {
+    if (const auto cmp = m_brd <=> other.m_brd; cmp != std::strong_ordering::equivalent) {
         return cmp;
     }
-    if (const auto cmp = m_prefixlen <=> other.m_prefixlen; cmp != 0) {
+    if (const auto cmp = m_prefixlen <=> other.m_prefixlen; cmp != std::strong_ordering::equivalent) {
         return cmp;
     }
-    if (const auto cmp = m_scope <=> other.m_scope; cmp != 0) {
+    if (const auto cmp = m_scope <=> other.m_scope; cmp != std::strong_ordering::equivalent) {
         return cmp;
     }
-    if (const auto cmp = m_flags <=> other.m_flags; cmp != 0) {
+    if (const auto cmp = m_flags <=> other.m_flags; cmp != std::strong_ordering::equivalent) {
         return cmp;
     }
     return m_prot <=> other.m_prot;
