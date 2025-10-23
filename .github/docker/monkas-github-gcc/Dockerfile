@@ -1,4 +1,4 @@
-FROM gcc@sha256:1cdc18232f169f6b03c51897fc6371f2603d880ae961caea55e69738c3cab193
+FROM gcc@sha256:bf951c48aaa5f4b884d86377071429d0e2e75d1691d33ac884a039c1b15cfb95
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
