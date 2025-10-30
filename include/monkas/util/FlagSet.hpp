@@ -15,7 +15,7 @@ class FlagSet
     static_assert(std::is_unsigned_v<std::underlying_type_t<Enum>>,
                   "Enum must have an unsigned integral underlying type");
     static_assert(requires { Enum::FlagsCount; }, "Enum must define FlagsCount enumerator");
-    // @todo use reflection when availalbe to verify that FlagsCount is the last enumerator
+    // @todo use reflection when available to verify that FlagsCount is the last enumerator
     static_assert(std::to_underlying(Enum::FlagsCount) <= MAX_FLAGS, "FlagsCount must not exceed MAX_FLAGS");
     static constexpr size_t FLAG_COUNT = static_cast<size_t>(Enum::FlagsCount);
 
