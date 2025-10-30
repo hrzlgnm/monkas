@@ -10,10 +10,13 @@ namespace monkas::util
 template<typename Enum>
 class FlagSet
 {
+    static constexpr size_t MAX_FLAGS = 32;
     static_assert(std::is_scoped_enum_v<Enum>, "Template parameter must be a scoped enum");
-    static_assert(std::is_integral_v<std::underlying_type_t<Enum>>, "Enum must have an integral underlying type");
+    static_assert(std::is_unsigned_v<std::underlying_type_t<Enum>>,
+                  "Enum must have an unsigned integral underlying type");
     static_assert(requires { Enum::FlagsCount; }, "Enum must define FlagsCount enumerator");
-    static_assert(std::to_underlying(Enum::FlagsCount) <= 32, "FlagsCount must not exceed 32");
+    // @todo use reflection when available to verify that FlagsCount is the last enumerator
+    static_assert(std::to_underlying(Enum::FlagsCount) <= MAX_FLAGS, "FlagsCount must not exceed MAX_FLAGS");
     static constexpr size_t FLAG_COUNT = static_cast<size_t>(Enum::FlagsCount);
 
   public:
