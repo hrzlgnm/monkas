@@ -64,19 +64,19 @@ class NetworkInterfaceStatusTracker
     };
     using LinkFlags = util::FlagSet<LinkFlag>;
 
-    enum class DirtyFlag : uint8_t
+    enum class ChangedFlag : uint8_t
     {
-        NameChanged,
-        LinkFlagsChanged,
-        OperationalStateChanged,
-        MacAddressChanged,
-        BroadcastAddressChanged,
-        GatewayAddressChanged,
-        NetworkAddressesChanged,
+        Name,
+        LinkFlags,
+        OperationalState,
+        MacAddress,
+        BroadcastAddress,
+        GatewayAddress,
+        NetworkAddresses,
         // NOTE: keep last
         FlagsCount,
     };
-    using DirtyFlags = util::FlagSet<DirtyFlag>;
+    using ChangedFlags = util::FlagSet<ChangedFlag>;
 
     NetworkInterfaceStatusTracker();
 
@@ -108,16 +108,16 @@ class NetworkInterfaceStatusTracker
 
     [[nodiscard]] auto hasName() const -> bool;
 
-    [[nodiscard]] auto isDirty() const -> bool;
-    [[nodiscard]] auto isDirty(DirtyFlag flag) const -> bool;
-    [[nodiscard]] auto dirtyFlags() const -> DirtyFlags;
+    [[nodiscard]] auto hasChanges() const -> bool;
+    [[nodiscard]] auto isChanged(ChangedFlag flag) const -> bool;
+    [[nodiscard]] auto changedFlags() const -> ChangedFlags;
 
-    void clearFlag(DirtyFlag flag);
-    void clearDirtyFlags();
+    void clearFlag(ChangedFlag flag);
+    void clearChangedFlags();
     void logNerdstats() const;
 
   private:
-    void touch(DirtyFlag flag);
+    void touch(ChangedFlag flag);
 
     std::string m_name;
     ethernet::Address m_macAddress;
@@ -126,7 +126,7 @@ class NetworkInterfaceStatusTracker
     Addresses m_networkAddresses;
     std::optional<ip::Address> m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
-    DirtyFlags m_dirtyFlags;
+    ChangedFlags m_dirtyFlags;
     LinkFlags m_linkFlags;
 
     // mutable for tracking const getters
@@ -152,10 +152,10 @@ using OperationalState = NetworkInterfaceStatusTracker::OperationalState;
 auto operator<<(std::ostream& o, OperationalState op) -> std::ostream&;
 using GatewayClearReason = NetworkInterfaceStatusTracker::GatewayClearReason;
 auto operator<<(std::ostream& o, GatewayClearReason r) -> std::ostream&;
-using DirtyFlag = NetworkInterfaceStatusTracker::DirtyFlag;
-using DirtyFlags = NetworkInterfaceStatusTracker::DirtyFlags;
-auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&;
-auto operator<<(std::ostream& o, const DirtyFlags& d) -> std::ostream&;
+using ChangedFlag = NetworkInterfaceStatusTracker::ChangedFlag;
+using ChangedFlags = NetworkInterfaceStatusTracker::ChangedFlags;
+auto operator<<(std::ostream& o, ChangedFlag d) -> std::ostream&;
+auto operator<<(std::ostream& o, const ChangedFlags& d) -> std::ostream&;
 using LinkFlag = NetworkInterfaceStatusTracker::LinkFlag;
 using LinkFlags = NetworkInterfaceStatusTracker::LinkFlags;
 
@@ -182,12 +182,12 @@ struct fmt::formatter<monkas::monitor::GatewayClearReason> : ostream_formatter
 };
 
 template<>
-struct fmt::formatter<monkas::monitor::DirtyFlag> : ostream_formatter
+struct fmt::formatter<monkas::monitor::ChangedFlag> : ostream_formatter
 {
 };
 
 template<>
-struct fmt::formatter<monkas::monitor::DirtyFlags> : ostream_formatter
+struct fmt::formatter<monkas::monitor::ChangedFlags> : ostream_formatter
 {
 };
 

@@ -18,7 +18,7 @@ TEST_SUITE("[monitor::NetworkInterfaceStatusTracker]")
     {
         CHECK(tracker.hasName() == false);
         CHECK(tracker.name() == "");
-        CHECK(tracker.isDirty() == false);
+        CHECK(tracker.hasChanges() == false);
     }
 
     TEST_CASE("NetworkInterfaceStatusTracker set and check name")
@@ -26,15 +26,15 @@ TEST_SUITE("[monitor::NetworkInterfaceStatusTracker]")
         tracker.setName("eth0");
         CHECK(tracker.hasName());
         CHECK(tracker.name() == "eth0");
-        CHECK(tracker.isDirty());
-        CHECK(tracker.isDirty(DirtyFlag::NameChanged));
+        CHECK(tracker.hasChanges());
+        CHECK(tracker.isChanged(ChangedFlag::Name));
     }
 
     TEST_CASE("NetworkInterfaceStatusTracker operational state")
     {
         tracker.setOperationalState(NetworkInterfaceStatusTracker::OperationalState::Up);
         CHECK(tracker.operationalState() == NetworkInterfaceStatusTracker::OperationalState::Up);
-        CHECK(tracker.isDirty(DirtyFlag::OperationalStateChanged));
+        CHECK(tracker.isChanged(ChangedFlag::OperationalState));
     }
 
     TEST_CASE("NetworkInterfaceStatusTracker MAC address")
@@ -42,7 +42,7 @@ TEST_SUITE("[monitor::NetworkInterfaceStatusTracker]")
         ethernet::Address addr;
         tracker.setMacAddress(addr);
         CHECK(tracker.macAddress() == addr);
-        CHECK(tracker.isDirty(DirtyFlag::MacAddressChanged));
+        CHECK(tracker.isChanged(ChangedFlag::MacAddress));
     }
 
     TEST_CASE("NetworkInterfaceStatusTracker broadcast address")
@@ -50,15 +50,15 @@ TEST_SUITE("[monitor::NetworkInterfaceStatusTracker]")
         ethernet::Address brd;
         tracker.setBroadcastAddress(brd);
         CHECK(tracker.broadcastAddress() == brd);
-        CHECK(tracker.isDirty(DirtyFlag::BroadcastAddressChanged));
+        CHECK(tracker.isChanged(ChangedFlag::BroadcastAddress));
     }
 
     TEST_CASE("NetworkInterfaceStatusTracker clearFlag")
     {
         tracker.setName("eth0");
-        CHECK(tracker.isDirty(DirtyFlag::NameChanged));
-        tracker.clearFlag(DirtyFlag::NameChanged);
-        CHECK_FALSE(tracker.isDirty(DirtyFlag::NameChanged));
+        CHECK(tracker.isChanged(ChangedFlag::Name));
+        tracker.clearFlag(ChangedFlag::Name);
+        CHECK_FALSE(tracker.isChanged(ChangedFlag::Name));
     }
 
     TEST_CASE("NetworkInterfaceStatusTracker age")

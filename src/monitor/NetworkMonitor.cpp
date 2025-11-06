@@ -570,30 +570,30 @@ void NetworkMonitor::notifyChanges()
         const network::Interface intf {index, tracker.name()};
         for (const auto& [sub, intfs] : m_subscribers) {
             if (intfs.contains(intf)) {
-                if (tracker.isDirty(DirtyFlag::NameChanged)) {
+                if (tracker.isChanged(ChangedFlag::Name)) {
                     sub->onInterfaceNameChanged(intf);
                 }
-                if (tracker.isDirty(DirtyFlag::OperationalStateChanged)) {
+                if (tracker.isChanged(ChangedFlag::OperationalState)) {
                     sub->onOperationalStateChanged(intf, tracker.operationalState());
                 }
-                if (tracker.isDirty(DirtyFlag::NetworkAddressesChanged)) {
+                if (tracker.isChanged(ChangedFlag::NetworkAddresses)) {
                     sub->onNetworkAddressesChanged(intf, tracker.networkAddresses());
                 }
-                if (tracker.isDirty(DirtyFlag::GatewayAddressChanged)) {
+                if (tracker.isChanged(ChangedFlag::GatewayAddress)) {
                     sub->onGatewayAddressChanged(intf, tracker.gatewayAddress());
                 }
-                if (tracker.isDirty(DirtyFlag::MacAddressChanged)) {
+                if (tracker.isChanged(ChangedFlag::MacAddress)) {
                     sub->onMacAddressChanged(intf, tracker.macAddress());
                 }
-                if (tracker.isDirty(DirtyFlag::BroadcastAddressChanged)) {
+                if (tracker.isChanged(ChangedFlag::BroadcastAddress)) {
                     sub->onBroadcastAddressChanged(intf, tracker.broadcastAddress());
                 }
-                if (tracker.isDirty(DirtyFlag::LinkFlagsChanged)) {
+                if (tracker.isChanged(ChangedFlag::LinkFlags)) {
                     sub->onLinkFlagsChanged(intf, tracker.linkFlags());
                 }
             }
         }
-        tracker.clearDirtyFlags();
+        tracker.clearChangedFlags();
     }
 }
 

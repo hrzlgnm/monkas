@@ -29,7 +29,7 @@ auto NetworkInterfaceStatusTracker::hasName() const -> bool
     return !m_name.empty();
 }
 
-void NetworkInterfaceStatusTracker::touch(const DirtyFlag flag)
+void NetworkInterfaceStatusTracker::touch(const ChangedFlag flag)
 {
     if (!m_dirtyFlags.test(flag)) {
         m_lastChanged = std::chrono::steady_clock::now();
@@ -50,7 +50,7 @@ void NetworkInterfaceStatusTracker::setName(const std::string& name)
 {
     if (m_name != name) {
         m_name = name;
-        touch(DirtyFlag::NameChanged);
+        touch(ChangedFlag::Name);
         logTrace(name, this, "name changed to");
         m_nerdstats.nameChanges++;
     }
@@ -65,7 +65,7 @@ void NetworkInterfaceStatusTracker::setOperationalState(const OperationalState o
 {
     if (m_operationalState != operationalState) {
         m_operationalState = operationalState;
-        touch(DirtyFlag::OperationalStateChanged);
+        touch(ChangedFlag::OperationalState);
         logTrace(operationalState, this, "operational state changed to");
         m_nerdstats.operationalStateChanges++;
     }
@@ -85,7 +85,7 @@ void NetworkInterfaceStatusTracker::setMacAddress(const ethernet::Address& addre
 {
     if (m_macAddress != address || address.allZeroes()) {
         m_macAddress = address;
-        touch(DirtyFlag::MacAddressChanged);
+        touch(ChangedFlag::MacAddress);
         logTrace(address, this, "mac address changed to");
         m_nerdstats.macAddressChanges++;
     }
@@ -95,7 +95,7 @@ void NetworkInterfaceStatusTracker::setBroadcastAddress(const ethernet::Address&
 {
     if (m_broadcastAddress != address || address.allZeroes()) {
         m_broadcastAddress = address;
-        touch(DirtyFlag::BroadcastAddressChanged);
+        touch(ChangedFlag::BroadcastAddress);
         logTrace(address, this, "broadcast address changed to");
         m_nerdstats.broadcastAddressChanges++;
     }
@@ -110,7 +110,7 @@ void NetworkInterfaceStatusTracker::setGatewayAddress(const ip::Address& gateway
 {
     if (m_gateway != gateway) {
         m_gateway = gateway;
-        touch(DirtyFlag::GatewayAddressChanged);
+        touch(ChangedFlag::GatewayAddress);
         logTrace(gateway, this, "gateway address changed to");
         m_nerdstats.gatewayAddressChanges++;
     }
@@ -120,7 +120,7 @@ void NetworkInterfaceStatusTracker::clearGatewayAddress(const GatewayClearReason
 {
     if (m_gateway) {
         m_gateway = ip::Address();
-        touch(DirtyFlag::GatewayAddressChanged);
+        touch(ChangedFlag::GatewayAddress);
         logTrace(r, this, "gateway cleared due to");
         m_nerdstats.gatewayAddressClears++;
     }
@@ -135,7 +135,7 @@ void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address& ad
 {
     if (m_networkAddresses.erase(address) == 0) {
         m_networkAddresses.insert(address);
-        touch(DirtyFlag::NetworkAddressesChanged);
+        touch(ChangedFlag::NetworkAddresses);
         logTrace(address, this, "address added");
         m_nerdstats.networkAddressesAdded++;
     } else {
@@ -152,7 +152,7 @@ void NetworkInterfaceStatusTracker::removeNetworkAddress(const network::Address&
     m_nerdstats.networkAddressesRemoved += res;
     if (res > 0) {
         logTrace(address, this, "address removed");
-        touch(DirtyFlag::NetworkAddressesChanged);
+        touch(ChangedFlag::NetworkAddresses);
         if (std::ranges::count_if(m_networkAddresses,
                                   [](const network::Address& a) -> bool { return a.family() == ip::Family::IPv4; })
             == 0)
@@ -168,7 +168,7 @@ void NetworkInterfaceStatusTracker::updateLinkFlags(const LinkFlags& flags)
 {
     if (m_linkFlags != flags) {
         m_linkFlags = flags;
-        touch(DirtyFlag::LinkFlagsChanged);
+        touch(ChangedFlag::LinkFlags);
         logTrace(flags, this, "link flags updated to");
         m_nerdstats.linkFlagChanges++;
     }
@@ -184,24 +184,24 @@ auto NetworkInterfaceStatusTracker::age() const -> Duration
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_lastChanged);
 }
 
-auto NetworkInterfaceStatusTracker::isDirty() const -> bool
+auto NetworkInterfaceStatusTracker::hasChanges() const -> bool
 {
     m_nerdstats.dirtyFlagChecks++;
     return m_dirtyFlags.any();
 }
 
-auto NetworkInterfaceStatusTracker::isDirty(const DirtyFlag flag) const -> bool
+auto NetworkInterfaceStatusTracker::isChanged(const ChangedFlag flag) const -> bool
 {
     m_nerdstats.dirtyFlagChecks++;
     return m_dirtyFlags.test(flag);
 }
 
-auto NetworkInterfaceStatusTracker::dirtyFlags() const -> DirtyFlags
+auto NetworkInterfaceStatusTracker::changedFlags() const -> ChangedFlags
 {
     return m_dirtyFlags;
 }
 
-void NetworkInterfaceStatusTracker::clearFlag(const DirtyFlag flag)
+void NetworkInterfaceStatusTracker::clearFlag(const ChangedFlag flag)
 {
     if (m_dirtyFlags.test(flag)) {
         m_dirtyFlags.reset(flag);
@@ -212,7 +212,7 @@ void NetworkInterfaceStatusTracker::clearFlag(const DirtyFlag flag)
     }
 }
 
-void NetworkInterfaceStatusTracker::clearDirtyFlags()
+void NetworkInterfaceStatusTracker::clearChangedFlags()
 {
     m_nerdstats.dirtyFlagClears += m_dirtyFlags.count();
     m_dirtyFlags.reset();
@@ -286,23 +286,23 @@ auto operator<<(std::ostream& o, const GatewayClearReason r) -> std::ostream&
     return o;
 }
 
-auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&
+auto operator<<(std::ostream& o, ChangedFlag d) -> std::ostream&
 {
-    using enum NetworkInterfaceStatusTracker::DirtyFlag;
+    using enum NetworkInterfaceStatusTracker::ChangedFlag;
     switch (d) {
-        case NameChanged:
+        case Name:
             return o << "NameChanged";
-        case LinkFlagsChanged:
+        case LinkFlags:
             return o << "LinkFlagsChanged";
-        case OperationalStateChanged:
+        case OperationalState:
             return o << "OperationalStateChanged";
-        case MacAddressChanged:
+        case MacAddress:
             return o << "MacAddressChanged";
-        case BroadcastAddressChanged:
+        case BroadcastAddress:
             return o << "BroadcastAddressChanged";
-        case GatewayAddressChanged:
+        case GatewayAddress:
             return o << "GatewayAddressChanged";
-        case NetworkAddressesChanged:
+        case NetworkAddresses:
             return o << "NetworkAddressesChanged";
         case FlagsCount:
         default:
@@ -310,7 +310,7 @@ auto operator<<(std::ostream& o, DirtyFlag d) -> std::ostream&
     }
 }
 
-auto operator<<(std::ostream& o, const DirtyFlags& d) -> std::ostream&
+auto operator<<(std::ostream& o, const ChangedFlags& d) -> std::ostream&
 {
     return o << d.toString();
 }
@@ -392,7 +392,7 @@ auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std:
     }
     o << " op " << toString(s.operationalState()) << "(" << static_cast<int>(s.operationalState()) << ")";
     o << " age " << s.age().count();
-    o << " dirty " << s.dirtyFlags();
+    o << " dirty " << s.changedFlags();
     return o;
 }
 
