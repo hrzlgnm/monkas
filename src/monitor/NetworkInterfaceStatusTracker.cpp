@@ -35,9 +35,9 @@ void NetworkInterfaceStatusTracker::touch(const ChangedFlag flag)
         m_lastChanged = std::chrono::steady_clock::now();
         m_changedFlags.set(flag);
         m_nerdstats.changedFlagChanges++;
-        logTrace(flag, this, "dirty flag set");
+        logTrace(flag, this, "change flag set");
     } else {
-        logTrace(flag, this, "dirty flag already set");
+        logTrace(flag, this, "change flag already set");
     }
 }
 
@@ -139,7 +139,7 @@ void NetworkInterfaceStatusTracker::addNetworkAddress(const network::Address& ad
         logTrace(address, this, "address added");
         m_nerdstats.networkAddressesAdded++;
     } else {
-        // No material change – keep ordering stable, skip dirty-flag spam
+        // No material change – keep ordering stable, skip change-flag spam
         m_networkAddresses.insert(address);
         logTrace(address, this, "address unchanged");
         m_nerdstats.networkAddressesNoChangeUpdates++;
@@ -206,9 +206,9 @@ void NetworkInterfaceStatusTracker::clearFlag(const ChangedFlag flag)
     if (m_changedFlags.test(flag)) {
         m_changedFlags.reset(flag);
         m_nerdstats.changedFlagClears++;
-        logTrace(flag, this, "dirty flag cleared");
+        logTrace(flag, this, "change flag cleared");
     } else {
-        logTrace(flag, this, "dirty flag already cleared");
+        logTrace(flag, this, "change flag already cleared");
     }
 }
 
@@ -216,7 +216,7 @@ void NetworkInterfaceStatusTracker::clearChangedFlags()
 {
     m_nerdstats.changedFlagClears += m_changedFlags.count();
     m_changedFlags.reset();
-    logTrace("all dirty flags", this, "cleared");
+    logTrace("all change flags", this, "cleared");
 }
 
 void NetworkInterfaceStatusTracker::logNerdstats() const
@@ -306,7 +306,7 @@ auto operator<<(std::ostream& o, ChangedFlag d) -> std::ostream&
             return o << "NetworkAddressesChanged";
         case FlagsCount:
         default:
-            return o << "UnknownDirtyFlag: 0x" << std::hex << static_cast<uint8_t>(d);
+            return o << "UnknownchangeFlag: 0x" << std::hex << static_cast<uint8_t>(d);
     }
 }
 
@@ -392,7 +392,7 @@ auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std:
     }
     o << " op " << toString(s.operationalState()) << "(" << static_cast<int>(s.operationalState()) << ")";
     o << " age " << s.age().count();
-    o << " dirty " << s.changedFlags();
+    o << " change " << s.changedFlags();
     return o;
 }
 
