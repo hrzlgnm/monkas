@@ -126,7 +126,7 @@ class NetworkInterfaceStatusTracker
     Addresses m_networkAddresses;
     std::optional<ip::Address> m_gateway;
     std::chrono::time_point<std::chrono::steady_clock> m_lastChanged;
-    ChangedFlags m_dirtyFlags;
+    ChangedFlags m_changedFlags;
     LinkFlags m_linkFlags;
 
     // mutable for tracking const getters
@@ -142,9 +142,9 @@ class NetworkInterfaceStatusTracker
         uint64_t networkAddressesNoChangeUpdates {0};
         uint64_t networkAddressesAdded {0};
         uint64_t networkAddressesRemoved {0};
-        uint64_t dirtyFlagChanges {0};
-        uint64_t dirtyFlagChecks {0};
-        uint64_t dirtyFlagClears {0};
+        uint64_t changedFlagChanges {0};
+        uint64_t changedFlagChecks {0};
+        uint64_t changedFlagClears {0};
     } m_nerdstats;
 };
 

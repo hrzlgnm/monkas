@@ -31,10 +31,10 @@ auto NetworkInterfaceStatusTracker::hasName() const -> bool
 
 void NetworkInterfaceStatusTracker::touch(const ChangedFlag flag)
 {
-    if (!m_dirtyFlags.test(flag)) {
+    if (!m_changedFlags.test(flag)) {
         m_lastChanged = std::chrono::steady_clock::now();
-        m_dirtyFlags.set(flag);
-        m_nerdstats.dirtyFlagChanges++;
+        m_changedFlags.set(flag);
+        m_nerdstats.changedFlagChanges++;
         logTrace(flag, this, "dirty flag set");
     } else {
         logTrace(flag, this, "dirty flag already set");
@@ -186,26 +186,26 @@ auto NetworkInterfaceStatusTracker::age() const -> Duration
 
 auto NetworkInterfaceStatusTracker::hasChanges() const -> bool
 {
-    m_nerdstats.dirtyFlagChecks++;
-    return m_dirtyFlags.any();
+    m_nerdstats.changedFlagChecks++;
+    return m_changedFlags.any();
 }
 
 auto NetworkInterfaceStatusTracker::isChanged(const ChangedFlag flag) const -> bool
 {
-    m_nerdstats.dirtyFlagChecks++;
-    return m_dirtyFlags.test(flag);
+    m_nerdstats.changedFlagChecks++;
+    return m_changedFlags.test(flag);
 }
 
 auto NetworkInterfaceStatusTracker::changedFlags() const -> ChangedFlags
 {
-    return m_dirtyFlags;
+    return m_changedFlags;
 }
 
 void NetworkInterfaceStatusTracker::clearFlag(const ChangedFlag flag)
 {
-    if (m_dirtyFlags.test(flag)) {
-        m_dirtyFlags.reset(flag);
-        m_nerdstats.dirtyFlagClears++;
+    if (m_changedFlags.test(flag)) {
+        m_changedFlags.reset(flag);
+        m_nerdstats.changedFlagClears++;
         logTrace(flag, this, "dirty flag cleared");
     } else {
         logTrace(flag, this, "dirty flag already cleared");
@@ -214,8 +214,8 @@ void NetworkInterfaceStatusTracker::clearFlag(const ChangedFlag flag)
 
 void NetworkInterfaceStatusTracker::clearChangedFlags()
 {
-    m_nerdstats.dirtyFlagClears += m_dirtyFlags.count();
-    m_dirtyFlags.reset();
+    m_nerdstats.changedFlagClears += m_changedFlags.count();
+    m_changedFlags.reset();
     logTrace("all dirty flags", this, "cleared");
 }
 
@@ -232,9 +232,9 @@ void NetworkInterfaceStatusTracker::logNerdstats() const
     spdlog::info("networkAddresses no change updates   {}", m_nerdstats.networkAddressesNoChangeUpdates);
     spdlog::info("networkAddresses added               {}", m_nerdstats.networkAddressesAdded);
     spdlog::info("networkAddresses removed             {}", m_nerdstats.networkAddressesRemoved);
-    spdlog::info("dirtyFlag changes                    {}", m_nerdstats.dirtyFlagChanges);
-    spdlog::info("dirtyFlag checks                     {}", m_nerdstats.dirtyFlagChecks);
-    spdlog::info("dirtyFlag clears                     {}", m_nerdstats.dirtyFlagClears);
+    spdlog::info("changedFlag changes                  {}", m_nerdstats.changedFlagChanges);
+    spdlog::info("changedFlag checks                   {}", m_nerdstats.changedFlagChecks);
+    spdlog::info("changedFlag clears                   {}", m_nerdstats.changedFlagClears);
     spdlog::info("{:-^38}", "-");
 }
 
