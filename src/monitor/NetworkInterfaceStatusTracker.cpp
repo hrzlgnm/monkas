@@ -306,7 +306,7 @@ auto operator<<(std::ostream& o, ChangedFlag d) -> std::ostream&
             return o << "NetworkAddressesChanged";
         case FlagsCount:
         default:
-            return o << "UnknownchangeFlag: 0x" << std::hex << static_cast<uint8_t>(d);
+            return o << "Unknown ChangedFlag: 0x" << std::hex << static_cast<uint8_t>(d);
     }
 }
 
@@ -359,7 +359,7 @@ auto operator<<(std::ostream& o, NetworkInterfaceStatusTracker::LinkFlag l) -> s
             return o << "Echo";
         case FlagsCount:
         default:
-            return o << "UnknownLinkFlag: 0x" << std::hex << static_cast<uint8_t>(l);
+            return o << "Unknown LinkFlag: 0x" << std::hex << static_cast<uint8_t>(l);
     }
 }
 
