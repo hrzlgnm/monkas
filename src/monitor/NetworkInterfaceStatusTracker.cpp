@@ -392,7 +392,7 @@ auto operator<<(std::ostream& o, const NetworkInterfaceStatusTracker& s) -> std:
     }
     o << " op " << toString(s.operationalState()) << "(" << static_cast<int>(s.operationalState()) << ")";
     o << " age " << s.age().count();
-    o << " change " << s.changedFlags();
+    o << " changed " << s.changedFlags();
     return o;
 }
 
