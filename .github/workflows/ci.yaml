@@ -20,7 +20,7 @@ jobs:
   Lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2f0ee22439029b94e995781f48f474ab12428f8689bc236d8b4c47780138c8a9
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:850894e359e4b0bf4ab2178e3380a5679d781314d80a39191c803e340f331927
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
@@ -45,7 +45,7 @@ jobs:
       CMAKE_C_COMPILER_LAUNCHER: sccache
       CMAKE_CXX_COMPILER_LAUNCHER: sccache
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2f0ee22439029b94e995781f48f474ab12428f8689bc236d8b4c47780138c8a9
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:850894e359e4b0bf4ab2178e3380a5679d781314d80a39191c803e340f331927
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Run sccache-action
@@ -130,7 +130,7 @@ jobs:
             }
     runs-on: ${{ matrix.toolchain.runs_on }}
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:2f0ee22439029b94e995781f48f474ab12428f8689bc236d8b4c47780138c8a9
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:850894e359e4b0bf4ab2178e3380a5679d781314d80a39191c803e340f331927
     env:
       ASAN_OPTIONS: ${{ matrix.toolchain.ASAN_OPTIONS }}
       CMAKE_BUILD_TYPE: ${{ matrix.toolchain.CMAKE_BUILD_TYPE }}
