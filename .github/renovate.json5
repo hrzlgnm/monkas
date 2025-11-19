@@ -28,6 +28,20 @@
                 'pip\\s+install(\\s+--[^\\s]+)+?\\s+(?<depName>[^\\s]+?)==(?<currentValue>.+?)\\s'
             ],
             datasourceTemplate: 'pypi'
+        },
+        {
+            customType: 'regex',
+            managerFilePatterns: [
+                '/CMakeLists\\.txt$/',
+                '/.*\\.cmake$/'
+            ],
+            matchStrings: [
+                'FetchContent_Declare[ \\s]*\\([^)]*GIT_REPOSITORY[ \\s]*"https:\\/\\/github\\.com\\/(?<packageName>[^"]*?)(.git)?"[^)]*GIT_TAG[ \\s]*"(?<currentValue>[^"]*)'
+            ],
+            packageNameTemplate: '{{#if (equals currentValue.length 40)}}https://github.com/{{packageName}}.git{{else}}{{packageName}}{{/if}}',
+            datasourceTemplate: '{{#if (equals currentValue.length 40)}}git-refs{{else}}github-tags{{/if}}',
+            versioningTemplate: '{{#if (equals currentValue.length 40)}}git{{else}}loose{{/if}}'
         }
+
     ]
 }

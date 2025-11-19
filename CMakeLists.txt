@@ -8,6 +8,8 @@ project(
         C
 )
 
+include(cmake/spdlog.cmake)
+
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
 
@@ -18,9 +20,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include(GNUInstallDirs)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(libmnl REQUIRED IMPORTED_TARGET libmnl)
-if(NOT TARGET spdlog)
-    find_package(spdlog REQUIRED)
-endif()
 
 add_compile_options(
     -Wall
