@@ -6,8 +6,6 @@ on:
 jobs:
   Lint:
     runs-on: ubuntu-latest
-    container:
-      image: "ghcr.io/hrzlgnm/cappuchin-github-void-linux-glibc-clang:v1@sha256:24fd0191fc1ad18dfa0b5a19c4adb08a2fd7e1ed54cdad38df785fd143aef05a"
     steps:
       - name: 🔄 Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
@@ -16,4 +14,5 @@ jobs:
         run: gersemi --check --diff .
 
       - name: 📐 Check clang-format
-        run: cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake
+        run: |
+          find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format --dry-run --Werror {} +
