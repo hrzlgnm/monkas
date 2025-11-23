@@ -1,5 +1,6 @@
 #include <compare>
 #include <ostream>
+#include <utility>
 
 #include <linux/rtnetlink.h>
 #include <network/Address.hpp>
@@ -155,8 +156,9 @@ auto operator<<(std::ostream& o, const AddressFlag a) -> std::ostream&
             return o << "MulticastAutoJoin";
         case StablePrivacy:
             return o << "StablePrivacy";
+        case FlagsCount:
         default:
-            return o << "Unknown Flag: 0x" << std::hex << static_cast<int>(a);
+            return o << fmt::format("Unknown AddressFlag: 0x{:02x}", std::to_underlying(a));
     }
 }
 
