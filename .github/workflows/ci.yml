@@ -45,7 +45,6 @@ jobs:
             code:
               - '.clang-tidy'
               - '.github/workflows/build-and-test.yml'
-              - '.github/workflows/static-analysis.yml'
               - 'examples/**'
               - 'external/**'
               - 'include/**'
@@ -54,7 +53,6 @@ jobs:
               - '.clang-format'
               - '.gersemirc'
               - '.github/workflows/lint.yml'
-              - 'cppcheck/**'
             tests:
               - 'tests/**'
 
