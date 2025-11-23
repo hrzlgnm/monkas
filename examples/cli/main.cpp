@@ -66,12 +66,16 @@ auto main(int argc, char* argv[]) -> int
 
     if (FLAGS_log_to_file) {
         const auto logFileName = fmt::format("/tmp/monka-{}.log", getpid());
-        // Let the user know where to find the log file before switching to file logging
-        spdlog::info("Logging to {}", logFileName);
-        auto logger = spdlog::basic_logger_mt("monka", logFileName, true);
-        logger->flush_on(spdlog::level::critical);
-        logger->set_level(spdlog::get_level());
-        spdlog::set_default_logger(std::move(logger));
+        try {
+            auto logger = spdlog::basic_logger_mt("monka", logFileName, true);
+            logger->flush_on(spdlog::level::critical);
+            logger->set_level(spdlog::get_level());
+            // Let the user know where to find the log file before switching to file logging
+            spdlog::info("Logging to {}", logFileName);
+            spdlog::set_default_logger(std::move(logger));
+        } catch (const spdlog::spdlog_ex& ex) {
+            spdlog::error("Log initialization failed: {}, continuing without logging to file", ex.what());
+        }
     }
 
     constexpr auto FLUSH_EVERY = std::chrono::seconds(10);
