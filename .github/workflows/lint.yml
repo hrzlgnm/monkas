@@ -1,0 +1,20 @@
+name: Reusable lint workflow
+
+on:
+  workflow_call:
+
+jobs:
+  Lint:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:850894e359e4b0bf4ab2178e3380a5679d781314d80a39191c803e340f331927
+    steps:
+      - name: 🔄 Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+
+      - name: 📐 Check cmake format
+        run: gersemi --check --diff .
+
+      - name: 📐 Check clang-format
+        run: |
+          find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format --dry-run --Werror {} +
