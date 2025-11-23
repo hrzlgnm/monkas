@@ -77,7 +77,8 @@ jobs:
   build-and-test:
     name: Build and Test
     permissions:
-      checks: write # required for action-junit-report annotation
+      pull-requests: write # retain for PR operations
+      checks: write # required for action-junit-report annotations
     needs: changes
     if: needs.changes.outputs.code == 'true' || needs.changes.outputs.tests == 'true'
     uses: ./.github/workflows/build-and-test.yml
