@@ -1,4 +1,5 @@
-![coverity](https://img.shields.io/coverity/scan/32629.svg)
+[![coverity](https://img.shields.io/coverity/scan/32629.svg)](https://scan.coverity.com/projects/hrzlgnm-monkas)
+[![License: MIT](https://img.shields.io/github/license/hrzlgnm/monkas)](https://github.com/hrzlgnm/monkas/blob/main/LICENSE)
 
 <!--toc:start-->
 
