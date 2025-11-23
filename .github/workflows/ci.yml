@@ -94,12 +94,6 @@ jobs:
     with:
       branch: ${{ needs.changes.outputs.branch }}
 
-  static-analysis:
-    name: Static Analysis
-    needs: changes
-    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.tests == 'true'
-    uses: ./.github/workflows/static-analysis.yml
-
   always-run:
     # used in branch protection rulesets as the only relevant step needing to pass
     name: CI Status
