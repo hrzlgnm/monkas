@@ -23,7 +23,7 @@ concurrency:
 jobs:
   changes:
     name: 🔍 Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
       code: ${{ steps.filter.outputs.code }}
