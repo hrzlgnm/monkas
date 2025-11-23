@@ -154,8 +154,8 @@ using GatewayClearReason = NetworkInterfaceStatusTracker::GatewayClearReason;
 auto operator<<(std::ostream& o, GatewayClearReason r) -> std::ostream&;
 using ChangedFlag = NetworkInterfaceStatusTracker::ChangedFlag;
 using ChangedFlags = NetworkInterfaceStatusTracker::ChangedFlags;
-auto operator<<(std::ostream& o, ChangedFlag d) -> std::ostream&;
-auto operator<<(std::ostream& o, const ChangedFlags& d) -> std::ostream&;
+auto operator<<(std::ostream& o, ChangedFlag c) -> std::ostream&;
+auto operator<<(std::ostream& o, const ChangedFlags& c) -> std::ostream&;
 using LinkFlag = NetworkInterfaceStatusTracker::LinkFlag;
 using LinkFlags = NetworkInterfaceStatusTracker::LinkFlags;
 

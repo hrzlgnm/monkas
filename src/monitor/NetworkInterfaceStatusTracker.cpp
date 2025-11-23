@@ -286,10 +286,10 @@ auto operator<<(std::ostream& o, const GatewayClearReason r) -> std::ostream&
     return o;
 }
 
-auto operator<<(std::ostream& o, ChangedFlag d) -> std::ostream&
+auto operator<<(std::ostream& o, ChangedFlag c) -> std::ostream&
 {
     using enum NetworkInterfaceStatusTracker::ChangedFlag;
-    switch (d) {
+    switch (c) {
         case Name:
             return o << "NameChanged";
         case LinkFlags:
@@ -306,13 +306,13 @@ auto operator<<(std::ostream& o, ChangedFlag d) -> std::ostream&
             return o << "NetworkAddressesChanged";
         case FlagsCount:
         default:
-            return o << "Unknown ChangedFlag: 0x" << std::hex << static_cast<uint8_t>(d);
+            return o << fmt::format("Unknown ChangedFlag: 0x{:02x}", std::to_underlying(c));
     }
 }
 
-auto operator<<(std::ostream& o, const ChangedFlags& d) -> std::ostream&
+auto operator<<(std::ostream& o, const ChangedFlags& c) -> std::ostream&
 {
-    return o << d.toString();
+    return o << c.toString();
 }
 
 auto operator<<(std::ostream& o, NetworkInterfaceStatusTracker::LinkFlag l) -> std::ostream&
@@ -359,7 +359,7 @@ auto operator<<(std::ostream& o, NetworkInterfaceStatusTracker::LinkFlag l) -> s
             return o << "Echo";
         case FlagsCount:
         default:
-            return o << "Unknown LinkFlag: 0x" << std::hex << static_cast<uint8_t>(l);
+            return o << fmt::format("Unknown LinkFlag: 0x{:02x}", std::to_underlying(l));
     }
 }
 
