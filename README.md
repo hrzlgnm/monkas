@@ -1,3 +1,5 @@
+![coverity](https://img.shields.io/coverity/scan/32629.svg)
+
 <!--toc:start-->
 
 - [monkas](#monkas)
