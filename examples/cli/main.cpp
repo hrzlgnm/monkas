@@ -71,7 +71,7 @@ auto main(int argc, char* argv[]) -> int
         auto logger = spdlog::basic_logger_mt("monka", logFileName, true);
         logger->flush_on(spdlog::level::critical);
         logger->set_level(spdlog::get_level());
-        spdlog::set_default_logger(logger);
+        spdlog::set_default_logger(std::move(logger));
     }
 
     constexpr auto FLUSH_EVERY = std::chrono::seconds(10);
