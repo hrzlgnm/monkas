@@ -72,7 +72,7 @@ auto main(int argc, char* argv[]) -> int
             logger->set_level(spdlog::get_level());
             // Let the user know where to find the log file before switching to file logging
             spdlog::info("Logging to {}", logFileName);
-            spdlog::set_default_logger(logger);
+            spdlog::set_default_logger(std::move(logger));
         } catch (const spdlog::spdlog_ex& ex) {
             spdlog::error("Log initialization failed: {}, continuing without logging to file", ex.what());
         }
