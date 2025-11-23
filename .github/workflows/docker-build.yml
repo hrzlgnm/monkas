@@ -1,21 +1,14 @@
 name: Build Changed Dockerfiles
 
 on:
-  push:
-    paths:
-      - ".github/docker/**/Dockerfile"
-      - ".github/workflows/docker-build.yaml"
-    branches:
-      - main
-  pull_request:
-    paths:
-      - ".github/docker/**/Dockerfile"
-      - ".github/workflows/docker-build.yaml"
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      branch:
+        type: string
+        description: The branch name we are building, eg 'main'
+        required: true
   workflow_dispatch:
-  schedule:
-    - cron: "0 0 1 * *"
+
 jobs:
   changed-dockerfiles:
     name: 🔍 Dockerfiles

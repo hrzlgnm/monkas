@@ -1,43 +1,10 @@
-name: CI
+name: Reusable build and test workflow
 
 on:
-  push:
-    paths-ignore:
-      - ".github/docker/**/*"
-      - ".github/workflows/docker-build.yaml"
-    branches: [main]
-  pull_request:
-    paths-ignore:
-      - ".github/docker/**/*"
-      - ".github/workflows/docker-build.yaml"
-    branches: [main]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  workflow_call:
+  workflow_dispatch:
 
 jobs:
-  Lint:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:850894e359e4b0bf4ab2178e3380a5679d781314d80a39191c803e340f331927
-    steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
-
-      - name: Check clang-format
-        if: always()
-        run: |
-          find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format --dry-run --Werror {} +
-
-      - name: Check spelling using typos-action
-        if: always()
-        uses: crate-ci/typos@626c4bedb751ce0b7f03262ca97ddda9a076ae1c # v1.39.2
-
-      - name: Gersemi --check --diff
-        if: always()
-        run: |
-          gersemi --check --diff .
-
   Non-Default-Build-Config:
     runs-on: ubuntu-latest
     env:
@@ -67,7 +34,6 @@ jobs:
       matrix:
         toolchain:
           - {
-              runs_on: ubuntu-latest,
               name: Clang libstdc++,
               CC: clang,
               CXX: clang++,
@@ -77,7 +43,6 @@ jobs:
               sccache: sccache,
             }
           - {
-              runs_on: ubuntu-latest,
               name: Clang ASAN+UBSAN libstdc++,
               CC: clang,
               CXX: clang++,
@@ -88,7 +53,6 @@ jobs:
               sccache: sccache,
             }
           - {
-              runs_on: ubuntu-latest,
               name: Clang libstdc++ Release,
               CC: clang,
               CXX: clang++,
@@ -98,7 +62,6 @@ jobs:
               sccache: sccache,
             }
           - {
-              runs_on: ubuntu-latest,
               name: GCC,
               CC: gcc,
               CXX: g++,
@@ -108,7 +71,6 @@ jobs:
               sccache: sccache,
             }
           - {
-              runs_on: ubuntu-latest,
               name: GCC ASAN+UBSAN,
               CC: gcc,
               CXX: g++,
@@ -119,7 +81,6 @@ jobs:
               sccache: sccache,
             }
           - {
-              runs_on: ubuntu-latest,
               name: GCC Release,
               CC: gcc,
               CXX: g++,
@@ -128,7 +89,7 @@ jobs:
               CMAKE_FLAGS: -G Ninja,
               sccache: sccache,
             }
-    runs-on: ${{ matrix.toolchain.runs_on }}
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:850894e359e4b0bf4ab2178e3380a5679d781314d80a39191c803e340f331927
     env:
@@ -174,7 +135,6 @@ jobs:
           ./build/examples/cli/monka --log-level=trace --nerdstats --dumppackets --include-non-ieee802 --exit-after-enumeration
 
       - name: JUnit Report
-        if: always()
         uses: mikepenz/action-junit-report@e08919a3b1fb83a78393dfb775a9c37f17d8eea6 # v6
         with:
           report_paths: "**/junit.xml"
