@@ -72,7 +72,7 @@ auto Address::isMulticast() const -> bool
                                       const auto upperOctet = addr[0];
                                       return upperOctet >= V4_MCAST_START && upperOctet <= V4_MCAST_END;
                                   },
-                                  [](const V6Bytes& addr)
+                                  [](const V6Bytes& addr) -> bool
                                   {
                                       // IPv6 multicast addresses start with 0xff
                                       constexpr auto V6_MCAST_PREFIX = 0xffU;
