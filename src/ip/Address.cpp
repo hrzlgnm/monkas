@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cstring>
 #include <ostream>
 #include <stdexcept>
 #include <utility>
@@ -65,7 +64,7 @@ auto Address::isV6() const -> bool
 
 auto Address::isMulticast() const -> bool
 {
-    return std::visit(Overloaded {[](const V4Bytes& addr)
+    return std::visit(Overloaded {[](const V4Bytes& addr) -> bool
                                   {
                                       // IPv4 multicast addresses are in the range
                                       constexpr auto V4_MCAST_START = 224;
@@ -84,7 +83,7 @@ auto Address::isMulticast() const -> bool
 
 auto Address::isUnicastLinkLocal() const -> bool
 {
-    return std::visit(Overloaded {[](const V4Bytes& addr)
+    return std::visit(Overloaded {[](const V4Bytes& addr) -> bool
                                   {
                                       constexpr auto LINK_LOCAL_START = 169;
                                       constexpr auto LINK_LOCAL_END = 254;
@@ -116,13 +115,13 @@ auto Address::isUniqueLocal() const -> bool
 
 auto Address::isLoopback() const -> bool
 {
-    return std::visit(Overloaded {[](const V4Bytes& addr)
+    return std::visit(Overloaded {[](const V4Bytes& addr) -> bool
                                   {
                                       // Loopback address in IPv4 is
                                       constexpr uint8_t LOOPBACK_FIRST_OCTET = 127;
                                       return addr[0] == LOOPBACK_FIRST_OCTET;
                                   },
-                                  [](const V6Bytes& addr)
+                                  [](const V6Bytes& addr) -> bool
                                   {
                                       // Loopback address in IPv6 is ::1
                                       return std::all_of(
@@ -150,13 +149,13 @@ auto Address::family() const -> Family
 
 auto Address::toString() const -> std::string
 {
-    return std::visit(Overloaded {[](const V4Bytes& addr)
+    return std::visit(Overloaded {[](const V4Bytes& addr) -> std::string
                                   {
                                       std::array<char, INET_ADDRSTRLEN> buffer {};
                                       inet_ntop(AF_INET, addr.data(), buffer.data(), buffer.size());
                                       return std::string(buffer.data());
                                   },
-                                  [](const V6Bytes& addr)
+                                  [](const V6Bytes& addr) -> std::string
                                   {
                                       std::array<char, INET6_ADDRSTRLEN> buffer {};
                                       inet_ntop(AF_INET6, addr.data(), buffer.data(), buffer.size());
