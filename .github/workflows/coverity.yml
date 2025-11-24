@@ -1,8 +1,8 @@
-name: Coverity Scan Reusable Workflow
+name: Coverity Scan Workflow
 on:
-  workflow_call:
   workflow_dispatch:
-
+  schedule:
+    - cron: "0 7 * * SAT"
 jobs:
   coverity:
     runs-on: ubuntu-latest
