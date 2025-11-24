@@ -52,7 +52,7 @@ class Address
     [[nodiscard]] auto family() const -> Family;
 
     [[nodiscard]] auto operator<=>(const Address& rhs) const noexcept -> std::strong_ordering;
-    [[nodiscard]] auto operator==(const Address& rhs) const noexcept -> bool = default;
+    [[nodiscard]] auto operator==(const Address& rhs) const -> bool = default;
 
   private:
     Bytes m_bytes;
