@@ -13,7 +13,7 @@ namespace
 {
 template<typename T>
 inline constexpr auto always_false = false;
-}
+}  // namespace
 
 auto asLinuxAf(const Family f) -> int
 {
@@ -23,9 +23,8 @@ auto asLinuxAf(const Family f) -> int
             return AF_INET;
         case IPv6:
             return AF_INET6;
-        default:
-            return AF_UNSPEC;
     }
+    return AF_UNSPEC;
 }
 
 auto operator<<(std::ostream& o, const Family f) -> std::ostream&
@@ -33,16 +32,11 @@ auto operator<<(std::ostream& o, const Family f) -> std::ostream&
     using enum Family;
     switch (f) {
         case IPv4:
-            o << "inet";
-            break;
+            return o << "inet";
         case IPv6:
-            o << "inet6";
-            break;
-        default:
-            o << "unspec";
-            break;
+            return o << "inet6";
     }
-    return o;
+    return o << "unspec";
 }
 
 Address::Address() = default;

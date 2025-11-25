@@ -58,7 +58,7 @@ template<std::size_t N>
 }  // namespace
 
 auto Attributes::parse(const nlmsghdr* n,
-                       const size_t offset,
+                       const uint32_t offset,
                        const uint16_t maxType,
                        uint64_t& seenCounter,
                        uint64_t& unknownCounter) -> Attributes
