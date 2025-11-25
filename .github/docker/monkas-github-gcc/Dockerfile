@@ -5,6 +5,7 @@ RUN apt-get update && \
     clang \
     clang-format \
     cmake \
+    cppcheck \
     jq \
     libasan8 \
     libclang-rt-dev \
