@@ -103,6 +103,20 @@ auto Address::isUnicastLinkLocal() const -> bool
         }, m_bytes);
 }
 
+auto Address::isUniqueLocal() const -> bool
+{
+    if (!isV6()) {
+        return false;
+    }
+    const auto bytes = std::get<V6Bytes>(m_bytes);
+
+    // Unique local IPv6 addresses are in fc00::/7 (first 7 bits are 1111 110)
+    // So, check if the first byte & 0xFE == 0xFC
+    constexpr auto V6_UL_PREFIX = 0xFCU;
+    constexpr auto V6_UL_MASK = 0xFEU;
+    return (bytes[0] & V6_UL_MASK) == V6_UL_PREFIX;
+}
+
 auto Address::isLoopback() const -> bool
 {
     return std::visit(
