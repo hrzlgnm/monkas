@@ -45,6 +45,7 @@ jobs:
             code:
               - '.clang-tidy'
               - '.github/workflows/build-and-test.yml'
+              - '.github/workflows/static-analysis.yml'
               - 'examples/**'
               - 'external/**'
               - 'include/**'
@@ -92,6 +93,13 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       branch: ${{ needs.changes.outputs.branch }}
+
+  # not to be included into the all-required-green yet
+  static-analysis:
+    name: Static Analysis
+    needs: changes
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.tests == 'true'
+    uses: ./.github/workflows/static-analysis.yml
 
   all-required-green: # This job does nothing and is only used for the branch protection
     name: CI Status
