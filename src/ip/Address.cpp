@@ -120,7 +120,7 @@ auto Address::isLoopback() const -> bool
                 constexpr uint8_t LOOPBACK_FIRST_OCTET = 127;
                 return addr[0] == LOOPBACK_FIRST_OCTET;
             } else if constexpr (std::same_as<T, V6Bytes>) {
-                return std::all_of(addr.cbegin(), addr.cend() - 1, [](const uint8_t b) { return b == 0; })
+                return std::all_of(addr.cbegin(), std::prev(addr.cend()), [](const uint8_t b) { return b == 0; })
                     && addr[IPV6_ADDR_LEN - 1] == 1;
             } else {
                 static_assert(false, "Non-exhaustive visitor for Address type");
