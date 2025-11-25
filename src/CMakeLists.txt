@@ -33,7 +33,7 @@ target_sources(
         network/Interface.cpp
     PRIVATE
         FILE_SET HEADERS
-            FILES monitor/Attributes.hpp overloaded/Overloaded.hpp
+            FILES monitor/Attributes.hpp
 )
 
 target_link_libraries(
