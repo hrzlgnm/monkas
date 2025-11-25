@@ -89,7 +89,7 @@ auto Address::isUnicastLinkLocal() const -> bool
                                       constexpr auto LINK_LOCAL_END = 254;
                                       return addr[0] == LINK_LOCAL_START && addr[1] == LINK_LOCAL_END;
                                   },
-                                  [](const V6Bytes& addr)
+                                  [](const V6Bytes& addr) -> bool
                                   {
                                       constexpr auto V6_LL_PREFIX = 0xfeU;
                                       constexpr auto V6_LL_MASK = 0xc0U;
@@ -182,7 +182,7 @@ auto Address::fromString(const std::string& address) noexcept(false) -> Address
                                 + "': Invalid format or unsupported address family");
 }
 
-auto Address::operator<=>(const Address& rhs) const noexcept -> std::strong_ordering
+auto Address::operator<=>(const Address& rhs) const -> std::strong_ordering
 {
     return m_bytes <=> rhs.m_bytes;
 }
