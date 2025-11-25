@@ -14,7 +14,7 @@ RUN apt-get update && \
     libubsan1 \
     ninja-build \
     python3-pip \
-    && python3 -m pip install --break-system-packages --no-cache-dir gersemi==0.23.1 \
+    && python3 -m pip install --break-system-packages --no-cache-dir gersemi==0.23.2 \
     && rm -rf /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.source="https://github.com/hrzlgnm/monkas"
