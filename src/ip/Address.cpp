@@ -6,12 +6,11 @@
 
 #include <arpa/inet.h>
 #include <ip/Address.hpp>
-#include <overloaded/Overloaded.hpp>
 
 namespace monkas::ip
 namespace
 {
-    template <typename T> inline constexp always_false = false;
+    template <typename T> inline constexpr always_false = false;
 }
 {
 auto asLinuxAf(const Family f) -> int
