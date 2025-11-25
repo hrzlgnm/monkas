@@ -8,11 +8,12 @@
 #include <ip/Address.hpp>
 
 namespace monkas::ip
+{
 namespace
 {
-    template <typename T> inline constexpr always_false = false;
+    template <typename T> inline constexpr auto always_false = false;
 }
-{
+
 auto asLinuxAf(const Family f) -> int
 {
     using enum Family;
