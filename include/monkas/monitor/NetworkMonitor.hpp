@@ -118,9 +118,9 @@ class NetworkMonitor
     [[nodiscard]] auto isEnumeratingRoutes() const -> bool { return m_cacheState == CacheState::EnumeratingRoutes; }
 
     void notifyChanges();
-    void notifyChanges(Subscriber* subscriber, const Interfaces& interfaces);
-    void notifyInterfaceAdded(const network::Interface& interface);
-    void notifyInterfaceRemoved(const network::Interface& interface);
+    void notifyChanges(Subscriber* subscriber, const Interfaces& intfs);
+    void notifyInterfaceAdded(const network::Interface& intf);
+    void notifyInterfaceRemoved(const network::Interface& intf);
 
     std::unique_ptr<mnl_socket, int (*)(mnl_socket*)> m_mnlSocket;
     std::vector<uint8_t> m_receiveBuffer;

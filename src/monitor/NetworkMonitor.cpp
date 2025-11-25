@@ -589,14 +589,14 @@ void NetworkMonitor::notifyChanges()
     }
 }
 
-void NetworkMonitor::notifyChanges(Subscriber* subscriber, const Interfaces& interfaces)
+void NetworkMonitor::notifyChanges(Subscriber* subscriber, const Interfaces& intfs)
 {
-    if (subscriber == nullptr || interfaces.empty()) {
+    if (subscriber == nullptr || intfs.empty()) {
         return;  // no subscriber or no interfaces to notify
     }
     for (const auto& [index, tracker] : m_trackers) {
         const auto intf = network::Interface {index, tracker.name()};
-        if (interfaces.contains(intf)) {
+        if (intfs.contains(intf)) {
             subscriber->onOperationalStateChanged(intf, tracker.operationalState());
             subscriber->onNetworkAddressesChanged(intf, tracker.networkAddresses());
             subscriber->onGatewayAddressChanged(intf, tracker.gatewayAddress());
