@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 jobs:
-  Lint:
+  cmake-format:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:77d14d47a92453d47f43c6c5e9a8700e5a20bc4f6d8b7c4d97d81dd1364bc867
@@ -16,6 +16,14 @@ jobs:
         if: always()
         run: gersemi --check --diff .
 
+  clang-format:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:77d14d47a92453d47f43c6c5e9a8700e5a20bc4f6d8b7c4d97d81dd1364bc867
+    steps:
+      - name: 🔄 Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+        
       - name: 📐 Check clang-format
         if: always()
         run: |
