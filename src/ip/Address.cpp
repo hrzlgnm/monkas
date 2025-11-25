@@ -9,11 +9,6 @@
 
 namespace monkas::ip
 {
-namespace
-{
-template<typename T>
-inline constexpr auto always_false = false;
-}  // namespace
 
 auto asLinuxAf(const Family f) -> int
 {
@@ -75,7 +70,7 @@ auto Address::isMulticast() const -> bool
                 constexpr auto V6_MCAST_PREFIX = 0xffU;
                 return addr[0] == V6_MCAST_PREFIX;
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);
@@ -96,7 +91,7 @@ auto Address::isUnicastLinkLocal() const -> bool
                 constexpr auto V6_LL_BITS = 0x80U;
                 return addr[0] == V6_LL_PREFIX && (addr[1] & V6_LL_MASK) == V6_LL_BITS;
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);
@@ -128,7 +123,7 @@ auto Address::isLoopback() const -> bool
                 return std::all_of(addr.cbegin(), addr.cend() - 1, [](const uint8_t b) { return b == 0; })
                     && addr[IPV6_ADDR_LEN - 1] == 1;
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);
@@ -144,7 +139,7 @@ auto Address::family() const -> Family
             } else if constexpr (std::same_as<T, V6Bytes>) {
                 return Family::IPv6;
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);
@@ -164,7 +159,7 @@ auto Address::toString() const -> std::string
                 inet_ntop(AF_INET6, addr.data(), buffer.data(), buffer.size());
                 return std::string(buffer.data());
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);
