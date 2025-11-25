@@ -94,7 +94,6 @@ jobs:
     with:
       branch: ${{ needs.changes.outputs.branch }}
 
-  # not to be included into the all-required-green yet
   static-analysis:
     name: Static Analysis
     needs: changes
@@ -109,6 +108,7 @@ jobs:
       - docker
       - lint
       - typos
+      - static-analysis
     if: always()
     steps:
       - name: Check whether the needed jobs succeeded or failed
@@ -117,5 +117,6 @@ jobs:
           allowed-skips: >-
             build-and-test,
             docker,
-            lint
+            lint,
+            static-analysis
           jobs: ${{ toJSON(needs) }}
