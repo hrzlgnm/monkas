@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <ostream>
 #include <string_view>
+#include <utility>
 
 #include <ip/Address.hpp>
 #include <monitor/NetworkInterfaceStatusTracker.hpp>
@@ -257,9 +258,9 @@ auto toString(const NetworkInterfaceStatusTracker::OperationalState o) -> std::s
         case Up:
             return "Up";
         case Unknown:
-        default:
             return "Unknown";
     }
+    return fmt::format("Unknown OperationalState({:02x})", std::to_underlying(o));
 }
 
 }  // namespace
@@ -305,9 +306,9 @@ auto operator<<(std::ostream& o, ChangedFlag c) -> std::ostream&
         case NetworkAddresses:
             return o << "NetworkAddressesChanged";
         case FlagsCount:
-        default:
-            return o << fmt::format("Unknown ChangedFlag: 0x{:02x}", std::to_underlying(c));
+            break;
     }
+    return o << fmt::format("Unknown ChangedFlag: 0x{:02x}", std::to_underlying(c));
 }
 
 auto operator<<(std::ostream& o, const ChangedFlags& c) -> std::ostream&
@@ -358,9 +359,9 @@ auto operator<<(std::ostream& o, NetworkInterfaceStatusTracker::LinkFlag l) -> s
         case Echo:
             return o << "Echo";
         case FlagsCount:
-        default:
-            return o << fmt::format("Unknown LinkFlag: 0x{:02x}", std::to_underlying(l));
+            break;
     }
+    return o << fmt::format("Unknown LinkFlag: 0x{:02x}", std::to_underlying(l));
 }
 
 auto operator<<(std::ostream& o, const LinkFlags& l) -> std::ostream&

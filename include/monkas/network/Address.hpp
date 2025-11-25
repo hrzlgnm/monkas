@@ -19,7 +19,7 @@ enum class Scope : uint8_t
     Host,
     Nowhere,
 };
-auto operator<<(std::ostream& o, Scope a) -> std::ostream&;
+auto operator<<(std::ostream& o, Scope s) -> std::ostream&;
 
 auto fromRtnlScope(uint8_t rtnlScope) -> Scope;
 

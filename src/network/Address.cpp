@@ -105,27 +105,21 @@ auto fromRtnlScope(const uint8_t rtnlScope) -> Scope
     }
 }
 
-auto operator<<(std::ostream& o, const Scope a) -> std::ostream&
+auto operator<<(std::ostream& o, const Scope s) -> std::ostream&
 {
-    switch (a) {
+    switch (s) {
         case Scope::Site:
-            o << "site";
-            break;
+            return o << "site";
         case Scope::Link:
-            o << "link";
-            break;
+            return o << "link";
         case Scope::Host:
-            o << "host";
-            break;
+            return o << "host";
         case Scope::Nowhere:
-            o << "nowhere";
-            break;
+            return o << "nowhere";
         case Scope::Global:
-        default:
-            o << "global";
-            break;
+            return o << "global";
     }
-    return o;
+    return o << fmt::format("Unknown Scope 0x{:02x}", std::to_underlying(s));
 }
 
 auto operator<<(std::ostream& o, const AddressFlag a) -> std::ostream&
@@ -179,9 +173,8 @@ auto operator<<(std::ostream& o, AddressAssignmentProtocol a) -> std::ostream&
             return o << "KernelRouterAdvertisement";
         case KernelLinkLocal:
             return o << "KernelLinkLocal";
-        default:
-            return o << "Unknown Address AddressAssignmentProtocol: 0x" << std::hex << static_cast<int>(a);
     }
+    return o << fmt::format("Unknown AddressAssignmentProtocol: 0x{:02x}", std::to_underlying(a));
 }
 
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
