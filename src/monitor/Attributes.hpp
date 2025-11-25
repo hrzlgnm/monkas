@@ -14,7 +14,7 @@ class Attributes
 {
   public:
     static auto parse(const nlmsghdr* n,
-                      size_t offset,
+                      uint32_t offset,
                       uint16_t maxType,
                       uint64_t& seenCounter,
                       uint64_t& unknownCounter) -> Attributes;

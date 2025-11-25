@@ -33,13 +33,6 @@ template<typename T>
     std::abort();
 }
 
-template<typename T>
-void pwarn(const T& msg)
-{
-    // NOLINTNEXTLINE(concurrency-mt-unsafe)
-    spdlog::warn("{} failed: {}[{}]", msg, strerror(errno), errno);
-}
-
 auto toRtnlGroupFlag(const rtnetlink_groups group) -> unsigned
 {
     return 1U << (group - 1U);
@@ -209,7 +202,7 @@ void NetworkMonitor::receiveAndProcess()
         }
         const auto seqNo = isEnumerating() ? m_sequenceNumber : 0;
         const auto callbackResult = mnl_cb_run(m_receiveBuffer.data(),
-                                               receiveResult,
+                                               static_cast<size_t>(receiveResult),
                                                seqNo,
                                                m_portid,
                                                &NetworkMonitor::dispatchMnMessageCallbackToSelf,
@@ -237,14 +230,14 @@ auto NetworkMonitor::interfacesFromCache() -> Interfaces
 void NetworkMonitor::updateStats(const ssize_t receiveResult)
 {
     m_stats.packetsReceived++;
-    m_stats.bytesReceived += receiveResult;
+    m_stats.bytesReceived += static_cast<size_t>(receiveResult);
 }
 
 void NetworkMonitor::dumpPacket(const ssize_t receiveResult) const
 {
     std::ignore = fflush(stderr);
     std::ignore = fflush(stdout);
-    mnl_nlmsg_fprintf(stdout, m_receiveBuffer.data(), receiveResult, 0);
+    mnl_nlmsg_fprintf(stdout, m_receiveBuffer.data(), static_cast<size_t>(receiveResult), 0);
 }
 
 auto NetworkMonitor::handleCallbackResult(const int callbackResult) -> bool
@@ -302,7 +295,7 @@ void NetworkMonitor::sendDumpRequest(const uint16_t msgType)
         pfatal("mnl_socket_sendto");
     }
     m_stats.packetsSent++;
-    m_stats.bytesSent += ret;
+    m_stats.bytesSent += static_cast<size_t>(ret);
 }
 
 void NetworkMonitor::retryLastDumpRequestWithNewSequenceNumber()
@@ -322,10 +315,9 @@ void NetworkMonitor::retryLastDumpRequestWithNewSequenceNumber()
     const auto ret = mnl_socket_sendto(m_mnlSocket.get(), nlh, nlh->nlmsg_len);
     if (ret < 0) {
         pfatal("mnl_socket_sendto");
-        return;
     }
     m_stats.packetsSent++;
-    m_stats.bytesSent += ret;
+    m_stats.bytesSent += static_cast<size_t>(ret);
 }
 
 auto NetworkMonitor::nextDumpRequestSequenceNumber() -> uint32_t
@@ -402,12 +394,12 @@ void NetworkMonitor::parseLinkMessage(const nlmsghdr* nlhdr, const ifinfomsg* if
     }
     if (nlhdr->nlmsg_type == RTM_DELLINK) {
         spdlog::trace("removing interface with index {}", ifi->ifi_index);
-        m_trackers.erase(ifi->ifi_index);
+        m_trackers.erase(static_cast<uint32_t>(ifi->ifi_index));
         notifyInterfaceRemoved(network::Interface {static_cast<uint32_t>(ifi->ifi_index), itfName.value_or("unknown")});
         return;
     }
 
-    auto& cacheEntry = ensureNameCurrent(ifi->ifi_index, itfName);
+    auto& cacheEntry = ensureNameCurrent(static_cast<uint32_t>(ifi->ifi_index), itfName);
     const NetworkInterfaceStatusTracker::LinkFlags linkFlags(ifi->ifi_flags);
     cacheEntry.updateLinkFlags(linkFlags);
 
@@ -597,14 +589,14 @@ void NetworkMonitor::notifyChanges()
     }
 }
 
-void NetworkMonitor::notifyChanges(Subscriber* subscriber, const Interfaces& interfaces)
+void NetworkMonitor::notifyChanges(Subscriber* subscriber, const Interfaces& intfs)
 {
-    if (subscriber == nullptr || interfaces.empty()) {
+    if (subscriber == nullptr || intfs.empty()) {
         return;  // no subscriber or no interfaces to notify
     }
     for (const auto& [index, tracker] : m_trackers) {
         const auto intf = network::Interface {index, tracker.name()};
-        if (interfaces.contains(intf)) {
+        if (intfs.contains(intf)) {
             subscriber->onOperationalStateChanged(intf, tracker.operationalState());
             subscriber->onNetworkAddressesChanged(intf, tracker.networkAddresses());
             subscriber->onGatewayAddressChanged(intf, tracker.gatewayAddress());

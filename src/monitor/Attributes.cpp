@@ -58,7 +58,7 @@ template<std::size_t N>
 }  // namespace
 
 auto Attributes::parse(const nlmsghdr* n,
-                       const size_t offset,
+                       const uint32_t offset,
                        const uint16_t maxType,
                        uint64_t& seenCounter,
                        uint64_t& unknownCounter) -> Attributes
@@ -77,13 +77,20 @@ Attributes::Attributes(const std::size_t toAlloc)
 void Attributes::parseAttribute(const nlattr* a, uint64_t& seenCounter, uint64_t& unknownCounter)
 {
     const auto type = mnl_attr_get_type(a);
-    if (mnl_attr_type_valid(a, m_attributes.size() - 1) > 0) {
+    const auto maxType = static_cast<uint16_t>(m_attributes.size() - 1U);
+    const auto typeValid = mnl_attr_type_valid(a, maxType);
+    if (typeValid > 0) {
         seenCounter++;
         m_attributes[type] = a;
-    } else {
-        unknownCounter++;
-        spdlog::warn("ignoring unexpected nlattr type {}", type);
+        return;
     }
+    unknownCounter++;
+    if (typeValid < 0) {
+        const auto err = errno;
+        spdlog::warn("failed to validate nlattr type 0x{:04x}: {}", type, std::strerror(err));
+        return;
+    }
+    spdlog::warn("ignoring unexpected nlattr type {}", type);
 }
 
 auto Attributes::dispatchMnlAttributeCallback(const nlattr* attr, void* args) -> int

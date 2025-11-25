@@ -12,6 +12,8 @@
 #include <spdlog/spdlog.h>
 #include <unistd.h>
 
+namespace
+{
 DEFINE_bool(nerdstats, false, "Enable stats for nerds");
 
 DEFINE_bool(dumppackets, false, "Enable dumping of rtnl packets");
@@ -31,6 +33,7 @@ DEFINE_string(log_level, "info", "Set log level: trace, debug, info, warn, err, 
 DEFINE_uint32(enum_loop, 1, "Run enumeration loop N times, 0 means infinite");
 DEFINE_uint64(loop_delay_us, 100, "Delay between enumeration loops in µs, at least 50");
 DEFINE_validator(loop_delay_us, [](const char* /*flagname*/, const uint64_t value) -> bool { return value >= 50; });
+}  // namespace
 
 // NOLINTNEXTLINE(google-build-*)
 using namespace monkas::monitor;

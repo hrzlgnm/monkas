@@ -9,11 +9,6 @@
 
 namespace monkas::ip
 {
-namespace
-{
-template<typename T>
-inline constexpr auto always_false = false;
-}
 
 auto asLinuxAf(const Family f) -> int
 {
@@ -23,9 +18,8 @@ auto asLinuxAf(const Family f) -> int
             return AF_INET;
         case IPv6:
             return AF_INET6;
-        default:
-            return AF_UNSPEC;
     }
+    return AF_UNSPEC;
 }
 
 auto operator<<(std::ostream& o, const Family f) -> std::ostream&
@@ -33,16 +27,11 @@ auto operator<<(std::ostream& o, const Family f) -> std::ostream&
     using enum Family;
     switch (f) {
         case IPv4:
-            o << "inet";
-            break;
+            return o << "inet";
         case IPv6:
-            o << "inet6";
-            break;
-        default:
-            o << "unspec";
-            break;
+            return o << "inet6";
     }
-    return o;
+    return o << "unspec";
 }
 
 Address::Address() = default;
@@ -81,7 +70,7 @@ auto Address::isMulticast() const -> bool
                 constexpr auto V6_MCAST_PREFIX = 0xffU;
                 return addr[0] == V6_MCAST_PREFIX;
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);
@@ -102,7 +91,7 @@ auto Address::isUnicastLinkLocal() const -> bool
                 constexpr auto V6_LL_BITS = 0x80U;
                 return addr[0] == V6_LL_PREFIX && (addr[1] & V6_LL_MASK) == V6_LL_BITS;
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);
@@ -131,10 +120,10 @@ auto Address::isLoopback() const -> bool
                 constexpr uint8_t LOOPBACK_FIRST_OCTET = 127;
                 return addr[0] == LOOPBACK_FIRST_OCTET;
             } else if constexpr (std::same_as<T, V6Bytes>) {
-                return std::all_of(addr.cbegin(), addr.cend() - 1, [](const uint8_t b) { return b == 0; })
+                return std::all_of(addr.cbegin(), std::prev(addr.cend()), [](const uint8_t b) { return b == 0; })
                     && addr[IPV6_ADDR_LEN - 1] == 1;
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);
@@ -150,7 +139,7 @@ auto Address::family() const -> Family
             } else if constexpr (std::same_as<T, V6Bytes>) {
                 return Family::IPv6;
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);
@@ -170,7 +159,7 @@ auto Address::toString() const -> std::string
                 inet_ntop(AF_INET6, addr.data(), buffer.data(), buffer.size());
                 return std::string(buffer.data());
             } else {
-                static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
+                static_assert(false, "Non-exhaustive visitor for Address type");
             }
         },
         m_bytes);

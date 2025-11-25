@@ -45,6 +45,7 @@ jobs:
             code:
               - '.clang-tidy'
               - '.github/workflows/build-and-test.yml'
+              - '.github/workflows/static-analysis.yml'
               - 'examples/**'
               - 'external/**'
               - 'include/**'
@@ -93,6 +94,12 @@ jobs:
     with:
       branch: ${{ needs.changes.outputs.branch }}
 
+  static-analysis:
+    name: Static Analysis
+    needs: changes
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.tests == 'true'
+    uses: ./.github/workflows/static-analysis.yml
+
   all-required-green: # This job does nothing and is only used for the branch protection
     name: CI Status
     runs-on: ubuntu-latest
@@ -101,6 +108,7 @@ jobs:
       - docker
       - lint
       - typos
+      - static-analysis
     if: always()
     steps:
       - name: Check whether the needed jobs succeeded or failed
@@ -109,5 +117,6 @@ jobs:
           allowed-skips: >-
             build-and-test,
             docker,
-            lint
+            lint,
+            static-analysis
           jobs: ${{ toJSON(needs) }}
