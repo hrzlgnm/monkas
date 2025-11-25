@@ -11,12 +11,12 @@ namespace monkas::network
 
 auto Interface::fromName(std::string name) -> Interface
 {
-    const auto index = if_nametoindex(name.c_str());
-    if (index == 0) {
+    const auto idx = if_nametoindex(name.c_str());
+    if (idx == 0) {
         const auto err = errno;
         throw std::system_error(err, std::system_category(), "if_nametoindex(\"" + name + "\") failed");
     }
-    return Interface {index, std::move(name)};
+    return Interface {idx, std::move(name)};
 }
 
 auto Interface::fromIndex(std::uint32_t index) -> Interface
