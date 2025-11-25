@@ -35,12 +35,12 @@ jobs:
           -S .
           -B ../build
 
-      - name: Build
+      - name: 🔧⚠️Build with -Werror and many warnings enabled
         if: always()
         run: |
           cmake --build ../build -j 2
 
-      - name: cppcheck
+      - name: 📘🔍Cppcheck
         if: always()
         run: |
           echo "Checking with $(cppcheck --version)"
@@ -50,5 +50,5 @@ jobs:
           --project=../build/compile_commands.json \
           --library=cppcheck/monkas.cfg \
           --enable=style \
-          --suppress='*:fmt/*'
+          --suppress='*:fmt/*' \
           --error-exitcode=2
