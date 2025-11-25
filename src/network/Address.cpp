@@ -151,9 +151,9 @@ auto operator<<(std::ostream& o, const AddressFlag a) -> std::ostream&
         case StablePrivacy:
             return o << "StablePrivacy";
         case FlagsCount:
-        default:
-            return o << fmt::format("Unknown AddressFlag: 0x{:02x}", std::to_underlying(a));
+            break;
     }
+    return o << fmt::format("Unknown AddressFlag: 0x{:02x}", std::to_underlying(a));
 }
 
 auto operator<<(std::ostream& o, const AddressFlags& a) -> std::ostream&

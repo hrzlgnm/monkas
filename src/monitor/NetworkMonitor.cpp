@@ -295,7 +295,7 @@ void NetworkMonitor::sendDumpRequest(const uint16_t msgType)
         pfatal("mnl_socket_sendto");
     }
     m_stats.packetsSent++;
-    m_stats.bytesSent += ret;
+    m_stats.bytesSent += static_cast<size_t>(ret);
 }
 
 void NetworkMonitor::retryLastDumpRequestWithNewSequenceNumber()
