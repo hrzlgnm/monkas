@@ -77,7 +77,7 @@ Attributes::Attributes(const std::size_t toAlloc)
 void Attributes::parseAttribute(const nlattr* a, uint64_t& seenCounter, uint64_t& unknownCounter)
 {
     const auto type = mnl_attr_get_type(a);
-    const auto maxType = static_cast<uint32_t>(m_attributes.size() - 1U);
+    const auto maxType = static_cast<uint16_t>(m_attributes.size() - 1U);
     const auto typeValid = mnl_attr_type_valid(a, maxType);
     if (typeValid > 0) {
         seenCounter++;
