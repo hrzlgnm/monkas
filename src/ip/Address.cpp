@@ -11,7 +11,8 @@ namespace monkas::ip
 {
 namespace
 {
-    template <typename T> inline constexpr auto always_false = false;
+template<typename T>
+inline constexpr auto always_false = false;
 }
 
 auto asLinuxAf(const Family f) -> int
@@ -69,7 +70,8 @@ auto Address::isV6() const -> bool
 auto Address::isMulticast() const -> bool
 {
     return std::visit(
-        []<typename T>(const T& addr) -> bool {
+        []<typename T>(const T& addr) -> bool
+        {
             if constexpr (std::same_as<T, V4Bytes>) {
                 constexpr auto V4_MCAST_START = 224;
                 constexpr auto V4_MCAST_END = 239;
@@ -81,13 +83,15 @@ auto Address::isMulticast() const -> bool
             } else {
                 static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
             }
-        }, m_bytes);
+        },
+        m_bytes);
 }
 
 auto Address::isUnicastLinkLocal() const -> bool
 {
     return std::visit(
-        []<typename T>(const T& addr) -> bool {
+        []<typename T>(const T& addr) -> bool
+        {
             if constexpr (std::same_as<T, V4Bytes>) {
                 constexpr auto LINK_LOCAL_START = 169;
                 constexpr auto LINK_LOCAL_END = 254;
@@ -100,7 +104,8 @@ auto Address::isUnicastLinkLocal() const -> bool
             } else {
                 static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
             }
-        }, m_bytes);
+        },
+        m_bytes);
 }
 
 auto Address::isUniqueLocal() const -> bool
@@ -120,24 +125,26 @@ auto Address::isUniqueLocal() const -> bool
 auto Address::isLoopback() const -> bool
 {
     return std::visit(
-        []<typename T>(const T& addr) -> bool {
+        []<typename T>(const T& addr) -> bool
+        {
             if constexpr (std::same_as<T, V4Bytes>) {
                 constexpr uint8_t LOOPBACK_FIRST_OCTET = 127;
                 return addr[0] == LOOPBACK_FIRST_OCTET;
             } else if constexpr (std::same_as<T, V6Bytes>) {
-                return std::all_of(
-                        addr.cbegin(), addr.cend() - 1, [](const uint8_t b) { return b == 0; })
+                return std::all_of(addr.cbegin(), addr.cend() - 1, [](const uint8_t b) { return b == 0; })
                     && addr[IPV6_ADDR_LEN - 1] == 1;
             } else {
                 static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
             }
-        }, m_bytes);
+        },
+        m_bytes);
 }
 
 auto Address::family() const -> Family
 {
     return std::visit(
-        []<typename T>(const T&) -> Family {
+        []<typename T>(const T&) -> Family
+        {
             if constexpr (std::same_as<T, V4Bytes>) {
                 return Family::IPv4;
             } else if constexpr (std::same_as<T, V6Bytes>) {
@@ -145,13 +152,15 @@ auto Address::family() const -> Family
             } else {
                 static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
             }
-        }, m_bytes);
+        },
+        m_bytes);
 }
 
 auto Address::toString() const -> std::string
 {
     return std::visit(
-        []<typename T>(const T& addr) -> std::string {
+        []<typename T>(const T& addr) -> std::string
+        {
             if constexpr (std::same_as<T, V4Bytes>) {
                 std::array<char, INET_ADDRSTRLEN> buffer {};
                 inet_ntop(AF_INET, addr.data(), buffer.data(), buffer.size());
@@ -163,7 +172,8 @@ auto Address::toString() const -> std::string
             } else {
                 static_assert(always_false<T>, "Non-exhaustive visitor for Address type");
             }
-        }, m_bytes);
+        },
+        m_bytes);
 }
 
 auto Address::isBroadcast() const -> bool
