@@ -58,7 +58,7 @@ auto Address::scope() const -> Scope
     return m_scope;
 }
 
-auto Address::flags() const -> AddressFlags
+auto Address::flags() const -> const AddressFlags&
 {
     return m_flags;
 }

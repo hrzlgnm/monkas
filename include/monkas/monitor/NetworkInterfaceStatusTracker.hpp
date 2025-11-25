@@ -102,7 +102,7 @@ class NetworkInterfaceStatusTracker
     void removeNetworkAddress(const network::Address& address);
 
     void updateLinkFlags(const LinkFlags& flags);
-    [[nodiscard]] auto linkFlags() const -> LinkFlags;
+    [[nodiscard]] auto linkFlags() const -> const LinkFlags&;
 
     [[nodiscard]] auto age() const -> Duration;
 
@@ -110,7 +110,7 @@ class NetworkInterfaceStatusTracker
 
     [[nodiscard]] auto hasChanges() const -> bool;
     [[nodiscard]] auto isChanged(ChangedFlag flag) const -> bool;
-    [[nodiscard]] auto changedFlags() const -> ChangedFlags;
+    [[nodiscard]] auto changedFlags() const -> const ChangedFlags&;
 
     void clearFlag(ChangedFlag flag);
     void clearChangedFlags();

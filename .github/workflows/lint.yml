@@ -13,8 +13,10 @@ jobs:
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
       - name: 📐 Check cmake format
+        if: always()
         run: gersemi --check --diff .
 
       - name: 📐 Check clang-format
+        if: always()
         run: |
           find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format --dry-run --Werror {} +

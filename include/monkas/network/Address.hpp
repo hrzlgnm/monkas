@@ -69,7 +69,7 @@ class Address
     [[nodiscard]] auto broadcast() const -> std::optional<ip::Address>;
     [[nodiscard]] auto prefixLength() const -> uint8_t;
     [[nodiscard]] auto scope() const -> Scope;
-    [[nodiscard]] auto flags() const -> AddressFlags;
+    [[nodiscard]] auto flags() const -> const AddressFlags&;
     [[nodiscard]] auto addressAssignmentProtocol() const -> AddressAssignmentProtocol;
 
     [[nodiscard]] auto operator<=>(const Address& other) const -> std::strong_ordering;

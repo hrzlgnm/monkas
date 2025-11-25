@@ -175,7 +175,7 @@ void NetworkInterfaceStatusTracker::updateLinkFlags(const LinkFlags& flags)
     }
 }
 
-auto NetworkInterfaceStatusTracker::linkFlags() const -> LinkFlags
+auto NetworkInterfaceStatusTracker::linkFlags() const -> const LinkFlags&
 {
     return m_linkFlags;
 }
@@ -197,7 +197,7 @@ auto NetworkInterfaceStatusTracker::isChanged(const ChangedFlag flag) const -> b
     return m_changedFlags.test(flag);
 }
 
-auto NetworkInterfaceStatusTracker::changedFlags() const -> ChangedFlags
+auto NetworkInterfaceStatusTracker::changedFlags() const -> const ChangedFlags&
 {
     return m_changedFlags;
 }
