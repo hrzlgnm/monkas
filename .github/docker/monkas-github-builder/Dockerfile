@@ -19,6 +19,6 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.source="https://github.com/hrzlgnm/monkas"
-LABEL org.opencontainers.image.title="monkas GitHub GCC"
+LABEL org.opencontainers.image.title="monkas GitHub Builder"
 LABEL org.opencontainers.image.base.name="docker.io/library/gcc"
 
