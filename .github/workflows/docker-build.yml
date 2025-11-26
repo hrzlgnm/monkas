@@ -43,7 +43,7 @@ jobs:
               done \
             | jq -R -s -c 'split("\n")[:-1]')
 
-            echo "packages=$names" >> $GITHUB_OUTPUT
+          echo "packages=$names" >> $GITHUB_OUTPUT
 
   build:
     name: Build
