@@ -7,7 +7,7 @@ jobs:
   cmake-format:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:77d14d47a92453d47f43c6c5e9a8700e5a20bc4f6d8b7c4d97d81dd1364bc867
+      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:b2557ac991a933b3628e3c00580326b2d25dd81cd57ac05f0be84abc5b73fc94
     steps:
       - name: 🔄 Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
@@ -18,7 +18,7 @@ jobs:
   clang-format:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-gcc:v1@sha256:77d14d47a92453d47f43c6c5e9a8700e5a20bc4f6d8b7c4d97d81dd1364bc867
+      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:b2557ac991a933b3628e3c00580326b2d25dd81cd57ac05f0be84abc5b73fc94
     steps:
       - name: 🔄 Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
