@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-slim
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
+      cmake: ${{ steps.filter.outputs.cmake }}
       code: ${{ steps.filter.outputs.code }}
       docker: ${{ steps.filter.outputs.docker }}
       lint: ${{ steps.filter.outputs.lint }}
@@ -45,16 +46,21 @@ jobs:
               - '.clang-tidy'
               - '.github/workflows/build-and-test-reusable.yml'
               - '.github/workflows/static-analysis-reusable.yml'
-              - 'examples/**'
-              - 'external/**'
-              - 'include/**'
-              - 'src/**'
+              - 'examples/**/*.cpp'
+              - 'external/**/*.cpp'
+              - 'external/**/*.h'
+              - 'include/**/*.hpp'
+              - 'src/**/*.hpp'
+              - 'src/**/*.cpp'
+              - '!src/**/*.test.cpp'
+            cmake:
+              - '.gersemirc'
+              - '**/CMakeLists.txt'
             lint:
               - '.clang-format'
-              - '.gersemirc'
               - '.github/workflows/lint-reusable.yml'
             tests:
-              - 'tests/**'
+              - 'src/**/*.test.cpp'
 
       - name: Output branch name
         id: branch
@@ -72,13 +78,19 @@ jobs:
     if: needs.changes.outputs.code == 'true' || needs.changes.outputs.lint == 'true'
     uses: ./.github/workflows/lint-reusable.yml
 
+  gersemi:
+    name: 📐 Check CMake format
+    needs: changes
+    if: needs.changes.outputs.cmake == 'true'
+    uses: hrzlgnm/actions/.github/workflows/gersemi-reusable.yml@acb5bddd856e0fd20697dc5f3f90ccddd813d8f0 # v1.3.0
+
   build-and-test:
     name: Build and Test
     permissions:
       pull-requests: write # retain for PR operations
       checks: write # required for action-junit-report annotations
     needs: changes
-    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.tests == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.tests == 'true' || needs.changes.outputs.cmake == 'true'
     uses: ./.github/workflows/build-and-test-reusable.yml
 
   docker:
@@ -105,6 +117,7 @@ jobs:
     needs:
       - build-and-test
       - docker
+      - gersemi
       - lint
       - typos
       - static-analysis
@@ -116,6 +129,7 @@ jobs:
           allowed-skips: >-
             build-and-test,
             docker,
+            gersemi,
             lint,
             static-analysis
           jobs: ${{ toJSON(needs) }}

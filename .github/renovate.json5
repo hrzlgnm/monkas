@@ -17,17 +17,4 @@
         ':semanticCommits',
         ':separateMajorReleases',
     ],
-    customManagers: [
-        {
-            customType: 'regex',
-            managerFilePatterns: [
-                '/^\\.github/docker/.*/Dockerfile$/',
-            ],
-            matchStringsStrategy: 'any',
-            matchStrings: [
-                'pip\\s+install(\\s+--[^\\s]+)+?\\s+(?<depName>[^\\s]+?)==(?<currentValue>.+?)\\s'
-            ],
-            datasourceTemplate: 'pypi'
-        }
-    ]
 }

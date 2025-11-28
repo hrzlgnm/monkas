@@ -43,6 +43,7 @@ set_target_properties(
         CXX_CPPCHECK
             ""
 )
+
 set_target_properties(
     doctest_lib
     PROPERTIES
