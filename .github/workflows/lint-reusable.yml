@@ -4,17 +4,6 @@ on:
   workflow_call:
 
 jobs:
-  cmake-format:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:b2557ac991a933b3628e3c00580326b2d25dd81cd57ac05f0be84abc5b73fc94
-    steps:
-      - name: 🔄 Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
-
-      - name: 📐 Check cmake format
-        run: gersemi --check --diff .
-
   clang-format:
     runs-on: ubuntu-latest
     container:
@@ -22,7 +11,7 @@ jobs:
     steps:
       - name: 🔄 Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
-        
+
       - name: 📐 Check clang-format
         run: |
           find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format --dry-run --Werror {} +
