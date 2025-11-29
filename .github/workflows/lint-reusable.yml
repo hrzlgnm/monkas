@@ -7,7 +7,7 @@ jobs:
   clang-format:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:b2557ac991a933b3628e3c00580326b2d25dd81cd57ac05f0be84abc5b73fc94
+      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:94995fa470e435d56f9e17f24b146bc72913536b0798fca7229be1faf6cd8e4c
     steps:
       - name: 🔄 Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
