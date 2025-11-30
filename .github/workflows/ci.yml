@@ -29,7 +29,7 @@ jobs:
       cmake: ${{ steps.filter.outputs.cmake }}
       code: ${{ steps.filter.outputs.code }}
       docker: ${{ steps.filter.outputs.docker }}
-      clang-format: ${{ steps.filter.outputs.lint }}
+      clang-format: ${{ steps.filter.outputs.clang-format }}
       tests: ${{ steps.filter.outputs.tests }}
     steps:
       - name: 🔄 Checkout
