@@ -90,7 +90,7 @@ jobs:
     name: 📘🔍Cppcheck
     needs: changes
     if: needs.changes.outputs.code == 'true' || needs.changes.outputs.cppcheck == 'true'
-    uses: hrzlgnm/actions/.github/workflows/cppcheck-reusable.yml@d1b7f17856f1c7e4cd50f1f81933027eae5290e6 # v1.4.0
+    uses: hrzlgnm/actions/.github/workflows/cppcheck-reusable.yml@f6f57ff48395c2f3ae7a85df40d786d31e5d5ac8 # v1.4.0
 
   build-and-test:
     name: Build and Test
