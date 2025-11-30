@@ -4,7 +4,6 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     clang \
     cmake \
-    cppcheck \
     jq \
     libasan8 \
     libclang-rt-dev \

@@ -27,6 +27,7 @@ jobs:
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
       clang-format: ${{ steps.filter.outputs.clang-format }}
+      cppcheck: ${{ steps.filter.outputs.cppcheck }}
       cmake: ${{ steps.filter.outputs.cmake }}
       code: ${{ steps.filter.outputs.code }}
       docker: ${{ steps.filter.outputs.docker }}
@@ -58,6 +59,8 @@ jobs:
               - '**/CMakeLists.txt'
             clang-format:
               - '.clang-format'
+            cppcheck: 
+              - 'cppcheck/**'
             tests:
               - 'src/**/*.test.cpp'
 
@@ -82,6 +85,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.cmake == 'true'
     uses: hrzlgnm/actions/.github/workflows/gersemi-reusable.yml@7b9f9b43588d85fc180bca626cc1cc0365025fe7 # v1.4.0
+
+  cppcheck:
+    name: 📘🔍Cppcheck
+    needs: changes
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.cppcheck == 'true'
+    uses: hrzlgnm/actions/.github/workflows/cppcheck-reusable.yml@d1b7f17856f1c7e4cd50f1f81933027eae5290e6 # v1.4.0
 
   build-and-test:
     name: Build and Test
@@ -116,6 +125,7 @@ jobs:
     needs:
       - build-and-test
       - clang-format
+      - cppcheck
       - docker
       - gersemi
       - typos
@@ -128,6 +138,7 @@ jobs:
           allowed-skips: >-
             build-and-test,
             clang-format,
+            cppcheck,
             docker,
             gersemi,
             static-analysis
