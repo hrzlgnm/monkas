@@ -3,7 +3,6 @@ FROM gcc@sha256:65f2c30c0bebffaf76fd21a491cab75b5d8b4c33c589a3a0a6168933c7b994a0
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     clang \
-    clang-format \
     cmake \
     cppcheck \
     jq \
