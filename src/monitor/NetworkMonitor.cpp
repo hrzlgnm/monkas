@@ -555,6 +555,34 @@ auto NetworkMonitor::dispatchMnMessageCallbackToSelf(const nlmsghdr* n, void* se
     return static_cast<NetworkMonitor*>(self)->mnlMessageCallback(n);
 }
 
+void NetworkMonitor::notifyChanges(Subscriber* subscriber,
+                                   const network::Interface& intf,
+                                   const NetworkInterfaceStatusTracker& tracker,
+                                   bool forceNotify)
+{
+    if (forceNotify || tracker.isChanged(ChangedFlag::Name)) {
+        subscriber->onInterfaceNameChanged(intf);
+    }
+    if (forceNotify || tracker.isChanged(ChangedFlag::OperationalState)) {
+        subscriber->onOperationalStateChanged(intf, tracker.operationalState());
+    }
+    if (forceNotify || tracker.isChanged(ChangedFlag::NetworkAddresses)) {
+        subscriber->onNetworkAddressesChanged(intf, tracker.networkAddresses());
+    }
+    if (forceNotify || tracker.isChanged(ChangedFlag::GatewayAddress)) {
+        subscriber->onGatewayAddressChanged(intf, tracker.gatewayAddress());
+    }
+    if (forceNotify || tracker.isChanged(ChangedFlag::MacAddress)) {
+        subscriber->onMacAddressChanged(intf, tracker.macAddress());
+    }
+    if (forceNotify || tracker.isChanged(ChangedFlag::BroadcastAddress)) {
+        subscriber->onBroadcastAddressChanged(intf, tracker.broadcastAddress());
+    }
+    if (forceNotify || tracker.isChanged(ChangedFlag::LinkFlags)) {
+        subscriber->onLinkFlagsChanged(intf, tracker.linkFlags());
+    }
+}
+
 void NetworkMonitor::notifyChanges()
 {
     if (m_subscribers.empty()) {
@@ -565,27 +593,7 @@ void NetworkMonitor::notifyChanges()
         const network::Interface intf {index, tracker.name()};
         for (const auto& [sub, intfs] : m_subscribers) {
             if (intfs.contains(intf)) {
-                if (tracker.isChanged(ChangedFlag::Name)) {
-                    sub->onInterfaceNameChanged(intf);
-                }
-                if (tracker.isChanged(ChangedFlag::OperationalState)) {
-                    sub->onOperationalStateChanged(intf, tracker.operationalState());
-                }
-                if (tracker.isChanged(ChangedFlag::NetworkAddresses)) {
-                    sub->onNetworkAddressesChanged(intf, tracker.networkAddresses());
-                }
-                if (tracker.isChanged(ChangedFlag::GatewayAddress)) {
-                    sub->onGatewayAddressChanged(intf, tracker.gatewayAddress());
-                }
-                if (tracker.isChanged(ChangedFlag::MacAddress)) {
-                    sub->onMacAddressChanged(intf, tracker.macAddress());
-                }
-                if (tracker.isChanged(ChangedFlag::BroadcastAddress)) {
-                    sub->onBroadcastAddressChanged(intf, tracker.broadcastAddress());
-                }
-                if (tracker.isChanged(ChangedFlag::LinkFlags)) {
-                    sub->onLinkFlagsChanged(intf, tracker.linkFlags());
-                }
+                notifyChanges(sub.get(), intf, tracker);
             }
         }
         tracker.clearChangedFlags();
@@ -600,12 +608,7 @@ void NetworkMonitor::notifyChanges(Subscriber* subscriber, const Interfaces& int
     for (const auto& [index, tracker] : m_trackers) {
         const auto intf = network::Interface {index, tracker.name()};
         if (intfs.contains(intf)) {
-            subscriber->onOperationalStateChanged(intf, tracker.operationalState());
-            subscriber->onNetworkAddressesChanged(intf, tracker.networkAddresses());
-            subscriber->onGatewayAddressChanged(intf, tracker.gatewayAddress());
-            subscriber->onMacAddressChanged(intf, tracker.macAddress());
-            subscriber->onBroadcastAddressChanged(intf, tracker.broadcastAddress());
-            subscriber->onLinkFlagsChanged(intf, tracker.linkFlags());
+            notifyChanges(subscriber, intf, tracker, /*forceNotify=*/true);
         }
     }
 }

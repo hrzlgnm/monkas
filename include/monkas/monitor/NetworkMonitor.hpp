@@ -122,6 +122,10 @@ class NetworkMonitor
 
     void notifyChanges();
     void notifyChanges(Subscriber* subscriber, const Interfaces& intfs);
+    static void notifyChanges(Subscriber* subscriber,
+                              const network::Interface& intf,
+                              const NetworkInterfaceStatusTracker& tracker,
+                              bool forceNotify = false);
     void notifyInterfaceAdded(const network::Interface& intf);
     void notifyInterfaceRemoved(const network::Interface& intf);
 
