@@ -559,7 +559,6 @@ void NetworkMonitor::notifyChanges(Subscriber* subscriber,
                                    const network::Interface& intf,
                                    const NetworkInterfaceStatusTracker& tracker,
                                    bool forceNotify)
-
 {
     if (forceNotify || tracker.isChanged(ChangedFlag::Name)) {
         subscriber->onInterfaceNameChanged(intf);
