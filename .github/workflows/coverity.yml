@@ -6,7 +6,7 @@ on:
 
 jobs:
   coverity:
-    uses: hrzlgnm/actions/.github/workflows/coverity-reusable.yml@05541fcd8920d5f9164f5b7f0b5467689d280142 # v1.5.3
+    uses: hrzlgnm/actions/.github/workflows/coverity-reusable.yml@787f20c0506ef7b31174badb3a98cae79f17dcd3 # v1.5.5
     secrets:
       COVERITY_EMAIL: ${{ secrets.COVERITY_NOTIFY_EMAIL }}
       COVERITY_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
