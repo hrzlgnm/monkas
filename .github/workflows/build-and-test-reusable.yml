@@ -12,7 +12,7 @@ jobs:
       CMAKE_C_COMPILER_LAUNCHER: sccache
       CMAKE_CXX_COMPILER_LAUNCHER: sccache
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:60b3ebf8b849edcf2668d09158bba2de5211cd0afc295ff44a3bbf673db1d03b
+      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:291f0f36c592b44db0b07087ee591dc118bcc3946ebe68963549e3e5ed1b1f83
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - name: Run sccache-action
@@ -88,7 +88,7 @@ jobs:
             }
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:60b3ebf8b849edcf2668d09158bba2de5211cd0afc295ff44a3bbf673db1d03b
+      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:291f0f36c592b44db0b07087ee591dc118bcc3946ebe68963549e3e5ed1b1f83
     env:
       ASAN_OPTIONS: ${{ matrix.toolchain.ASAN_OPTIONS }}
       CMAKE_BUILD_TYPE: ${{ matrix.toolchain.CMAKE_BUILD_TYPE }}
