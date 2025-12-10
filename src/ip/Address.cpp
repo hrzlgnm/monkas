@@ -196,11 +196,6 @@ auto Address::fromString(const std::string& address) noexcept(false) -> Address
                                 + "': Invalid format or unsupported address family");
 }
 
-auto Address::operator<=>(const Address& rhs) const -> std::strong_ordering
-{
-    return m_bytes <=> rhs.m_bytes;
-}
-
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
 {
     return o << a.toString();
