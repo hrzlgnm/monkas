@@ -49,11 +49,6 @@ auto Address::toString() const -> std::string
     return {buf.data(), buf.size()};
 }
 
-auto Address::operator<=>(const Address& other) const -> std::strong_ordering
-{
-    return m_bytes <=> other.m_bytes;
-}
-
 auto operator<<(std::ostream& o, const Address& a) -> std::ostream&
 {
     return o << a.toString();
