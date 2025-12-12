@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT-0
 
 #include <cstdint>
+#include <ranges>
 
 #include <libmnl/libmnl.h>
 #include <linux/netlink.h>
@@ -53,8 +54,9 @@ template<std::size_t N>
     }
 
     const auto* payload = static_cast<const uint8_t*>(mnl_attr_get_payload(attr));
+    // NOLINTNEXTLINE(*-member-init)
     std::array<uint8_t, N> arr;
-    std::copy_n(payload, N, arr.data());
+    std::ranges::copy_n(payload, N, arr.begin());
     return arr;
 }
 
