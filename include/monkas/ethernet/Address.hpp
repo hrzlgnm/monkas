@@ -26,8 +26,8 @@ class Address
     [[nodiscard]] auto isBroadcast() const -> bool;
     [[nodiscard]] auto toString() const -> std::string;
 
-    auto operator<=>(const Address& other) const -> std::strong_ordering;
-    auto operator==(const Address& other) const -> bool = default;
+    auto operator<=>(const Address& other) const noexcept = default;
+    auto operator==(const Address& other) const noexcept -> bool = default;
 
   private:
     Bytes m_bytes;

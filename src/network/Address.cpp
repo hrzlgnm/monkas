@@ -71,26 +71,6 @@ auto Address::addressAssignmentProtocol() const -> AddressAssignmentProtocol
     return m_prot;
 }
 
-auto Address::operator<=>(const Address& other) const -> std::strong_ordering
-{
-    if (const auto cmp = m_ip <=> other.m_ip; cmp != std::strong_ordering::equivalent) {
-        return cmp;
-    }
-    if (const auto cmp = m_brd <=> other.m_brd; cmp != std::strong_ordering::equivalent) {
-        return cmp;
-    }
-    if (const auto cmp = m_prefixlen <=> other.m_prefixlen; cmp != std::strong_ordering::equivalent) {
-        return cmp;
-    }
-    if (const auto cmp = m_scope <=> other.m_scope; cmp != std::strong_ordering::equivalent) {
-        return cmp;
-    }
-    if (const auto cmp = m_flags <=> other.m_flags; cmp != std::strong_ordering::equivalent) {
-        return cmp;
-    }
-    return m_prot <=> other.m_prot;
-}
-
 auto fromRtnlScope(const uint8_t rtnlScope) -> Scope
 {
     switch (rtnlScope) {

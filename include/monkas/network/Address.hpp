@@ -75,7 +75,7 @@ class Address
     [[nodiscard]] auto flags() const -> const AddressFlags&;
     [[nodiscard]] auto addressAssignmentProtocol() const -> AddressAssignmentProtocol;
 
-    [[nodiscard]] auto operator<=>(const Address& other) const -> std::strong_ordering;
+    [[nodiscard]] auto operator<=>(const Address& other) const = default;
     [[nodiscard]] auto operator==(const Address& other) const -> bool = default;
 
   private:
