@@ -12,7 +12,7 @@ jobs:
   Static-Analysis:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:d6201eac996991c24f6bb69526cb5446a1537a2045089568254f5722add58aee
+      image: ghcr.io/hrzlgnm/monkas-github-builder:v1@sha256:7d76829302525163f4fe77beaa2392fd8ba3b34f3879faa36b110df3d0cc83fd
 
     steps:
       - name: 🔄 Checkout
