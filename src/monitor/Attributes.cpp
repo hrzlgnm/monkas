@@ -1,8 +1,8 @@
 // Copyright 2023-2025 hrzlgnm
 // SPDX-License-Identifier: MIT-0
 
+#include <algorithm>
 #include <cstdint>
-#include <ranges>
 
 #include <libmnl/libmnl.h>
 #include <linux/netlink.h>
